@@ -1,0 +1,12 @@
+name: Daily Agent
+
+on:
+  schedule:
+    - cron: "0 4 * * *"   # daily; the reusable workflow no-ops if the backlog is empty
+  workflow_dispatch: {}    # manual test trigger
+
+jobs:
+  run:
+    uses: anubhab-m02/automation-kit/.github/workflows/daily-agent.yml@main
+    secrets:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
