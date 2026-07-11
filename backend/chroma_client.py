@@ -8,13 +8,12 @@ import os
 from functools import lru_cache
 
 import chromadb
-from chromadb.api import ClientAPI
 
 DEFAULT_CHROMA_DATA_DIR = "./chroma_data"
 
 
 @lru_cache
-def get_chroma_client() -> ClientAPI:
+def get_chroma_client():
     """Return a process-wide, disk-persisted Chroma client.
 
     Cached so repeated calls (e.g. across FastAPI request handlers) reuse
