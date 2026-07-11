@@ -5,50 +5,75 @@
 > effect without knowing the cause."
 
 RAG applied to a team's *living decision history*, not static documents.
-Ask "why is auth done this way?" or "what alternatives did we consider for
-the database?" and get a cited answer pointing back to the commit, PR, or
-ticket where that decision actually happened.
+Ask "why is auth done this way?" and get a cited answer pointing back to
+the commit or PR where that decision actually happened.
 
-## Phase 1 — MVP: GitHub only (current focus)
+Design docs: [SYSTEM-DESIGN.md](docs/SYSTEM-DESIGN.md) ·
+[ARCHITECTURE.md](docs/ARCHITECTURE.md) · [UI-DESIGN.md](docs/UI-DESIGN.md)
 
-Ingest commits + PR titles/descriptions/review comments from a configured
-list of repos, extract the decision intent behind them, and make that
-queryable with citations.
+## Delivery model (how work lands here)
 
-Pipeline:
-1. **Ingest** — GitHub API pulls commits + PRs (+ linked issues) for
-   configured repos, incrementally since the last run.
-2. **Extract** — local Ollama pass per commit/PR condenses the raw
-   diff/description into a structured "decision unit": what was decided,
-   why, what alternatives were mentioned (if any).
-3. **Embed** — local Ollama (`nomic-embed-text`) embeds each decision
-   unit. Nothing leaves the machine at index time.
-4. **Store** — Chroma (local, file-based), with metadata: repo, commit
-   SHA / PR number, author, date, URL.
-5. **Query** — FastAPI endpoint retrieves top-k decision units, sends only
-   those (not the whole corpus) to a cloud model (Gemini/Claude) for
-   synthesis, returns an answer with inline citations back to GitHub.
-6. **Frontend** — React chat-style UI: ask a question, get an answer with
-   clickable citation cards (commit/PR links, author, date).
+Work is delivered by an unattended daily agent picking issues off the
+backlog. The model is designed so the agent can make progress for days
+without a human merging anything:
 
-Deliberately out of scope for Phase 1: Jira, Slack, multi-tenant/hosted
-deployment, auth.
+- **Rolling branch:** the agent works on a single long-lived branch
+  (`agent/rolling`), created from `main` when absent. Day N+1 builds on
+  day N's unmerged work because it's the same branch. One PR from
+  `agent/rolling` → `main` accumulates the work; its body maintains a
+  checklist of `Closes #N` lines per completed issue.
+- **Issue state machine:** `daily-task` (eligible) → agent completes it
+  and adds the `in-pr` label (now invisible to the picker) → merging the
+  rolling PR auto-closes it. `needs-input` marks issues blocked on a
+  human; `needs-triage` marks agent-proposed issues awaiting promotion.
+- **Issue sizing rules (binding):**
+  - One module or one component per issue; target diff ≤ ~150 lines
+    excluding fixtures.
+  - Every issue names exact files to create/modify and acceptance
+    criteria checkable by `pytest`/`npm test` in CI (no network, no
+    Ollama — see ARCHITECTURE.md testing conventions).
+  - Issues are numbered in dependency order; the picker takes the
+    lowest-numbered eligible issue, so an issue may assume all
+    lower-numbered issues exist on the rolling branch (merged or not).
+- **Per run:** the agent completes 1–3 issues (as budget allows),
+  committing each in 1–3 natural commits, then updates the single
+  rolling PR. Daily output therefore varies naturally between ~1 and ~9
+  commits.
+- **Human loop:** review the rolling PR whenever available; merging it
+  closes the completed issues and resets the cycle. Groom `needs-triage`
+  into `daily-task` (or close) during ideation sessions.
+
+## Phase 1 — MVP: GitHub only (current)
+
+Goal: ask a question about the indexed repos in the React UI and get a
+correctly cited answer, end to end, locally.
+
+Batches (each batch = several one-PR-sized issues, in dependency order):
+
+- **A. Foundation** — config module, typed models, Chroma store layer,
+  test fixtures scaffolding. *(Backend scaffold + health check already
+  landed via PR #12.)*
+- **B. GitHub ingestion** — client (commits, then PRs, then pagination/
+  rate-limit handling as separate issues), cursor persistence.
+- **C. Extraction & embedding** — extraction prompt + JSON parsing +
+  skip signal, malformed-output handling, embedding wrapper, ingestion
+  orchestrator, `/ingest` endpoint.
+- **D. Retrieval & synthesis** — search with relevance floor + repo
+  filter, `/retrieve`, `GET /repos`, synthesis prompt + citation
+  parsing, `/query`, golden-questions eval file.
+- **E. Frontend** — Vite+Tailwind scaffold, tokens, then one component
+  per issue (ChatInput, CitationCard, AnswerCard, MessageList,
+  Loading/Error cards, RepoFilter), api.js, wiring, empty state.
+- **F. Polish & docs** — README quickstart, .env reconciliation,
+  ingestion CLI entry point.
 
 ## Phase 2 — Jira
+Ticket descriptions + comments as a new DecisionUnit `kind`, linked to
+commits/PRs via branch/PR references. Scoped when Phase 1 ships.
 
-Pull ticket descriptions + comments, link them to commits/PRs via branch
-name or PR body references. Same extract → embed → store pipeline, tagged
-with `source: jira`.
-
-## Phase 3 — Slack (optional, privacy-sensitive)
-
-Explicit opt-in per channel, not blanket workspace ingestion. Needs its
-own scoping pass before backlog issues get written for it.
+## Phase 3 — Slack (opt-in per channel)
+Privacy-sensitive; needs its own scoping pass.
 
 ## Non-goals (for now)
-
-- Hosted/multi-user product — this is a personal tool over your own repos
-  first.
-- Real-time ingestion — daily/on-demand batch is fine.
-- Fine-tuning — retrieval + citation quality first, model tuning never (use
-  better retrieval and prompting before reaching for fine-tuning).
+Hosted/multi-user deployment, auth, real-time ingestion, fine-tuning,
+TypeScript migration.
