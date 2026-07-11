@@ -10,3 +10,4 @@ jobs:
     uses: anubhab-m02/automation-kit/.github/workflows/daily-agent.yml@main
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
