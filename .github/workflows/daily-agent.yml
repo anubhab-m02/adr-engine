@@ -2,12 +2,17 @@ name: Daily Agent
 
 on:
   schedule:
-    - cron: "0 4 * * *"   # daily; the reusable workflow no-ops if the backlog is empty
-  workflow_dispatch: {}    # manual test trigger
+    # 18:30 UTC = 00:00 IST (IST has no DST, fixed UTC+5:30). The reusable
+    # workflow sleeps a random 0-180min from here, so actual work lands
+    # uniformly between 12am-3am IST. No-ops if the backlog is empty.
+    - cron: "30 18 * * *"
+  workflow_dispatch: {}    # manual test trigger (skips the random sleep)
 
 jobs:
   run:
     uses: anubhab-m02/automation-kit/.github/workflows/daily-agent.yml@main
+    with:
+      random_window_minutes: 180
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
       GH_PAT: ${{ secrets.GH_PAT }}
