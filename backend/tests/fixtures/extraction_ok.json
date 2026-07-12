@@ -1,0 +1,7 @@
+{
+  "title": "Switch auth to session tokens",
+  "decision": "Use server-side session tokens backed by Redis instead of JWTs",
+  "rationale": "JWTs couldn't be revoked without maintaining a blocklist, which defeated the point of using a stateless token.",
+  "alternatives": ["JWT with a revocation blocklist", "opaque tokens via Redis"],
+  "source_excerpt": "JWTs couldn't be revoked without maintaining a blocklist, which defeated the point of using them."
+}

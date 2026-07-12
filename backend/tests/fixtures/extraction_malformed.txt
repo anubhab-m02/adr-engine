@@ -1,0 +1,4 @@
+Sure thing! Here's the decision unit you asked for:
+
+{ "title": "Switch auth to session tokens", "decision": "Use Redis for sessions"
+  "rationale": "revocation was the deciding factor

@@ -1,0 +1,39 @@
+{
+  "sha": "6dcb09b5b57875f334f61aebed695e2e4193db5",
+  "commit": {
+    "author": {
+      "name": "Monalisa Octocat",
+      "email": "mona@github.com",
+      "date": "2026-03-14T16:00:49Z"
+    },
+    "committer": {
+      "name": "Monalisa Octocat",
+      "email": "mona@github.com",
+      "date": "2026-03-14T16:00:49Z"
+    },
+    "message": "Switch session storage to Redis\n\nIn-memory sessions didn't survive a pod restart, so we lost every logged-in user on every deploy. Redis gives us a shared store across instances.",
+    "tree": {
+      "sha": "6dcb09b5b57875f334f61aebed695e2e4193db5",
+      "url": "https://api.github.com/repos/octocat/Hello-World/git/trees/6dcb09b5b57875f334f61aebed695e2e4193db5"
+    },
+    "url": "https://api.github.com/repos/octocat/Hello-World/git/commits/6dcb09b5b57875f334f61aebed695e2e4193db5",
+    "comment_count": 0
+  },
+  "url": "https://api.github.com/repos/octocat/Hello-World/commits/6dcb09b5b57875f334f61aebed695e2e4193db5",
+  "html_url": "https://github.com/octocat/Hello-World/commit/6dcb09b5b57875f334f61aebed695e2e4193db5",
+  "comments_url": "https://api.github.com/repos/octocat/Hello-World/commits/6dcb09b5b57875f334f61aebed695e2e4193db5/comments",
+  "author": {
+    "login": "octocat",
+    "id": 1
+  },
+  "committer": {
+    "login": "octocat",
+    "id": 1
+  },
+  "parents": [
+    {
+      "sha": "6dcb09b5b57875f334f61aebed695e2e4193db4",
+      "url": "https://api.github.com/repos/octocat/Hello-World/commits/6dcb09b5b57875f334f61aebed695e2e4193db4"
+    }
+  ]
+}
