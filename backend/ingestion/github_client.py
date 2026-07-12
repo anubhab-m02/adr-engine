@@ -28,6 +28,16 @@ class CommitRef(BaseModel):
     url: str
 
 
+class PullRequestRef(BaseModel):
+    number: int
+    title: str
+    body: str
+    url: str
+    author: str
+    merged_at: str | None
+    review_comments: list[str]
+
+
 def _headers() -> dict:
     return {
         "Authorization": f"Bearer {get_settings().github_token}",
@@ -59,6 +69,29 @@ def list_commits(repo: str, since: str | None = None) -> list[CommitRef]:
             author=item["commit"]["author"]["name"],
             date=item["commit"]["author"]["date"],
             url=item["html_url"],
+        )
+        for item in data
+    ]
+
+
+def _list_review_comments(repo: str, number: int) -> list[str]:
+    data = _get(f"/repos/{repo}/pulls/{number}/comments")
+    return [comment["body"] for comment in data]
+
+
+def list_prs(repo: str, since: str | None = None) -> list[PullRequestRef]:
+    params = {"state": "closed"}
+    data = _get(f"/repos/{repo}/pulls", params=params)
+
+    return [
+        PullRequestRef(
+            number=item["number"],
+            title=item["title"],
+            body=item["body"] or "",
+            url=item["html_url"],
+            author=item["user"]["login"],
+            merged_at=item["merged_at"],
+            review_comments=_list_review_comments(repo, item["number"]),
         )
         for item in data
     ]

@@ -4,7 +4,13 @@ import httpx
 import pytest
 
 import config
-from ingestion.github_client import CommitRef, GitHubError, list_commits
+from ingestion.github_client import (
+    CommitRef,
+    GitHubError,
+    PullRequestRef,
+    list_commits,
+    list_prs,
+)
 
 REQUIRED_ENV = {
     "GITHUB_TOKEN": "tok",
@@ -63,6 +69,60 @@ def test_list_commits_raises_github_error_on_non_2xx():
 
         with pytest.raises(GitHubError) as exc_info:
             list_commits("octocat/Hello-World")
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.message == "Not Found"
+
+
+def _pr_list_payload(pr: dict) -> dict:
+    return {key: value for key, value in pr.items() if key != "review_comments"}
+
+
+def test_list_prs_returns_typed_pull_request_refs_with_review_comments(load_fixture):
+    pr = load_fixture("github_pr.json")
+    review_comments = pr["review_comments"]
+
+    def fake_get(url, headers=None, params=None):
+        if url.endswith("/comments"):
+            return httpx.Response(200, json=review_comments)
+        return httpx.Response(200, json=[_pr_list_payload(pr)])
+
+    with patch("ingestion.github_client.httpx.get", side_effect=fake_get):
+        prs = list_prs("octocat/Hello-World")
+
+    assert prs == [
+        PullRequestRef(
+            number=pr["number"],
+            title=pr["title"],
+            body=pr["body"],
+            url=pr["html_url"],
+            author=pr["user"]["login"],
+            merged_at=pr["merged_at"],
+            review_comments=[comment["body"] for comment in review_comments],
+        )
+    ]
+
+
+def test_list_prs_with_no_review_comments_returns_empty_list(load_fixture):
+    pr = load_fixture("github_pr.json")
+
+    def fake_get(url, headers=None, params=None):
+        if url.endswith("/comments"):
+            return httpx.Response(200, json=[])
+        return httpx.Response(200, json=[_pr_list_payload(pr)])
+
+    with patch("ingestion.github_client.httpx.get", side_effect=fake_get):
+        prs = list_prs("octocat/Hello-World")
+
+    assert prs[0].review_comments == []
+
+
+def test_list_prs_raises_github_error_on_non_2xx():
+    with patch("ingestion.github_client.httpx.get") as mock_get:
+        mock_get.return_value = httpx.Response(404, json={"message": "Not Found"})
+
+        with pytest.raises(GitHubError) as exc_info:
+            list_prs("octocat/Hello-World")
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.message == "Not Found"
