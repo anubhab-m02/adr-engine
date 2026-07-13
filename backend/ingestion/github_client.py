@@ -1,9 +1,11 @@
 """GitHub REST client: typed commit/PR fetching.
 
 Returns typed models only — GitHub's raw JSON schema must not leak past
-this module, per ARCHITECTURE.md. Single page only; pagination and
-rate-limit handling are handled in a later module.
+this module, per ARCHITECTURE.md. Follows `Link: rel="next"` pagination
+and fails clearly on rate-limit exhaustion rather than hanging a run.
 """
+
+import time
 
 import httpx
 from pydantic import BaseModel
@@ -18,6 +20,20 @@ class GitHubError(Exception):
         self.status_code = status_code
         self.message = message
         super().__init__(f"GitHub API error {status_code}: {message}")
+
+
+class GitHubRateLimitError(GitHubError):
+    """Raised when honoring the rate limit would require waiting longer
+    than the configured ceiling."""
+
+    def __init__(self, wait_seconds: float, ceiling_seconds: float):
+        self.wait_seconds = wait_seconds
+        self.ceiling_seconds = ceiling_seconds
+        message = (
+            f"rate limit exhausted; reset in {wait_seconds:.0f}s exceeds "
+            f"the {ceiling_seconds:.0f}s wait ceiling"
+        )
+        super().__init__(429, message)
 
 
 class CommitRef(BaseModel):
@@ -38,6 +54,37 @@ class PullRequestRef(BaseModel):
     review_comments: list[str]
 
 
+class _RateLimiter:
+    """Tracks the last response's rate-limit headers across the several
+    requests one top-level call (pagination pages, per-PR sub-requests)
+    may issue."""
+
+    def __init__(self):
+        self._last_response: httpx.Response | None = None
+
+    def check(self) -> None:
+        if self._last_response is None:
+            return
+
+        remaining = self._last_response.headers.get("x-ratelimit-remaining")
+        if remaining is None or int(remaining) > 0:
+            return
+
+        reset = self._last_response.headers.get("x-ratelimit-reset")
+        if reset is None:
+            return
+
+        wait_seconds = max(0.0, float(reset) - time.time())
+        ceiling_seconds = get_settings().github_rate_limit_wait_ceiling_seconds
+        if wait_seconds > ceiling_seconds:
+            raise GitHubRateLimitError(wait_seconds, ceiling_seconds)
+
+        time.sleep(wait_seconds)
+
+    def record(self, response: httpx.Response) -> None:
+        self._last_response = response
+
+
 def _headers() -> dict:
     return {
         "Authorization": f"Bearer {get_settings().github_token}",
@@ -45,8 +92,10 @@ def _headers() -> dict:
     }
 
 
-def _get(path: str, params: dict | None = None) -> list | dict:
-    response = httpx.get(f"{GITHUB_API_URL}{path}", headers=_headers(), params=params)
+def _get(url: str, rate_limiter: _RateLimiter, params: dict | None = None) -> httpx.Response:
+    rate_limiter.check()
+    response = httpx.get(url, headers=_headers(), params=params)
+    rate_limiter.record(response)
 
     if response.is_error:
         try:
@@ -55,12 +104,26 @@ def _get(path: str, params: dict | None = None) -> list | dict:
             message = response.text
         raise GitHubError(response.status_code, message)
 
-    return response.json()
+    return response
+
+
+def _paginate(path: str, rate_limiter: _RateLimiter, params: dict | None = None) -> list:
+    url = f"{GITHUB_API_URL}{path}"
+    items: list = []
+
+    while url:
+        response = _get(url, rate_limiter, params=params)
+        items.extend(response.json())
+        params = None  # the next-page URL already carries the query string
+        url = response.links.get("next", {}).get("url")
+
+    return items
 
 
 def list_commits(repo: str, since: str | None = None) -> list[CommitRef]:
     params = {"since": since} if since else None
-    data = _get(f"/repos/{repo}/commits", params=params)
+    rate_limiter = _RateLimiter()
+    data = _paginate(f"/repos/{repo}/commits", rate_limiter, params=params)
 
     return [
         CommitRef(
@@ -74,8 +137,8 @@ def list_commits(repo: str, since: str | None = None) -> list[CommitRef]:
     ]
 
 
-def _list_review_comments(repo: str, number: int) -> list[str]:
-    data = _get(f"/repos/{repo}/pulls/{number}/comments")
+def _list_review_comments(repo: str, number: int, rate_limiter: _RateLimiter) -> list[str]:
+    data = _paginate(f"/repos/{repo}/pulls/{number}/comments", rate_limiter)
     return [comment["body"] for comment in data]
 
 
@@ -83,7 +146,8 @@ def list_prs(repo: str, since: str | None = None) -> list[PullRequestRef]:
     # GitHub's PR list endpoint has no server-side "since" filter (unlike
     # /commits), so we sort newest-updated first and filter client-side.
     params = {"state": "closed", "sort": "updated", "direction": "desc"}
-    data = _get(f"/repos/{repo}/pulls", params=params)
+    rate_limiter = _RateLimiter()
+    data = _paginate(f"/repos/{repo}/pulls", rate_limiter, params=params)
 
     if since:
         data = [item for item in data if item["updated_at"] >= since]
@@ -96,7 +160,7 @@ def list_prs(repo: str, since: str | None = None) -> list[PullRequestRef]:
             url=item["html_url"],
             author=item["user"]["login"],
             merged_at=item["merged_at"],
-            review_comments=_list_review_comments(repo, item["number"]),
+            review_comments=_list_review_comments(repo, item["number"], rate_limiter),
         )
         for item in data
     ]
