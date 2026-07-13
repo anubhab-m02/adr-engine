@@ -126,3 +126,50 @@ def test_list_prs_raises_github_error_on_non_2xx():
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.message == "Not Found"
+
+
+def test_list_prs_requests_sorted_by_updated_desc(load_fixture):
+    pr = load_fixture("github_pr.json")
+
+    def fake_get(url, headers=None, params=None):
+        if url.endswith("/comments"):
+            return httpx.Response(200, json=[])
+        return httpx.Response(200, json=[_pr_list_payload(pr)])
+
+    with patch("ingestion.github_client.httpx.get", side_effect=fake_get) as mock_get:
+        list_prs("octocat/Hello-World")
+
+    list_call_kwargs = mock_get.call_args_list[0].kwargs
+    assert list_call_kwargs["params"] == {
+        "state": "closed",
+        "sort": "updated",
+        "direction": "desc",
+    }
+
+
+def test_list_prs_filters_out_items_updated_before_since(load_fixture):
+    pr = load_fixture("github_pr.json")  # updated_at: 2026-03-14T16:05:00Z
+
+    def fake_get(url, headers=None, params=None):
+        if url.endswith("/comments"):
+            return httpx.Response(200, json=[])
+        return httpx.Response(200, json=[_pr_list_payload(pr)])
+
+    with patch("ingestion.github_client.httpx.get", side_effect=fake_get):
+        prs = list_prs("octocat/Hello-World", since="2026-04-01T00:00:00Z")
+
+    assert prs == []
+
+
+def test_list_prs_keeps_items_updated_on_or_after_since(load_fixture):
+    pr = load_fixture("github_pr.json")  # updated_at: 2026-03-14T16:05:00Z
+
+    def fake_get(url, headers=None, params=None):
+        if url.endswith("/comments"):
+            return httpx.Response(200, json=[])
+        return httpx.Response(200, json=[_pr_list_payload(pr)])
+
+    with patch("ingestion.github_client.httpx.get", side_effect=fake_get):
+        prs = list_prs("octocat/Hello-World", since="2026-03-01T00:00:00Z")
+
+    assert len(prs) == 1

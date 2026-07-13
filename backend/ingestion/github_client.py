@@ -80,8 +80,13 @@ def _list_review_comments(repo: str, number: int) -> list[str]:
 
 
 def list_prs(repo: str, since: str | None = None) -> list[PullRequestRef]:
-    params = {"state": "closed"}
+    # GitHub's PR list endpoint has no server-side "since" filter (unlike
+    # /commits), so we sort newest-updated first and filter client-side.
+    params = {"state": "closed", "sort": "updated", "direction": "desc"}
     data = _get(f"/repos/{repo}/pulls", params=params)
+
+    if since:
+        data = [item for item in data if item["updated_at"] >= since]
 
     return [
         PullRequestRef(
