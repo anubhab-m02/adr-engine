@@ -1,3 +1,4 @@
+import time
 from unittest.mock import patch
 
 import httpx
@@ -7,6 +8,7 @@ import config
 from ingestion.github_client import (
     CommitRef,
     GitHubError,
+    GitHubRateLimitError,
     PullRequestRef,
     list_commits,
     list_prs,
@@ -173,3 +175,71 @@ def test_list_prs_keeps_items_updated_on_or_after_since(load_fixture):
         prs = list_prs("octocat/Hello-World", since="2026-03-01T00:00:00Z")
 
     assert len(prs) == 1
+
+
+def test_list_commits_follows_pagination_link_header(load_fixture):
+    commit = load_fixture("github_commit.json")
+    base_url = "https://api.github.com/repos/octocat/Hello-World/commits"
+    page2_url = f"{base_url}?page=2"
+    page3_url = f"{base_url}?page=3"
+
+    responses = [
+        httpx.Response(200, json=[commit], headers={"Link": f'<{page2_url}>; rel="next"'}),
+        httpx.Response(200, json=[commit], headers={"Link": f'<{page3_url}>; rel="next"'}),
+        httpx.Response(200, json=[commit]),
+    ]
+
+    with patch("ingestion.github_client.httpx.get", side_effect=responses) as mock_get:
+        commits = list_commits("octocat/Hello-World")
+
+    assert len(commits) == 3
+    assert mock_get.call_count == 3
+    assert mock_get.call_args_list[1].args[0] == page2_url
+    assert mock_get.call_args_list[2].args[0] == page3_url
+
+
+def test_list_commits_raises_rate_limit_error_when_wait_exceeds_ceiling():
+    reset_far_future = time.time() + 3600  # well beyond the default 60s ceiling
+    exhausted = httpx.Response(
+        200,
+        json=[],
+        headers={
+            "Link": (
+                '<https://api.github.com/repos/octocat/Hello-World/commits?page=2>; '
+                'rel="next"'
+            ),
+            "x-ratelimit-remaining": "0",
+            "x-ratelimit-reset": str(int(reset_far_future)),
+        },
+    )
+
+    with patch("ingestion.github_client.httpx.get", return_value=exhausted) as mock_get:
+        with pytest.raises(GitHubRateLimitError):
+            list_commits("octocat/Hello-World")
+
+    assert mock_get.call_count == 1
+
+
+def test_list_commits_waits_and_continues_when_wait_is_within_ceiling(load_fixture):
+    commit = load_fixture("github_commit.json")
+    reset_soon = time.time() + 5  # well within the default 60s ceiling
+    page1 = httpx.Response(
+        200,
+        json=[commit],
+        headers={
+            "Link": (
+                '<https://api.github.com/repos/octocat/Hello-World/commits?page=2>; '
+                'rel="next"'
+            ),
+            "x-ratelimit-remaining": "0",
+            "x-ratelimit-reset": str(int(reset_soon)),
+        },
+    )
+    page2 = httpx.Response(200, json=[commit])
+
+    with patch("ingestion.github_client.httpx.get", side_effect=[page1, page2]):
+        with patch("ingestion.github_client.time.sleep") as mock_sleep:
+            commits = list_commits("octocat/Hello-World")
+
+    assert len(commits) == 2
+    mock_sleep.assert_called_once()
