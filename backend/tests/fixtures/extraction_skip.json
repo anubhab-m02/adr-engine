@@ -1,0 +1,4 @@
+{
+  "is_decision": false,
+  "reason": "This commit only fixes a typo in the README and reflects no architectural decision."
+}
