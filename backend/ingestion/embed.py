@@ -20,6 +20,7 @@ def embed_text(text: str) -> list[float]:
         response = httpx.post(
             f"{settings.ollama_host}/api/embeddings",
             json={"model": settings.ollama_embedding_model, "prompt": text},
+            timeout=settings.ollama_request_timeout_seconds,
         )
     except httpx.HTTPError as exc:
         raise EmbeddingError(f"failed to reach Ollama for embedding: {exc}") from exc

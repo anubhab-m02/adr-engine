@@ -65,6 +65,7 @@ def _call_ollama(prompt: str) -> str:
                 "format": "json",
                 "stream": False,
             },
+            timeout=settings.ollama_request_timeout_seconds,
         )
     except httpx.HTTPError as exc:
         raise ExtractionError(f"failed to reach Ollama for extraction: {exc}") from exc
