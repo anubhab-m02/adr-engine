@@ -3,8 +3,10 @@
 from fastapi import FastAPI
 
 from chroma_client import get_chroma_client
+from routers.ingest import router as ingest_router
 
 app = FastAPI(title="adr-engine")
+app.include_router(ingest_router)
 
 
 @app.get("/health")
