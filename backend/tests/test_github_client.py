@@ -220,6 +220,26 @@ def test_list_commits_raises_rate_limit_error_when_wait_exceeds_ceiling():
     assert mock_get.call_count == 1
 
 
+def test_get_passes_configured_timeout(load_fixture):
+    commit = load_fixture("github_commit.json")
+
+    with patch("ingestion.github_client.httpx.get") as mock_get:
+        mock_get.return_value = httpx.Response(200, json=[commit])
+
+        list_commits("octocat/Hello-World")
+
+    _, kwargs = mock_get.call_args
+    assert kwargs["timeout"] == config.get_settings().github_request_timeout_seconds
+
+
+def test_list_commits_raises_github_error_on_timeout():
+    with patch("ingestion.github_client.httpx.get", side_effect=httpx.TimeoutException("timed out")):
+        with pytest.raises(GitHubError) as exc_info:
+            list_commits("octocat/Hello-World")
+
+    assert exc_info.value.status_code == 504
+
+
 def test_list_commits_waits_and_continues_when_wait_is_within_ceiling(load_fixture):
     commit = load_fixture("github_commit.json")
     reset_soon = time.time() + 5  # well within the default 60s ceiling

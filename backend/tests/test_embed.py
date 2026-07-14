@@ -59,3 +59,19 @@ def test_embed_text_raises_embedding_error_on_unexpected_response_shape():
 
         with pytest.raises(EmbeddingError):
             embed_text("some decision text")
+
+
+def test_embed_text_raises_embedding_error_on_timeout():
+    with patch("ingestion.embed.httpx.post", side_effect=httpx.TimeoutException("timed out")):
+        with pytest.raises(EmbeddingError):
+            embed_text("some decision text")
+
+
+def test_embed_text_passes_configured_timeout():
+    with patch("ingestion.embed.httpx.post") as mock_post:
+        mock_post.return_value = httpx.Response(200, json={"embedding": [0.1]})
+
+        embed_text("some decision text")
+
+    _, kwargs = mock_post.call_args
+    assert kwargs["timeout"] == config.get_settings().ollama_request_timeout_seconds
