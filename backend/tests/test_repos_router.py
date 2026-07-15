@@ -5,7 +5,6 @@ import chroma_client
 import config
 from ingestion import store
 from main import app
-from models import DecisionUnit
 
 client = TestClient(app)
 
@@ -26,30 +25,11 @@ def _repos_env(tmp_path, monkeypatch):
     chroma_client.get_chroma_client.cache_clear()
 
 
-def make_unit(**overrides) -> DecisionUnit:
-    fields = {
-        "id": "owner/a:pr:1",
-        "repo": "owner/a",
-        "kind": "pr",
-        "ref": "1",
-        "url": "https://github.com/owner/a/pull/1",
-        "author": "someone",
-        "date": "2026-01-01T00:00:00Z",
-        "title": "Add caching layer",
-        "decision": "Use Redis for the cache",
-        "rationale": "Needed shared state across instances",
-        "alternatives": [],
-        "source_excerpt": "Discussion about caching options.",
-    }
-    fields.update(overrides)
-    return DecisionUnit(**fields)
-
-
-def test_repos_returns_counts_per_repo():
+def test_repos_returns_counts_per_repo(make_unit):
     store.upsert_units(
         [
-            make_unit(id="owner/a:pr:1"),
-            make_unit(id="owner/a:pr:2"),
+            make_unit(id="owner/a:pr:1", repo="owner/a", url="https://github.com/owner/a/pull/1"),
+            make_unit(id="owner/a:pr:2", repo="owner/a", url="https://github.com/owner/a/pull/2"),
             make_unit(id="owner/b:pr:1", repo="owner/b", url="https://github.com/owner/b/pull/1"),
         ],
         embeddings=[[1, 0], [1, 0], [1, 0]],
@@ -66,8 +46,11 @@ def test_repos_returns_counts_per_repo():
     }
 
 
-def test_repos_with_zero_indexed_units_still_appears():
-    store.upsert_units([make_unit()], embeddings=[[1, 0]])
+def test_repos_with_zero_indexed_units_still_appears(make_unit):
+    store.upsert_units(
+        [make_unit(id="owner/a:pr:1", repo="owner/a", url="https://github.com/owner/a/pull/1")],
+        embeddings=[[1, 0]],
+    )
 
     response = client.get("/repos")
 

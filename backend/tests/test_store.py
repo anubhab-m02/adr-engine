@@ -1,48 +1,12 @@
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
 import pytest
 
 import chroma_client
 import config
-from models import DecisionUnit
-
-REQUIRED_ENV = {
-    "GITHUB_TOKEN": "tok",
-    "INDEXED_REPOS": "owner/repo",
-    "OLLAMA_EXTRACTION_MODEL": "phi4-mini",
-    "OLLAMA_EMBEDDING_MODEL": "nomic-embed-text",
-    "GEMINI_API_KEY": "key",
-}
-
-
-def make_unit(**overrides) -> DecisionUnit:
-    fields = {
-        "id": "owner/repo:pr:1",
-        "repo": "owner/repo",
-        "kind": "pr",
-        "ref": "1",
-        "url": "https://github.com/owner/repo/pull/1",
-        "author": "someone",
-        "date": "2026-01-01T00:00:00Z",
-        "title": "Add caching layer",
-        "decision": "Use Redis for the cache",
-        "rationale": "Needed shared state across instances",
-        "alternatives": ["in-memory cache", "Memcached"],
-        "source_excerpt": "Discussion about caching options.",
-    }
-    fields.update(overrides)
-    return DecisionUnit(**fields)
 
 
 @pytest.fixture
 def store_module(tmp_path, monkeypatch):
     monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
-    for key, value in REQUIRED_ENV.items():
-        monkeypatch.setenv(key, value)
-
     config.get_settings.cache_clear()
     chroma_client.get_chroma_client.cache_clear()
 
@@ -54,7 +18,7 @@ def store_module(tmp_path, monkeypatch):
     chroma_client.get_chroma_client.cache_clear()
 
 
-def test_upserting_same_id_twice_does_not_duplicate(store_module):
+def test_upserting_same_id_twice_does_not_duplicate(store_module, make_unit):
     unit = make_unit()
 
     store_module.upsert_units([unit], embeddings=[[0.1, 0.2, 0.3]])
@@ -71,7 +35,7 @@ def test_upserting_same_id_twice_does_not_duplicate(store_module):
     assert stored["documents"][0].startswith("Add caching layer (revised)")
 
 
-def test_upsert_units_stores_metadata_and_document_text(store_module):
+def test_upsert_units_stores_metadata_and_document_text(store_module, make_unit):
     unit = make_unit()
 
     store_module.upsert_units([unit], embeddings=[[0.1, 0.2, 0.3]])
@@ -103,7 +67,7 @@ def test_cursor_round_trips_through_disk(store_module):
     assert store_module.get_cursor("owner/other") == {}
 
 
-def test_query_units_orders_by_score_descending(store_module):
+def test_query_units_orders_by_score_descending(store_module, make_unit):
     store_module.upsert_units(
         [make_unit(id="owner/repo:pr:1"), make_unit(id="owner/repo:pr:2", title="Other")],
         embeddings=[[1, 0], [0, 1]],
@@ -115,7 +79,7 @@ def test_query_units_orders_by_score_descending(store_module):
     assert results[0][1] > results[1][1]
 
 
-def test_query_units_filters_by_repo(store_module):
+def test_query_units_filters_by_repo(store_module, make_unit):
     store_module.upsert_units(
         [
             make_unit(id="owner/a:pr:1", repo="owner/a"),
@@ -129,7 +93,7 @@ def test_query_units_filters_by_repo(store_module):
     assert [unit.id for unit, _score in results] == ["owner/a:pr:1"]
 
 
-def test_query_units_reconstructs_full_decision_unit(store_module):
+def test_query_units_reconstructs_full_decision_unit(store_module, make_unit):
     unit = make_unit()
     store_module.upsert_units([unit], embeddings=[[1, 0]])
 
@@ -139,7 +103,7 @@ def test_query_units_reconstructs_full_decision_unit(store_module):
     assert score == pytest.approx(1.0)
 
 
-def test_count_units_counts_only_matching_repo(store_module):
+def test_count_units_counts_only_matching_repo(store_module, make_unit):
     store_module.upsert_units(
         [
             make_unit(id="owner/repo:pr:1"),
