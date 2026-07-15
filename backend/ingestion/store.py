@@ -76,6 +76,10 @@ def query_units(
     ]
 
 
+def count_units(repo: str) -> int:
+    return len(get_collection().get(where={"repo": repo}, include=[])["ids"])
+
+
 def _cursor_path() -> Path:
     return Path(get_settings().chroma_data_dir) / "cursors.json"
 

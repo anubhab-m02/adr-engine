@@ -139,6 +139,24 @@ def test_query_units_reconstructs_full_decision_unit(store_module):
     assert score == pytest.approx(1.0)
 
 
+def test_count_units_counts_only_matching_repo(store_module):
+    store_module.upsert_units(
+        [
+            make_unit(id="owner/repo:pr:1"),
+            make_unit(id="owner/repo:pr:2"),
+            make_unit(id="owner/other:pr:1", repo="owner/other"),
+        ],
+        embeddings=[[1, 0], [1, 0], [1, 0]],
+    )
+
+    assert store_module.count_units("owner/repo") == 2
+    assert store_module.count_units("owner/other") == 1
+
+
+def test_count_units_with_no_matches_returns_zero(store_module):
+    assert store_module.count_units("owner/repo") == 0
+
+
 def test_set_cursor_preserves_other_repos(store_module):
     store_module.set_cursor("owner/repo", {"last_commit_date": "2026-01-01T00:00:00Z"})
     store_module.set_cursor("owner/other", {"last_commit_date": "2026-02-01T00:00:00Z"})
