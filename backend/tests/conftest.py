@@ -64,6 +64,29 @@ def tmp_chroma_client(tmp_path) -> chromadb.ClientAPI:
 
 
 @pytest.fixture
+def make_unit():
+    def _make(**overrides) -> DecisionUnit:
+        fields = {
+            "id": "owner/repo:pr:1",
+            "repo": "owner/repo",
+            "kind": "pr",
+            "ref": "1",
+            "url": "https://github.com/owner/repo/pull/1",
+            "author": "someone",
+            "date": "2026-01-01T00:00:00Z",
+            "title": "Add caching layer",
+            "decision": "Use Redis for the cache",
+            "rationale": "Needed shared state across instances",
+            "alternatives": ["in-memory cache", "Memcached"],
+            "source_excerpt": "Discussion about caching options.",
+        }
+        fields.update(overrides)
+        return DecisionUnit(**fields)
+
+    return _make
+
+
+@pytest.fixture
 def load_fixture():
     def _load(name: str):
         path = FIXTURES_DIR / name

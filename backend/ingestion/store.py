@@ -19,7 +19,9 @@ COLLECTION_NAME = "decisions"
 
 
 def get_collection() -> chromadb.Collection:
-    return get_chroma_client().get_or_create_collection(name=COLLECTION_NAME)
+    return get_chroma_client().get_or_create_collection(
+        name=COLLECTION_NAME, metadata={"hnsw:space": "cosine"}
+    )
 
 
 def _document_text(unit: DecisionUnit) -> str:
@@ -32,6 +34,12 @@ def _metadata(unit: DecisionUnit) -> dict:
     return metadata
 
 
+def _unit_from_metadata(id: str, metadata: dict) -> DecisionUnit:
+    fields = dict(metadata)
+    fields["alternatives"] = json.loads(fields["alternatives"])
+    return DecisionUnit(id=id, **fields)
+
+
 def upsert_units(units: list[DecisionUnit], embeddings: list[list[float]]) -> None:
     if not units:
         return
@@ -42,6 +50,34 @@ def upsert_units(units: list[DecisionUnit], embeddings: list[list[float]]) -> No
         documents=[_document_text(unit) for unit in units],
         metadatas=[_metadata(unit) for unit in units],
     )
+
+
+def query_units(
+    vector: list[float], k: int, repos: list[str] | None = None
+) -> list[tuple[DecisionUnit, float]]:
+    """Top-k nearest units to `vector`, scored by cosine similarity (1 -
+    cosine distance, per the collection's `hnsw:space: cosine` config)."""
+    where = {"repo": {"$in": repos}} if repos else None
+
+    result = get_collection().query(
+        query_embeddings=[vector],
+        n_results=k,
+        where=where,
+        include=["metadatas", "distances"],
+    )
+
+    ids = result["ids"][0]
+    metadatas = result["metadatas"][0]
+    distances = result["distances"][0]
+
+    return [
+        (_unit_from_metadata(id, metadata), 1 - distance)
+        for id, metadata, distance in zip(ids, metadatas, distances)
+    ]
+
+
+def count_units(repo: str) -> int:
+    return len(get_collection().get(where={"repo": repo}, include=[])["ids"])
 
 
 def _cursor_path() -> Path:
