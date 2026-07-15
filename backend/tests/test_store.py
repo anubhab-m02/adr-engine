@@ -103,6 +103,42 @@ def test_cursor_round_trips_through_disk(store_module):
     assert store_module.get_cursor("owner/other") == {}
 
 
+def test_query_units_orders_by_score_descending(store_module):
+    store_module.upsert_units(
+        [make_unit(id="owner/repo:pr:1"), make_unit(id="owner/repo:pr:2", title="Other")],
+        embeddings=[[1, 0], [0, 1]],
+    )
+
+    results = store_module.query_units([1, 0], k=2)
+
+    assert [unit.id for unit, _score in results] == ["owner/repo:pr:1", "owner/repo:pr:2"]
+    assert results[0][1] > results[1][1]
+
+
+def test_query_units_filters_by_repo(store_module):
+    store_module.upsert_units(
+        [
+            make_unit(id="owner/a:pr:1", repo="owner/a"),
+            make_unit(id="owner/b:pr:1", repo="owner/b"),
+        ],
+        embeddings=[[1, 0], [1, 0]],
+    )
+
+    results = store_module.query_units([1, 0], k=5, repos=["owner/a"])
+
+    assert [unit.id for unit, _score in results] == ["owner/a:pr:1"]
+
+
+def test_query_units_reconstructs_full_decision_unit(store_module):
+    unit = make_unit()
+    store_module.upsert_units([unit], embeddings=[[1, 0]])
+
+    [(returned, score)] = store_module.query_units([1, 0], k=1)
+
+    assert returned == unit
+    assert score == pytest.approx(1.0)
+
+
 def test_set_cursor_preserves_other_repos(store_module):
     store_module.set_cursor("owner/repo", {"last_commit_date": "2026-01-01T00:00:00Z"})
     store_module.set_cursor("owner/other", {"last_commit_date": "2026-02-01T00:00:00Z"})
