@@ -94,7 +94,15 @@ def _headers() -> dict:
 
 def _get(url: str, rate_limiter: _RateLimiter, params: dict | None = None) -> httpx.Response:
     rate_limiter.check()
-    response = httpx.get(url, headers=_headers(), params=params)
+    try:
+        response = httpx.get(
+            url,
+            headers=_headers(),
+            params=params,
+            timeout=get_settings().github_request_timeout_seconds,
+        )
+    except httpx.TimeoutException as exc:
+        raise GitHubError(504, f"request to GitHub timed out: {exc}") from exc
     rate_limiter.record(response)
 
     if response.is_error:

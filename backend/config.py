@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     gemini_api_key: str
     chroma_data_dir: str = "./chroma_data"
     github_rate_limit_wait_ceiling_seconds: float = 60
+    github_request_timeout_seconds: float = 10
+    ollama_request_timeout_seconds: float = 60
 
     @field_validator("indexed_repos", mode="before")
     @classmethod
