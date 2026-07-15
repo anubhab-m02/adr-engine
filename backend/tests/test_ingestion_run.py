@@ -1,8 +1,4 @@
-import sys
-from pathlib import Path
 from unittest.mock import patch
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
 
@@ -12,14 +8,6 @@ from ingestion.extract import ExtractionResult
 from ingestion.github_client import CommitRef, GitHubError, PullRequestRef
 from ingestion.run import run_ingestion
 from models import IngestResult
-
-REQUIRED_ENV = {
-    "GITHUB_TOKEN": "tok",
-    "INDEXED_REPOS": "owner/repo",
-    "OLLAMA_EXTRACTION_MODEL": "phi4-mini",
-    "OLLAMA_EMBEDDING_MODEL": "nomic-embed-text",
-    "GEMINI_API_KEY": "key",
-}
 
 DECISION = ExtractionResult(
     is_decision=True, decision="Use Redis", rationale="Shared state", alternatives=["Memcached"]
@@ -48,17 +36,6 @@ def _pr(number=1, title="Add caching layer", body="Use Redis.", merged_at="2026-
         merged_at=merged_at,
         review_comments=review_comments or [],
     )
-
-
-@pytest.fixture(autouse=True)
-def _settings_env(monkeypatch):
-    for key, value in REQUIRED_ENV.items():
-        monkeypatch.setenv(key, value)
-    config.get_settings.cache_clear()
-
-    yield
-
-    config.get_settings.cache_clear()
 
 
 @pytest.fixture

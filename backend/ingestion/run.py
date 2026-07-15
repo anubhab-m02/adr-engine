@@ -6,6 +6,8 @@ Ollama being unreachable propagates and aborts the run without advancing
 the cursor), per ARCHITECTURE.md's error-handling conventions.
 """
 
+from typing import Callable
+
 from ingestion import embed, extract, github_client, store
 from ingestion.github_client import CommitRef, PullRequestRef
 from models import DecisionUnit, IngestResult
@@ -54,13 +56,17 @@ def _pr_unit(repo: str, pr: PullRequestRef, body: str, result: extract.Extractio
     )
 
 
-def _ingest_commits(repo: str, commits: list[CommitRef]) -> tuple[int, int, list[DecisionUnit]]:
+def _ingest_items(
+    items: list,
+    title_body: Callable[[object], tuple[str, str]],
+    build_unit: Callable[[object, str, extract.ExtractionResult], DecisionUnit],
+) -> tuple[int, int, list[DecisionUnit]]:
     extracted = 0
     skipped = 0
     units: list[DecisionUnit] = []
 
-    for commit in commits:
-        title, body = _split_commit_message(commit.message)
+    for item in items:
+        title, body = title_body(item)
         result = extract.extract_decision(title, body)
         if result is None or not result.is_decision:
             skipped += 1
@@ -68,28 +74,7 @@ def _ingest_commits(repo: str, commits: list[CommitRef]) -> tuple[int, int, list
 
         extracted += 1
         vector = embed.embed_text(result.decision)
-        unit = _commit_unit(repo, commit, result)
-        store.upsert_units([unit], embeddings=[vector])
-        units.append(unit)
-
-    return extracted, skipped, units
-
-
-def _ingest_prs(repo: str, prs: list[PullRequestRef]) -> tuple[int, int, list[DecisionUnit]]:
-    extracted = 0
-    skipped = 0
-    units: list[DecisionUnit] = []
-
-    for pr in prs:
-        body = _pr_body(pr)
-        result = extract.extract_decision(pr.title, body)
-        if result is None or not result.is_decision:
-            skipped += 1
-            continue
-
-        extracted += 1
-        vector = embed.embed_text(result.decision)
-        unit = _pr_unit(repo, pr, body, result)
+        unit = build_unit(item, body, result)
         store.upsert_units([unit], embeddings=[vector])
         units.append(unit)
 
@@ -102,8 +87,16 @@ def run_ingestion(repo: str) -> IngestResult:
     commits = github_client.list_commits(repo, since=cursor.get("last_commit_date"))
     prs = github_client.list_prs(repo, since=cursor.get("last_pr_updated_at"))
 
-    commit_extracted, commit_skipped, commit_units = _ingest_commits(repo, commits)
-    pr_extracted, pr_skipped, pr_units = _ingest_prs(repo, prs)
+    commit_extracted, commit_skipped, commit_units = _ingest_items(
+        commits,
+        title_body=lambda commit: _split_commit_message(commit.message),
+        build_unit=lambda commit, _body, result: _commit_unit(repo, commit, result),
+    )
+    pr_extracted, pr_skipped, pr_units = _ingest_items(
+        prs,
+        title_body=lambda pr: (pr.title, _pr_body(pr)),
+        build_unit=lambda pr, body, result: _pr_unit(repo, pr, body, result),
+    )
 
     new_cursor = dict(cursor)
     if commits:

@@ -6,25 +6,6 @@ import pytest
 import config
 from ingestion.embed import EmbeddingError, embed_text
 
-REQUIRED_ENV = {
-    "GITHUB_TOKEN": "tok",
-    "INDEXED_REPOS": "owner/repo",
-    "OLLAMA_EXTRACTION_MODEL": "phi4-mini",
-    "OLLAMA_EMBEDDING_MODEL": "nomic-embed-text",
-    "GEMINI_API_KEY": "key",
-}
-
-
-@pytest.fixture(autouse=True)
-def _settings_env(monkeypatch):
-    for key, value in REQUIRED_ENV.items():
-        monkeypatch.setenv(key, value)
-    config.get_settings.cache_clear()
-
-    yield
-
-    config.get_settings.cache_clear()
-
 
 def test_embed_text_returns_vector_on_success():
     with patch("ingestion.embed.httpx.post") as mock_post:

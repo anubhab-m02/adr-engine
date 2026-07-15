@@ -7,25 +7,6 @@ import pytest
 import config
 from ingestion.extract import ExtractionError, ExtractionResult, extract_decision
 
-REQUIRED_ENV = {
-    "GITHUB_TOKEN": "tok",
-    "INDEXED_REPOS": "owner/repo",
-    "OLLAMA_EXTRACTION_MODEL": "phi4-mini",
-    "OLLAMA_EMBEDDING_MODEL": "nomic-embed-text",
-    "GEMINI_API_KEY": "key",
-}
-
-
-@pytest.fixture(autouse=True)
-def _settings_env(monkeypatch):
-    for key, value in REQUIRED_ENV.items():
-        monkeypatch.setenv(key, value)
-    config.get_settings.cache_clear()
-
-    yield
-
-    config.get_settings.cache_clear()
-
 
 def _ollama_response(text: str) -> httpx.Response:
     return httpx.Response(200, json={"response": text})

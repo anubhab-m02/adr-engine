@@ -1,8 +1,4 @@
-import sys
-from pathlib import Path
 from unittest.mock import call, patch
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,19 +7,12 @@ import config
 from main import app
 from models import IngestResult
 
-REQUIRED_ENV = {
-    "GITHUB_TOKEN": "tok",
-    "INDEXED_REPOS": "owner/a,owner/b",
-    "OLLAMA_EXTRACTION_MODEL": "phi4-mini",
-    "OLLAMA_EMBEDDING_MODEL": "nomic-embed-text",
-    "GEMINI_API_KEY": "key",
-}
-
 
 @pytest.fixture(autouse=True)
-def _settings_env(monkeypatch):
-    for key, value in REQUIRED_ENV.items():
-        monkeypatch.setenv(key, value)
+def _multi_repo_env(monkeypatch):
+    """This router exercises multi-repo fan-out, so override conftest's
+    single-repo default (runs after conftest's autouse _settings_env)."""
+    monkeypatch.setenv("INDEXED_REPOS", "owner/a,owner/b")
     config.get_settings.cache_clear()
 
     yield

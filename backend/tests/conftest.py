@@ -13,9 +13,31 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import chromadb
 import pytest
 
+import config
 from models import DecisionUnit
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
+
+REQUIRED_ENV = {
+    "GITHUB_TOKEN": "tok",
+    "INDEXED_REPOS": "owner/repo",
+    "OLLAMA_EXTRACTION_MODEL": "phi4-mini",
+    "OLLAMA_EMBEDDING_MODEL": "nomic-embed-text",
+    "GEMINI_API_KEY": "key",
+}
+
+
+@pytest.fixture(autouse=True)
+def _settings_env(monkeypatch):
+    """Populate required Settings env vars for every test; individual
+    tests/modules can monkeypatch additional overrides afterward."""
+    for key, value in REQUIRED_ENV.items():
+        monkeypatch.setenv(key, value)
+    config.get_settings.cache_clear()
+
+    yield
+
+    config.get_settings.cache_clear()
 
 
 @pytest.fixture

@@ -14,25 +14,6 @@ from ingestion.github_client import (
     list_prs,
 )
 
-REQUIRED_ENV = {
-    "GITHUB_TOKEN": "tok",
-    "INDEXED_REPOS": "owner/repo",
-    "OLLAMA_EXTRACTION_MODEL": "phi4-mini",
-    "OLLAMA_EMBEDDING_MODEL": "nomic-embed-text",
-    "GEMINI_API_KEY": "key",
-}
-
-
-@pytest.fixture(autouse=True)
-def _settings_env(monkeypatch):
-    for key, value in REQUIRED_ENV.items():
-        monkeypatch.setenv(key, value)
-    config.get_settings.cache_clear()
-
-    yield
-
-    config.get_settings.cache_clear()
-
 
 def test_list_commits_returns_typed_commit_refs(load_fixture):
     commit = load_fixture("github_commit.json")
@@ -84,7 +65,7 @@ def test_list_prs_returns_typed_pull_request_refs_with_review_comments(load_fixt
     pr = load_fixture("github_pr.json")
     review_comments = pr["review_comments"]
 
-    def fake_get(url, headers=None, params=None):
+    def fake_get(url, headers=None, params=None, timeout=None):
         if url.endswith("/comments"):
             return httpx.Response(200, json=review_comments)
         return httpx.Response(200, json=[_pr_list_payload(pr)])
@@ -108,7 +89,7 @@ def test_list_prs_returns_typed_pull_request_refs_with_review_comments(load_fixt
 def test_list_prs_with_no_review_comments_returns_empty_list(load_fixture):
     pr = load_fixture("github_pr.json")
 
-    def fake_get(url, headers=None, params=None):
+    def fake_get(url, headers=None, params=None, timeout=None):
         if url.endswith("/comments"):
             return httpx.Response(200, json=[])
         return httpx.Response(200, json=[_pr_list_payload(pr)])
@@ -133,7 +114,7 @@ def test_list_prs_raises_github_error_on_non_2xx():
 def test_list_prs_requests_sorted_by_updated_desc(load_fixture):
     pr = load_fixture("github_pr.json")
 
-    def fake_get(url, headers=None, params=None):
+    def fake_get(url, headers=None, params=None, timeout=None):
         if url.endswith("/comments"):
             return httpx.Response(200, json=[])
         return httpx.Response(200, json=[_pr_list_payload(pr)])
@@ -152,7 +133,7 @@ def test_list_prs_requests_sorted_by_updated_desc(load_fixture):
 def test_list_prs_filters_out_items_updated_before_since(load_fixture):
     pr = load_fixture("github_pr.json")  # updated_at: 2026-03-14T16:05:00Z
 
-    def fake_get(url, headers=None, params=None):
+    def fake_get(url, headers=None, params=None, timeout=None):
         if url.endswith("/comments"):
             return httpx.Response(200, json=[])
         return httpx.Response(200, json=[_pr_list_payload(pr)])
@@ -166,7 +147,7 @@ def test_list_prs_filters_out_items_updated_before_since(load_fixture):
 def test_list_prs_keeps_items_updated_on_or_after_since(load_fixture):
     pr = load_fixture("github_pr.json")  # updated_at: 2026-03-14T16:05:00Z
 
-    def fake_get(url, headers=None, params=None):
+    def fake_get(url, headers=None, params=None, timeout=None):
         if url.endswith("/comments"):
             return httpx.Response(200, json=[])
         return httpx.Response(200, json=[_pr_list_payload(pr)])
