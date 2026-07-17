@@ -2,34 +2,25 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
+from ingestion.embed import EmbeddingError
 from main import app
-from models import DecisionUnit, RetrieveResult
+from models import RetrieveResult
+from synthesis.answer import SynthesisError
 
 client = TestClient(app)
 
 
-def _result(ref: str) -> RetrieveResult:
+def _result(make_unit, ref: str) -> RetrieveResult:
     return RetrieveResult(
-        unit=DecisionUnit(
-            id=f"owner/repo:pr:{ref}",
-            repo="owner/repo",
-            kind="pr",
-            ref=ref,
-            url=f"https://github.com/owner/repo/pull/{ref}",
-            author="someone",
-            date="2026-01-01T00:00:00Z",
-            title="Add caching layer",
-            decision="Use Redis for the cache",
-            rationale="Needed shared state across instances",
-            alternatives=[],
-            source_excerpt="Discussion about caching options.",
+        unit=make_unit(
+            id=f"owner/repo:pr:{ref}", ref=ref, url=f"https://github.com/owner/repo/pull/{ref}"
         ),
         score=0.9,
     )
 
 
-def test_query_returns_answer_with_resolved_citations_and_retrieved_count():
-    results = [_result("1"), _result("2"), _result("3")]
+def test_query_returns_answer_with_resolved_citations_and_retrieved_count(make_unit):
+    results = [_result(make_unit, "1"), _result(make_unit, "2"), _result(make_unit, "3")]
     cited = [results[0].unit, results[1].unit]
 
     with patch("routers.query.search") as search, patch("routers.query.synthesize") as synthesize:
@@ -65,3 +56,24 @@ def test_query_omitted_repos_searches_all():
         client.post("/query", json={"question": "why redis?"})
 
     search.assert_called_once_with("why redis?", repos=None)
+
+
+def test_query_translates_synthesis_error_to_502():
+    with patch("routers.query.search") as search, patch("routers.query.synthesize") as synthesize:
+        search.return_value = []
+        synthesize.side_effect = SynthesisError("Gemini returned 401 during synthesis")
+
+        response = client.post("/query", json={"question": "why redis?"})
+
+    assert response.status_code == 502
+    assert "Gemini returned 401" in response.json()["detail"]
+
+
+def test_query_translates_embedding_error_to_503():
+    with patch("routers.query.search") as search:
+        search.side_effect = EmbeddingError("failed to reach Ollama for embedding")
+
+        response = client.post("/query", json={"question": "why redis?"})
+
+    assert response.status_code == 503
+    assert "failed to reach Ollama" in response.json()["detail"]

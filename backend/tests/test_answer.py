@@ -101,6 +101,16 @@ def test_synthesize_raises_synthesis_error_on_malformed_response_shape(make_unit
             synthesize("why redis?", units)
 
 
+def test_synthesize_raises_synthesis_error_on_non_json_response_body(make_unit):
+    units = [make_unit()]
+
+    with patch("synthesis.answer.httpx.post") as mock_post:
+        mock_post.return_value = httpx.Response(200, content=b"not json")
+
+        with pytest.raises(SynthesisError):
+            synthesize("why redis?", units)
+
+
 def test_synthesize_passes_configured_timeout_and_api_key(make_unit):
     units = [make_unit()]
 

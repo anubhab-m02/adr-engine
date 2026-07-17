@@ -73,7 +73,9 @@ def _call_gemini(prompt: str) -> str:
 
     try:
         return response.json()["candidates"][0]["content"]["parts"][0]["text"]
-    except (KeyError, IndexError) as exc:
+    except (KeyError, IndexError, ValueError) as exc:
+        # ValueError also catches json.JSONDecodeError from response.json()
+        # itself, e.g. a non-JSON 200 body.
         raise SynthesisError("Gemini response missing expected candidate text") from exc
 
 
