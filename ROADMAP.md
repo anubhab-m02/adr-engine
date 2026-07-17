@@ -74,6 +74,14 @@ commits/PRs via branch/PR references. Scoped when Phase 1 ships.
 ## Phase 3 — Slack (opt-in per channel)
 Privacy-sensitive; needs its own scoping pass.
 
+## Evaluation
+
+No automated eval harness in Phase 1 (see SYSTEM-DESIGN.md). Quality is
+checked manually against [docs/eval-questions.md](docs/eval-questions.md),
+a running list of golden questions with their expected cited source —
+run each through `/query` after a retrieval or extraction change and
+watch for drift.
+
 ## Non-goals (for now)
 Hosted/multi-user deployment, auth, real-time ingestion, fine-tuning,
 TypeScript migration.
