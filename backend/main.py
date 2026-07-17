@@ -4,12 +4,14 @@ from fastapi import FastAPI
 
 from chroma_client import get_chroma_client
 from routers.ingest import router as ingest_router
+from routers.query import router as query_router
 from routers.repos import router as repos_router
 from routers.retrieve import router as retrieve_router
 
 app = FastAPI(title="adr-engine")
 app.include_router(ingest_router)
 app.include_router(retrieve_router)
+app.include_router(query_router)
 app.include_router(repos_router)
 
 
