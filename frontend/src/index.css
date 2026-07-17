@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface: var(--color-zinc-50);
+  --color-panel: var(--color-white);
+  --color-ink: var(--color-zinc-900);
+  --color-ink-muted: var(--color-zinc-500);
+  --color-accent: var(--color-indigo-600);
+  --color-danger: var(--color-red-600);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-surface: var(--color-zinc-900);
+    --color-panel: var(--color-zinc-800);
+    --color-ink: var(--color-zinc-100);
+    --color-ink-muted: var(--color-zinc-400);
+    --color-accent: var(--color-indigo-400);
+    --color-danger: var(--color-red-400);
+  }
+}
+
+body {
+  margin: 0;
+}
