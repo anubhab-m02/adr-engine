@@ -22,8 +22,14 @@ arbitrary spacing in component files.
 | Spacing | Tailwind scale only; card padding `p-4`, section gaps `gap-4` | |
 | Type scale | `text-sm` metadata, `text-base` body, `text-lg` semibold headings | |
 
-Dark mode: `prefers-color-scheme` via Tailwind `dark:` variants from day
-one — both themes styled in the same commit as any new component.
+Dark mode: the tokens above are CSS custom properties, redefined at
+`:root` under a single `@media (prefers-color-scheme: dark)` block in
+`index.css` (not per-component Tailwind `dark:` classes). Every
+component that uses a token (`bg-surface`, `text-ink`, etc.) re-themes
+automatically — no `dark:` class is ever needed in component markup.
+Both themes must still be verified in the same commit as any new
+component; there's just one place the values live, not one class per
+component.
 
 ## Layout
 
