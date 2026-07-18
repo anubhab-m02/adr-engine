@@ -35,7 +35,7 @@ function CitationCard({ unit }) {
       target="_blank"
       rel="noreferrer"
       aria-label={accessibleName}
-      className="block w-64 rounded-xl border border-transparent bg-panel p-4 hover:border-accent"
+      className="block w-64 rounded-xl border border-transparent bg-panel p-4 transition-colors hover:border-accent"
     >
       <span className="inline-block rounded-lg bg-surface text-ink-muted text-sm px-2 py-1">
         {badgeText(unit)}
