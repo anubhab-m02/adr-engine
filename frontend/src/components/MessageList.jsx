@@ -8,7 +8,13 @@ function AssistantMessage({ message }) {
   if (message.type === 'error') {
     return <ErrorCard message={message.message} onRetry={message.onRetry} />
   }
-  return <AnswerCard answer={message.answer} citations={message.citations ?? []} />
+  // `type` is optional and defaults to 'answer' per its spec — but a
+  // genuinely unrecognized value (a typo, a future untyped state) is a
+  // bug, not a silent answer with undefined content.
+  if (!message.type || message.type === 'answer') {
+    return <AnswerCard answer={message.answer} citations={message.citations ?? []} />
+  }
+  return <ErrorCard message={`Unrecognized message type: "${message.type}"`} onRetry={() => {}} />
 }
 
 function MessageList({ messages }) {

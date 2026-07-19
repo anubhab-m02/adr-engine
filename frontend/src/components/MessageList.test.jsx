@@ -49,6 +49,20 @@ describe('MessageList', () => {
     expect(screen.getByRole('link')).toHaveAttribute('href', citation.url)
   })
 
+  it('renders AnswerCard for an assistant message with an omitted type (defaults to answer)', () => {
+    render(
+      <MessageList
+        messages={[{ role: 'assistant', answer: 'We use OAuth2 for auth.', citations: [] }]}
+      />,
+    )
+    expect(screen.getByText('We use OAuth2 for auth.')).toBeInTheDocument()
+  })
+
+  it('renders ErrorCard with a generic message for an unrecognized type', () => {
+    render(<MessageList messages={[{ role: 'assistant', type: 'bogus' }]} />)
+    expect(screen.getByText('Unrecognized message type: "bogus"')).toBeInTheDocument()
+  })
+
   it('scrolls to the newest message on update', () => {
     const { rerender } = render(<MessageList messages={[{ role: 'user', content: 'first' }]} />)
     expect(Element.prototype.scrollIntoView).toHaveBeenCalled()
