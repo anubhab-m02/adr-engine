@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { MESSAGE_CARD_BASE } from './messageCardBase.js'
 
 const STATUSES = [
   'Searching decision history…',
@@ -17,7 +18,7 @@ function LoadingCard() {
   }, [])
 
   return (
-    <div role="status" className="max-w-3xl rounded-xl bg-panel p-4">
+    <div role="status" className={MESSAGE_CARD_BASE}>
       <div className="flex gap-1">
         <span className="h-2 w-2 rounded-full bg-ink-muted animate-pulse" />
         <span className="h-2 w-2 rounded-full bg-ink-muted animate-pulse [animation-delay:150ms]" />

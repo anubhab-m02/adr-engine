@@ -1,6 +1,8 @@
+import { MESSAGE_CARD_BASE } from './messageCardBase.js'
+
 function ErrorCard({ message, onRetry }) {
   return (
-    <div className="max-w-3xl rounded-xl bg-panel border border-danger p-4">
+    <div className={`${MESSAGE_CARD_BASE} border border-danger`}>
       <p className="text-base text-danger">{message}</p>
       <button
         type="button"

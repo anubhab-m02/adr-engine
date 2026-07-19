@@ -1,12 +1,11 @@
 import CitationCard from './CitationCard.jsx'
+import { MESSAGE_CARD_BASE } from './messageCardBase.js'
 
 function AnswerCard({ answer, citations }) {
   const hasCitations = citations.length > 0
 
   return (
-    <div
-      className={`max-w-3xl rounded-xl bg-panel p-4 ${hasCitations ? 'text-ink' : 'text-ink-muted'}`}
-    >
+    <div className={`${MESSAGE_CARD_BASE} ${hasCitations ? 'text-ink' : 'text-ink-muted'}`}>
       <p className="text-base">{answer}</p>
       {hasCitations && (
         <div className="mt-4 flex flex-wrap gap-4">
