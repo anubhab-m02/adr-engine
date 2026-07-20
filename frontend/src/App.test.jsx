@@ -62,6 +62,45 @@ describe('App', () => {
     expect(postQuery).toHaveBeenCalledTimes(2)
   })
 
+  it('disables Retry while a retry is in flight, preventing a double-fire race', async () => {
+    const user = userEvent.setup()
+    getRepos.mockResolvedValue(REPOS)
+    postQuery.mockRejectedValueOnce(new Error('Gemini returned 401'))
+
+    render(<App />)
+
+    await user.type(screen.getByLabelText('Ask a question'), 'Why Redis?')
+    await user.click(screen.getByRole('button', { name: 'Ask' }))
+
+    expect(await screen.findByText('Gemini returned 401')).toBeInTheDocument()
+
+    let resolveRetry
+    postQuery.mockReturnValueOnce(new Promise((resolve) => { resolveRetry = resolve }))
+
+    const retryButton = screen.getByRole('button', { name: 'Retry' })
+    await user.click(retryButton)
+
+    // Retry is now in flight (rendered as a LoadingCard) — the button that
+    // triggered it is gone, and nothing else can fire a second concurrent
+    // call while this one resolves.
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument()
+    expect(await screen.findByRole('status')).toBeInTheDocument()
+
+    resolveRetry({ answer: 'Redis was already used for caching.', citations: [], retrieved_count: 0 })
+
+    expect(await screen.findByText('Redis was already used for caching.')).toBeInTheDocument()
+    expect(postQuery).toHaveBeenCalledTimes(2)
+  })
+
+  it('shows a distinct failed state, not an eternal skeleton, when GET /repos fails', async () => {
+    getRepos.mockRejectedValue(new Error('network error'))
+
+    render(<App />)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't load repos")
+    expect(screen.queryByRole('status', { name: 'Loading repos' })).not.toBeInTheDocument()
+  })
+
   it('fills the input when an example chip is clicked', async () => {
     const user = userEvent.setup()
     getRepos.mockResolvedValue(REPOS)

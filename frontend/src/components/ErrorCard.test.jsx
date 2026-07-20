@@ -20,4 +20,9 @@ describe('ErrorCard', () => {
     await user.click(screen.getByRole('button', { name: 'Retry' }))
     expect(onRetry).toHaveBeenCalledTimes(2)
   })
+
+  it('disables the Retry button when disabled is true', () => {
+    render(<ErrorCard message="Backend unreachable" onRetry={() => {}} disabled />)
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeDisabled()
+  })
 })

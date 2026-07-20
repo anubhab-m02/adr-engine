@@ -29,7 +29,7 @@ function App() {
       })
       .catch(() => {
         if (cancelled) return
-        setRepos([])
+        setRepos('error')
       })
 
     return () => {
@@ -37,26 +37,34 @@ function App() {
     }
   }, [])
 
+  function replaceLastMessage(message) {
+    setMessages((prev) => [...prev.slice(0, -1), message])
+  }
+
   async function runQuery(question) {
     setLoading(true)
     try {
       const result = await postQuery({ question, repos: selectedRepos })
-      setMessages((prev) => [
-        ...prev.slice(0, -1),
-        { role: 'assistant', type: 'answer', answer: result.answer, citations: result.citations },
-      ])
+      replaceLastMessage({
+        role: 'assistant',
+        type: 'answer',
+        answer: result.answer,
+        citations: result.citations,
+      })
     } catch (err) {
-      setMessages((prev) => [
-        ...prev.slice(0, -1),
-        { role: 'assistant', type: 'error', message: err.message, onRetry: () => retry(question) },
-      ])
+      replaceLastMessage({
+        role: 'assistant',
+        type: 'error',
+        message: err.message,
+        onRetry: () => retry(question),
+      })
     } finally {
       setLoading(false)
     }
   }
 
   function retry(question) {
-    setMessages((prev) => [...prev.slice(0, -1), { role: 'assistant', type: 'loading' }])
+    replaceLastMessage({ role: 'assistant', type: 'loading' })
     runQuery(question)
   }
 
@@ -102,7 +110,7 @@ function App() {
           </div>
         ) : (
           <div className="max-w-3xl mx-auto">
-            <MessageList messages={messages} />
+            <MessageList messages={messages} disabled={loading} />
           </div>
         )}
       </main>

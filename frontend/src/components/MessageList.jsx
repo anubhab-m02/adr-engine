@@ -3,10 +3,10 @@ import AnswerCard from './AnswerCard.jsx'
 import ErrorCard from './ErrorCard.jsx'
 import LoadingCard from './LoadingCard.jsx'
 
-function AssistantMessage({ message }) {
+function AssistantMessage({ message, disabled }) {
   if (message.type === 'loading') return <LoadingCard />
   if (message.type === 'error') {
-    return <ErrorCard message={message.message} onRetry={message.onRetry} />
+    return <ErrorCard message={message.message} onRetry={message.onRetry} disabled={disabled} />
   }
   // `type` is optional and defaults to 'answer' per its spec — but a
   // genuinely unrecognized value (a typo, a future untyped state) is a
@@ -14,10 +14,16 @@ function AssistantMessage({ message }) {
   if (!message.type || message.type === 'answer') {
     return <AnswerCard answer={message.answer} citations={message.citations ?? []} />
   }
-  return <ErrorCard message={`Unrecognized message type: "${message.type}"`} onRetry={() => {}} />
+  return (
+    <ErrorCard
+      message={`Unrecognized message type: "${message.type}"`}
+      onRetry={() => {}}
+      disabled={disabled}
+    />
+  )
 }
 
-function MessageList({ messages }) {
+function MessageList({ messages, disabled }) {
   const bottomRef = useRef(null)
 
   useEffect(() => {
@@ -35,7 +41,7 @@ function MessageList({ messages }) {
           </div>
         ) : (
           <div key={index} className="flex justify-start">
-            <AssistantMessage message={message} />
+            <AssistantMessage message={message} disabled={disabled} />
           </div>
         ),
       )}

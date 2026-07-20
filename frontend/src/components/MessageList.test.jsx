@@ -37,6 +37,16 @@ describe('MessageList', () => {
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
   })
 
+  it('disables the Retry button when the list is disabled', () => {
+    render(
+      <MessageList
+        messages={[{ role: 'assistant', type: 'error', message: 'Backend unreachable', onRetry: () => {} }]}
+        disabled
+      />,
+    )
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeDisabled()
+  })
+
   it('renders AnswerCard for an assistant answer message', () => {
     render(
       <MessageList
