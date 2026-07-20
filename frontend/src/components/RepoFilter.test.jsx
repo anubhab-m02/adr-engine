@@ -10,9 +10,15 @@ const repos = [
 ]
 
 describe('RepoFilter', () => {
-  it('renders a loading skeleton when repos is empty or undefined', () => {
+  it('renders a loading skeleton when repos is undefined', () => {
     render(<RepoFilter repos={undefined} selected={[]} onChange={() => {}} />)
     expect(screen.getByRole('status', { name: 'Loading repos' })).toBeInTheDocument()
+  })
+
+  it('renders a distinct failed state when repos is "error", not an eternal skeleton', () => {
+    render(<RepoFilter repos="error" selected={[]} onChange={() => {}} />)
+    expect(screen.queryByRole('status', { name: 'Loading repos' })).not.toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent("Couldn't load repos")
   })
 
   it('renders a static badge for a single repo, not a dropdown', () => {

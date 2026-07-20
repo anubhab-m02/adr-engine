@@ -5,7 +5,8 @@ function RepoFilter({ repos, selected, onChange }) {
   const [activeIndex, setActiveIndex] = useState(0)
   const containerRef = useRef(null)
 
-  const loading = repos == null || repos.length === 0
+  const loading = repos === undefined
+  const failed = repos === 'error'
 
   useEffect(() => {
     if (!open) return
@@ -27,6 +28,17 @@ function RepoFilter({ repos, selected, onChange }) {
         aria-label="Loading repos"
         className="h-9 w-28 rounded-lg bg-panel animate-pulse"
       />
+    )
+  }
+
+  if (failed) {
+    return (
+      <span
+        role="alert"
+        className="inline-block rounded-lg bg-panel text-danger text-sm px-3 py-1.5"
+      >
+        Couldn't load repos
+      </span>
     )
   }
 
