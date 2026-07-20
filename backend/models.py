@@ -73,3 +73,13 @@ class RepoInfo(BaseModel):
 
 class ReposResponse(BaseModel):
     repos: list[RepoInfo]
+
+
+class GitHubRepoInfo(BaseModel):
+    name: str
+    private: bool
+    commit_count_estimate: int
+
+
+class GitHubReposResponse(BaseModel):
+    repos: list[GitHubRepoInfo]

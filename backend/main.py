@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from chroma_client import get_chroma_client
+from routers.github import router as github_router
 from routers.ingest import router as ingest_router
 from routers.query import router as query_router
 from routers.repos import router as repos_router
@@ -26,6 +27,7 @@ app.include_router(ingest_router)
 app.include_router(retrieve_router)
 app.include_router(query_router)
 app.include_router(repos_router)
+app.include_router(github_router)
 
 
 @app.get("/health")
