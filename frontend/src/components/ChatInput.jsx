@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
-function ChatInput({ onSubmit, disabled }) {
-  const [value, setValue] = useState('')
+function ChatInput({ onSubmit, disabled, initialValue = '' }) {
+  const [value, setValue] = useState(initialValue)
 
   function submit() {
     const question = value.trim()
