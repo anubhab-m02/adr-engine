@@ -6,6 +6,7 @@ and fails clearly on rate-limit exhaustion rather than hanging a run.
 """
 
 import time
+import urllib.parse
 
 import httpx
 from pydantic import BaseModel
@@ -20,6 +21,10 @@ class GitHubError(Exception):
         self.status_code = status_code
         self.message = message
         super().__init__(f"GitHub API error {status_code}: {message}")
+
+
+class GitHubAuthError(GitHubError):
+    """Raised when GitHub rejects the stored token as invalid/expired."""
 
 
 class GitHubRateLimitError(GitHubError):
@@ -52,6 +57,12 @@ class PullRequestRef(BaseModel):
     author: str
     merged_at: str | None
     review_comments: list[str]
+
+
+class RepoSummary(BaseModel):
+    name: str
+    private: bool
+    commit_count_estimate: int
 
 
 class _RateLimiter:
@@ -110,6 +121,8 @@ def _get(url: str, rate_limiter: _RateLimiter, params: dict | None = None) -> ht
             message = response.json().get("message", response.text)
         except ValueError:
             message = response.text
+        if response.status_code == 401:
+            raise GitHubAuthError(response.status_code, message)
         raise GitHubError(response.status_code, message)
 
     return response
@@ -172,3 +185,44 @@ def list_prs(repo: str, since: str | None = None) -> list[PullRequestRef]:
         )
         for item in data
     ]
+
+
+def _estimate_commit_count(repo: str, rate_limiter: _RateLimiter) -> int:
+    # GitHub has no direct "commit count" field. The documented trick: ask
+    # for one commit per page and read the last page number off the Link
+    # header, avoiding a full commit fetch just to size a repo picker row.
+    try:
+        response = _get(
+            f"{GITHUB_API_URL}/repos/{repo}/commits",
+            rate_limiter,
+            params={"per_page": 1},
+        )
+    except GitHubError:
+        return 0
+
+    last_url = response.links.get("last", {}).get("url")
+    if last_url is None:
+        return len(response.json())
+
+    last_page = urllib.parse.parse_qs(urllib.parse.urlparse(last_url).query)["page"][0]
+    return int(last_page)
+
+
+def list_repos(query: str | None = None) -> list[RepoSummary]:
+    rate_limiter = _RateLimiter()
+    data = _paginate("/user/repos", rate_limiter, params={"per_page": 100})
+
+    repos = [
+        RepoSummary(
+            name=item["full_name"],
+            private=item["private"],
+            commit_count_estimate=_estimate_commit_count(item["full_name"], rate_limiter),
+        )
+        for item in data
+    ]
+
+    if query:
+        needle = query.lower()
+        repos = [repo for repo in repos if needle in repo.name.lower()]
+
+    return repos
