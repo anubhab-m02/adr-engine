@@ -2,8 +2,9 @@
 
 Talks to `config_store` directly rather than `config.Settings` — the
 whole point of this endpoint is to let the UI bootstrap configuration
-before any Settings-dependent (required-field) endpoint can run. Per
-ARCHITECTURE.md, secrets are masked in every response.
+before any Settings-dependent (required-field) endpoint can run.
+Masking and validation are `config_store`'s job; this router only
+parses the request, calls the store, and shapes the response.
 """
 
 from fastapi import APIRouter, HTTPException
@@ -13,35 +14,17 @@ from models import ConfigPatchRequest, ConfigResponse
 
 router = APIRouter()
 
-_SECRET_FIELDS = {"github_token", "gemini_api_key"}
-
-
-def _mask(value: str | None) -> str | None:
-    if not value:
-        return value
-    if len(value) <= 8:
-        return "…"
-    return f"{value[:4]}…{value[-4:]}"
-
-
-def _to_response(raw: dict) -> ConfigResponse:
-    masked = {
-        key: _mask(value) if key in _SECRET_FIELDS else value for key, value in raw.items()
-    }
-    return ConfigResponse(**masked)
-
 
 @router.get("/config", response_model=ConfigResponse)
 def get_config() -> ConfigResponse:
-    return _to_response(config_store.load())
+    return ConfigResponse(**config_store.mask(config_store.load()))
 
 
 @router.patch("/config", response_model=ConfigResponse)
 def patch_config(patch: ConfigPatchRequest) -> ConfigResponse:
-    partial = patch.model_dump(exclude_unset=True)
-    for key, value in partial.items():
-        if isinstance(value, str) and not value.strip():
-            raise HTTPException(status_code=422, detail=f"{key} must not be empty")
+    try:
+        updated = config_store.save(patch.model_dump(exclude_unset=True))
+    except config_store.ConfigValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
-    updated = config_store.save(partial)
-    return _to_response(updated)
+    return ConfigResponse(**config_store.mask(updated))

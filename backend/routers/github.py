@@ -9,7 +9,7 @@ to routers specifically.
 from fastapi import APIRouter, HTTPException
 
 from ingestion.github_client import GitHubAuthError, GitHubError, list_repos
-from models import GitHubRepoInfo, GitHubReposResponse
+from models import GitHubReposResponse
 
 router = APIRouter()
 
@@ -23,13 +23,4 @@ def github_repos(query: str | None = None) -> GitHubReposResponse:
     except GitHubError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
-    return GitHubReposResponse(
-        repos=[
-            GitHubRepoInfo(
-                name=repo.name,
-                private=repo.private,
-                commit_count_estimate=repo.commit_count_estimate,
-            )
-            for repo in repos
-        ]
-    )
+    return GitHubReposResponse(repos=repos)

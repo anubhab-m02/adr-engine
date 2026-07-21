@@ -27,6 +27,12 @@ DEFAULTS = {
     "gemini_model": "gemini-2.5-flash",
 }
 
+_SECRET_FIELDS = {"github_token", "gemini_api_key"}
+
+
+class ConfigValidationError(ValueError):
+    """Raised when a PATCH value fails store-level validation."""
+
 
 def _config_path() -> Path:
     data_dir = os.getenv("CHROMA_DATA_DIR", DEFAULT_CHROMA_DATA_DIR)
@@ -43,7 +49,11 @@ def load() -> dict:
 
 
 def save(partial: dict) -> dict:
-    """Merge `partial` into the stored config and persist the result."""
+    """Validate, merge `partial` into the stored config, and persist it."""
+    for key, value in partial.items():
+        if isinstance(value, str) and not value.strip():
+            raise ConfigValidationError(f"{key} must not be empty")
+
     current = load()
     current.update(partial)
 
@@ -52,3 +62,16 @@ def save(partial: dict) -> dict:
     path.write_text(json.dumps(current, indent=2))
 
     return current
+
+
+def _mask_value(value: str | None) -> str | None:
+    if not value:
+        return value
+    if len(value) <= 8:
+        return "*" * len(value)
+    return f"{value[:4]}…{value[-4:]}"
+
+
+def mask(raw: dict) -> dict:
+    """Return a copy of `raw` with secret fields masked for API responses."""
+    return {key: _mask_value(value) if key in _SECRET_FIELDS else value for key, value in raw.items()}

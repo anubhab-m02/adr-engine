@@ -39,7 +39,7 @@ class Settings(BaseSettings):
 
         stored = config_store.load()
         for key, value in stored.items():
-            if value and key not in data:
+            if value is not None and key not in data:
                 data[key] = value
         return data
 

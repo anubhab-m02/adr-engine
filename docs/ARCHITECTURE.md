@@ -67,6 +67,11 @@ docs/                   # this file + SYSTEM-DESIGN.md + UI-DESIGN.md + eval-que
   env overrides on top of `config_store` (Phase 2). No `os.getenv` and
   no direct store reads scattered in modules. Secrets are masked in
   every API response.
+- Exception: `config_store.py` and `chroma_client.py` read
+  `CHROMA_DATA_DIR` via `os.getenv` directly, not through
+  `config.Settings` — `Settings` itself reads `config_store`, so routing
+  the store's own bootstrap path through `Settings` would be circular.
+  This is the only sanctioned `os.getenv` outside `config.py`.
 - LLM calls are isolated in exactly three places: `extract.py` (local),
   `embed.py` (local), `answer.py` (cloud). Nothing else talks to a model.
 
