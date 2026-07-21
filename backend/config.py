@@ -1,14 +1,18 @@
 """Application settings.
 
-The only place environment variables are read. Every other module
-imports `get_settings()` instead of touching `os.environ` directly.
+The only place environment variables are read directly. Every other
+module imports `get_settings()` instead of touching `os.environ` or
+`config_store` itself. Values not provided by env/`.env` fall back to
+the `config_store` (Phase 2) — env always wins when both are set.
 """
 
 from functools import lru_cache
 from typing import Annotated
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+import config_store
 
 
 class Settings(BaseSettings):
@@ -26,6 +30,18 @@ class Settings(BaseSettings):
     github_request_timeout_seconds: float = 10
     ollama_request_timeout_seconds: float = 60
     gemini_request_timeout_seconds: float = 30
+
+    @model_validator(mode="before")
+    @classmethod
+    def _fill_from_config_store(cls, data: dict) -> dict:
+        if not isinstance(data, dict):
+            return data
+
+        stored = config_store.load()
+        for key, value in stored.items():
+            if value and key not in data:
+                data[key] = value
+        return data
 
     @field_validator("indexed_repos", mode="before")
     @classmethod
