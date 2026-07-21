@@ -42,6 +42,10 @@ class IngestResponse(BaseModel):
     repos: list[IngestResult]
 
 
+class IngestJobResponse(BaseModel):
+    job_id: str
+
+
 class RetrieveRequest(BaseModel):
     query: str
     k: int = 5
