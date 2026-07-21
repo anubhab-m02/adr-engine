@@ -18,3 +18,7 @@ chroma_data/
 
 # OS
 .DS_Store
+
+# Local tooling state
+.claude/
+.impeccable/

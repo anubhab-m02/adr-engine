@@ -8,8 +8,10 @@ RAG applied to a team's *living decision history*, not static documents.
 Ask "why is auth done this way?" and get a cited answer pointing back to
 the commit or PR where that decision actually happened.
 
-Design docs: [SYSTEM-DESIGN.md](docs/SYSTEM-DESIGN.md) ·
-[ARCHITECTURE.md](docs/ARCHITECTURE.md) · [UI-DESIGN.md](docs/UI-DESIGN.md)
+Design docs: [PRODUCT.md](PRODUCT.md) ·
+[SYSTEM-DESIGN.md](docs/SYSTEM-DESIGN.md) ·
+[ARCHITECTURE.md](docs/ARCHITECTURE.md) ·
+[UI-DESIGN.md](docs/UI-DESIGN.md)
 
 ## Delivery model (how work lands here)
 
@@ -43,45 +45,85 @@ without a human merging anything:
   closes the completed issues and resets the cycle. Groom `needs-triage`
   into `daily-task` (or close) during ideation sessions.
 
-## Phase 1 — MVP: GitHub only (current)
+## Phase 1 — MVP: GitHub only (complete, pending final polish)
 
-Goal: ask a question about the indexed repos in the React UI and get a
-correctly cited answer, end to end, locally.
+Goal reached: ask a question about the indexed repos in the React UI and
+get a correctly cited answer, end to end, locally. All batches (A–F)
+delivered; remaining loose ends: #39 (.env reconciliation), #40
+(ingestion CLI entry point) — both fold naturally into Phase 2's config
+work.
 
-Batches (each batch = several one-PR-sized issues, in dependency order):
+## Phase 2 — Productization (current)
 
-- **A. Foundation** — config module, typed models, Chroma store layer,
-  test fixtures scaffolding. *(Backend scaffold + health check already
-  landed via PR #12.)*
-- **B. GitHub ingestion** — client (commits, then PRs, then pagination/
-  rate-limit handling as separate issues), cursor persistence.
-- **C. Extraction & embedding** — extraction prompt + JSON parsing +
-  skip signal, malformed-output handling, embedding wrapper, ingestion
-  orchestrator, `/ingest` endpoint.
-- **D. Retrieval & synthesis** — search with relevance floor + repo
-  filter, `/retrieve`, `GET /repos`, synthesis prompt + citation
-  parsing, `/query`, golden-questions eval file.
-- **E. Frontend** — Vite+Tailwind scaffold, tokens, then one component
-  per issue (ChatInput, CitationCard, AnswerCard, MessageList,
-  Loading/Error cards, RepoFilter), api.js, wiring, empty state.
-- **F. Polish & docs** — README quickstart, .env reconciliation,
-  ingestion CLI entry point.
+A stranger can run adr-engine without touching a config file. Form
+factor locked by [PRODUCT.md](PRODUCT.md): **local-first product** — no
+user accounts, no hosting; "login" is GitHub authorization via OAuth
+device flow. Full UX/visual spec: [docs/UI-DESIGN.md](docs/UI-DESIGN.md)
+(binding); API contracts: [docs/SYSTEM-DESIGN.md](docs/SYSTEM-DESIGN.md).
 
-## Phase 2 — Jira
-Ticket descriptions + comments as a new DecisionUnit `kind`, linked to
-commits/PRs via branch/PR references. Scoped when Phase 1 ships.
+Success: launch → first cited answer in minutes, zero file editing; the
+UI stops looking like a stock chat template (editorial/archival
+identity, WCAG 2.1 AA).
 
-## Phase 3 — Slack (opt-in per channel)
-Privacy-sensitive; needs its own scoping pass.
+Batches (dependency order, each = several one-PR-sized issues):
+
+- **G. Config store & GitHub auth (backend)** — UI-managed local config
+  store (`.env` demoted to dev override), `GET/PATCH /config`, GitHub
+  device-flow endpoints, `GET /setup/state`, `GET /github/repos`.
+  Absorbs #39/#40.
+- **H. Background ingestion** — `POST /ingest` → 202 + job state,
+  `GET /ingest/status` with per-repo phase and live counts; frontend
+  `useIngestStatus` hook + StatusPill in the shell.
+- **I. App shell & onboarding (frontend)** — react-router, shell with
+  top nav, onboarding flow: Connect (device code) → Choose repos →
+  Indexing, optional Gemini key step; setup gate.
+- **J. The reading room** — editorial identity: new tokens/fonts,
+  AnswerPassage + inline citation markers + SourceCards, degraded
+  sources-only mode (`/query` `mode` field, backend), signature motion.
+- **K. Library & Settings** — repo rows with live status, re-index /
+  remove, add-repos; settings sections (GitHub, Gemini, models, data).
+- **L. Hardening pass** — responsive/mobile fixes, a11y verification
+  (contrast, keyboard, reduced motion), state-coverage sweep.
+
+## Phase 3 — The living archive
+
+What makes the product returned-to, not just usable:
+
+- **Question history + follow-ups** — persisted threads; follow-up
+  questions carry prior citations into retrieval.
+- **Decision browser** — a browsable, filterable timeline of every
+  extracted decision per repo; adds file-path metadata at ingestion,
+  enabling path-scoped questions ("why is `backend/auth.py` like this?").
+- **Markdown export** — copy any answer with citations, ready for PR
+  descriptions and docs.
+- **Scheduled re-indexing** — interval-based auto-refresh keeping the
+  index alive; reuses the Phase 2 job/status machinery.
+
+## Phase 4 — The decision inbox
+
+The differentiator: after each index run, newly extracted decisions land
+in a review queue — confirm / edit / discard, with confirmed units
+boosted in retrieval. The system writes the ADRs; you approve them.
+Scoped when Phase 3 ships.
+
+## Later / parking lot
+
+- **Editor & CLI integration** (`adr why "..."`, VS Code) — meet the
+  question where it arises. Deliberately parked until the web product
+  proves the core loop.
+- **Phase J+ sources: Jira, then Slack (opt-in per channel)** — pushed
+  until GitHub is fully proven; same DecisionUnit model, new `kind`s.
 
 ## Evaluation
 
-No automated eval harness in Phase 1 (see SYSTEM-DESIGN.md). Quality is
-checked manually against [docs/eval-questions.md](docs/eval-questions.md),
-a running list of golden questions with their expected cited source —
-run each through `/query` after a retrieval or extraction change and
-watch for drift.
+No automated eval harness yet (see SYSTEM-DESIGN.md). Quality is checked
+manually against [docs/eval-questions.md](docs/eval-questions.md) — run
+each question through `/query` after a retrieval or extraction change
+and watch for drift.
 
-## Non-goals (for now)
-Hosted/multi-user deployment, auth, real-time ingestion, fine-tuning,
-TypeScript migration.
+## Non-goals (still)
+
+Hosted/multi-user deployment, user accounts, real-time ingestion,
+fine-tuning, TypeScript migration. GitHub *authorization* is in scope
+(Phase 2); *accounts* are not — adr-engine remains a single-user,
+local-first tool whose index never leaves the machine.

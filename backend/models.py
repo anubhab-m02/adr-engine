@@ -8,6 +8,8 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+from ingestion.github_client import RepoSummary
+
 
 class DecisionUnit(BaseModel):
     id: str
@@ -73,3 +75,25 @@ class RepoInfo(BaseModel):
 
 class ReposResponse(BaseModel):
     repos: list[RepoInfo]
+
+
+class GitHubReposResponse(BaseModel):
+    repos: list[RepoSummary]
+
+
+class ConfigResponse(BaseModel):
+    github_token: str | None = None
+    gemini_api_key: str | None = None
+    indexed_repos: list[str] = []
+    ollama_host: str
+    ollama_extraction_model: str | None = None
+    ollama_embedding_model: str | None = None
+    gemini_model: str
+
+
+class ConfigPatchRequest(ConfigResponse):
+    """Same shape as ConfigResponse, but every field is optional (a PATCH
+    only ever sends the fields being changed)."""
+
+    ollama_host: str | None = None
+    gemini_model: str | None = None
