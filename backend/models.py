@@ -83,3 +83,23 @@ class GitHubRepoInfo(BaseModel):
 
 class GitHubReposResponse(BaseModel):
     repos: list[GitHubRepoInfo]
+
+
+class ConfigResponse(BaseModel):
+    github_token: str | None = None
+    gemini_api_key: str | None = None
+    indexed_repos: list[str] = []
+    ollama_host: str
+    ollama_extraction_model: str | None = None
+    ollama_embedding_model: str | None = None
+    gemini_model: str
+
+
+class ConfigPatchRequest(BaseModel):
+    github_token: str | None = None
+    gemini_api_key: str | None = None
+    indexed_repos: list[str] | None = None
+    ollama_host: str | None = None
+    ollama_extraction_model: str | None = None
+    ollama_embedding_model: str | None = None
+    gemini_model: str | None = None
