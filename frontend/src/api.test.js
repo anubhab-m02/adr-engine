@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, getRepos, postQuery } from './api.js'
+import { ApiError, getIngestStatus, getRepos, postQuery } from './api.js'
 
 function mockFetchOnce(response) {
   vi.stubGlobal(
@@ -44,6 +44,21 @@ describe('postQuery', () => {
     expect(options.method).toBe('POST')
     expect(options.headers['Content-Type']).toBe('application/json')
     expect(JSON.parse(options.body)).toEqual({ question: 'Why Redis?', repos: ['owner/repo-a'] })
+    expect(result).toEqual(body)
+  })
+})
+
+describe('getIngestStatus', () => {
+  it('GETs /ingest/status and resolves with the parsed body', async () => {
+    const body = { active: true, repos: [] }
+    mockFetchOnce({ body })
+
+    const result = await getIngestStatus()
+
+    expect(fetch).toHaveBeenCalledTimes(1)
+    const [url, options] = fetch.mock.calls[0]
+    expect(url).toMatch(/\/ingest\/status$/)
+    expect(options.method).toBe('GET')
     expect(result).toEqual(body)
   })
 })

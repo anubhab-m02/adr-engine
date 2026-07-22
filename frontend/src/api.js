@@ -41,3 +41,7 @@ export function postQuery({ question, repos }) {
     body: JSON.stringify({ question, repos }),
   })
 }
+
+export function getIngestStatus() {
+  return request('/ingest/status', { method: 'GET' })
+}
