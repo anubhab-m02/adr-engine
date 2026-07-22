@@ -46,6 +46,18 @@ class IngestJobResponse(BaseModel):
     job_id: str
 
 
+class IngestStatusRepo(BaseModel):
+    repo: str
+    phase: Literal["queued", "fetching", "extracting", "embedding", "done", "failed"]
+    counts: dict[str, int]
+    error: str | None = None
+
+
+class IngestStatusResponse(BaseModel):
+    active: bool
+    repos: list[IngestStatusRepo]
+
+
 class RetrieveRequest(BaseModel):
     query: str
     k: int = 5

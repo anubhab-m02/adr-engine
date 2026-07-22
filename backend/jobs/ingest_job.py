@@ -1,6 +1,6 @@
 """In-process background ingestion job: one job per `POST /ingest` call,
-module-level state read by `GET /ingest/status` (next issue). No queue
-infra, per SYSTEM-DESIGN.md's ingestion-jobs section — right-sized for a
+module-level state read by `GET /ingest/status`. No queue infra, per
+SYSTEM-DESIGN.md's ingestion-jobs section — right-sized for a
 single-user app. `jobs` may call `ingestion` directly, per
 ARCHITECTURE.md's stated exception (it orchestrates it).
 """
@@ -29,16 +29,26 @@ class Job(BaseModel):
 
 
 _jobs: dict[str, Job] = {}
+_latest_job_id: str | None = None
 
 
 def start_job(repos: list[str]) -> str:
+    global _latest_job_id
     job_id = str(uuid.uuid4())
     _jobs[job_id] = Job(id=job_id, repos={repo: RepoJobState(repo=repo) for repo in repos})
+    _latest_job_id = job_id
     return job_id
 
 
 def get_job(job_id: str) -> Job | None:
     return _jobs.get(job_id)
+
+
+def get_latest_job() -> Job | None:
+    """The most recently started job, regardless of whether it's still
+    active — `GET /ingest/status` has no job_id param and needs the last
+    known state even after completion."""
+    return _jobs.get(_latest_job_id) if _latest_job_id else None
 
 
 def run_job(job_id: str) -> None:
