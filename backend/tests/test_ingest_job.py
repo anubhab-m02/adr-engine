@@ -4,7 +4,7 @@ import pytest
 
 from ingestion.extract import ExtractionResult
 from ingestion.github_client import CommitRef, GitHubError
-from jobs.ingest_job import get_job, run_job, start_job
+from jobs.ingest_job import get_job, get_latest_job, run_job, start_job
 
 DECISION = ExtractionResult(is_decision=True, decision="Use Redis", rationale="Shared state", alternatives=[])
 
@@ -105,3 +105,22 @@ def test_run_job_marks_the_job_inactive_once_every_repo_finishes(mocks):
     run_job(job_id)
 
     assert get_job(job_id).active is False
+
+
+def test_get_latest_job_returns_the_most_recently_started_job():
+    start_job(["owner/first"])
+    second_id = start_job(["owner/second"])
+
+    assert get_latest_job().id == second_id
+
+
+def test_get_latest_job_keeps_returning_the_job_after_it_completes(mocks):
+    mocks["list_commits"].return_value = []
+    mocks["extract_decision"].return_value = None
+
+    job_id = start_job(["owner/repo"])
+    run_job(job_id)
+
+    latest = get_latest_job()
+    assert latest.id == job_id
+    assert latest.active is False
