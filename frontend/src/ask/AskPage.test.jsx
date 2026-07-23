@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import App from './App.jsx'
-import { getRepos, postQuery } from './api.js'
+import AskPage from './AskPage.jsx'
+import { getRepos, postQuery } from '../api.js'
 
-vi.mock('./api.js', () => ({
+vi.mock('../api.js', () => ({
   getRepos: vi.fn(),
   postQuery: vi.fn(),
 }))
@@ -19,14 +19,14 @@ afterEach(() => {
   vi.resetAllMocks()
 })
 
-describe('App', () => {
+describe('AskPage', () => {
   it('shows a loading state then an answer after submitting a question', async () => {
     const user = userEvent.setup()
     getRepos.mockResolvedValue(REPOS)
     let resolveQuery
     postQuery.mockReturnValue(new Promise((resolve) => { resolveQuery = resolve }))
 
-    render(<App />)
+    render(<AskPage />)
 
     await user.type(screen.getByLabelText('Ask a question'), 'Why OAuth2?')
     await user.click(screen.getByRole('button', { name: 'Ask' }))
@@ -44,7 +44,7 @@ describe('App', () => {
     getRepos.mockResolvedValue(REPOS)
     postQuery.mockRejectedValueOnce(new Error('Gemini returned 401'))
 
-    render(<App />)
+    render(<AskPage />)
 
     await user.type(screen.getByLabelText('Ask a question'), 'Why Redis?')
     await user.click(screen.getByRole('button', { name: 'Ask' }))
@@ -67,7 +67,7 @@ describe('App', () => {
     getRepos.mockResolvedValue(REPOS)
     postQuery.mockRejectedValueOnce(new Error('Gemini returned 401'))
 
-    render(<App />)
+    render(<AskPage />)
 
     await user.type(screen.getByLabelText('Ask a question'), 'Why Redis?')
     await user.click(screen.getByRole('button', { name: 'Ask' }))
@@ -95,7 +95,7 @@ describe('App', () => {
   it('shows a distinct failed state, not an eternal skeleton, when GET /repos fails', async () => {
     getRepos.mockRejectedValue(new Error('network error'))
 
-    render(<App />)
+    render(<AskPage />)
 
     expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't load repos")
     expect(screen.queryByRole('status', { name: 'Loading repos' })).not.toBeInTheDocument()
@@ -105,7 +105,7 @@ describe('App', () => {
     const user = userEvent.setup()
     getRepos.mockResolvedValue(REPOS)
 
-    render(<App />)
+    render(<AskPage />)
 
     const chip = await screen.findByRole('button', { name: 'Why is authentication done this way?' })
     await user.click(chip)

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, getIngestStatus, getRepos, postQuery } from './api.js'
+import { ApiError, getIngestStatus, getRepos, getSetupState, postQuery } from './api.js'
 
 function mockFetchOnce(response) {
   vi.stubGlobal(
@@ -58,6 +58,21 @@ describe('getIngestStatus', () => {
     expect(fetch).toHaveBeenCalledTimes(1)
     const [url, options] = fetch.mock.calls[0]
     expect(url).toMatch(/\/ingest\/status$/)
+    expect(options.method).toBe('GET')
+    expect(result).toEqual(body)
+  })
+})
+
+describe('getSetupState', () => {
+  it('GETs /setup/state and resolves with the parsed body', async () => {
+    const body = { github_connected: true, repos_selected: true, first_index_done: false, gemini_key_set: false }
+    mockFetchOnce({ body })
+
+    const result = await getSetupState()
+
+    expect(fetch).toHaveBeenCalledTimes(1)
+    const [url, options] = fetch.mock.calls[0]
+    expect(url).toMatch(/\/setup\/state$/)
     expect(options.method).toBe('GET')
     expect(result).toEqual(body)
   })
