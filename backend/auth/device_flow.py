@@ -7,6 +7,7 @@ ARCHITECTURE.md.
 """
 
 import time
+from typing import Literal
 
 import httpx
 from pydantic import BaseModel
@@ -35,7 +36,7 @@ class DeviceCodeResponse(BaseModel):
 
 
 class PollResult(BaseModel):
-    state: str  # "authorized" | "expired" | "denied"
+    state: Literal["pending", "authorized", "expired", "denied"]
     login: str | None = None
 
 
@@ -103,30 +104,48 @@ def _fetch_login(token: str) -> str | None:
     return response.json().get("login")
 
 
+def _interpret_token_response(data: dict) -> tuple[PollResult | None, int | None]:
+    """Returns `(result, retry_interval)`. `result` is `None` while GitHub
+    is still waiting on the user (caller should retry, after
+    `retry_interval` seconds if GitHub asked to slow down). On
+    `authorized`, persists the token to the config store."""
+    if "access_token" in data:
+        token = data["access_token"]
+        config_store.save({"github_token": token})
+        return PollResult(state="authorized", login=_fetch_login(token)), None
+
+    error = data.get("error")
+    if error == "authorization_pending":
+        return None, None
+    if error == "slow_down":
+        return None, data.get("interval")
+    if error == "expired_token":
+        return PollResult(state="expired"), None
+    if error == "access_denied":
+        return PollResult(state="denied"), None
+
+    raise GitHubAuthError(f"unexpected GitHub device flow response: {data}")
+
+
 def poll_for_token(device_code: str, interval: int) -> PollResult:
     """Poll GitHub's access-token endpoint, sleeping `interval` seconds
     (GitHub's stated cadence, possibly extended via `slow_down`) between
-    attempts, until a definitive state is reached. On `authorized`,
-    persists the token to the config store before returning."""
+    attempts, until a definitive state is reached. For CLI/script use —
+    an HTTP endpoint should use `check_token_once` instead, since this
+    blocks for however long the user takes to authorize."""
     while True:
-        data = _fetch_token(device_code)
+        result, retry_interval = _interpret_token_response(_fetch_token(device_code))
+        if result is not None:
+            return result
+        if retry_interval is not None:
+            interval = retry_interval
+        time.sleep(interval)
 
-        if "access_token" in data:
-            token = data["access_token"]
-            config_store.save({"github_token": token})
-            return PollResult(state="authorized", login=_fetch_login(token))
 
-        error = data.get("error")
-        if error == "authorization_pending":
-            time.sleep(interval)
-            continue
-        if error == "slow_down":
-            interval = data.get("interval", interval + 5)
-            time.sleep(interval)
-            continue
-        if error == "expired_token":
-            return PollResult(state="expired")
-        if error == "access_denied":
-            return PollResult(state="denied")
-
-        raise GitHubAuthError(f"unexpected GitHub device flow response: {data}")
+def check_token_once(device_code: str) -> PollResult:
+    """A single, non-blocking attempt against GitHub's access-token
+    endpoint — for `GET /auth/github/status`, which the frontend re-polls
+    on its own interval. Never sleeps; still-pending is a real, expected
+    result here, not something to wait out."""
+    result, _ = _interpret_token_response(_fetch_token(device_code))
+    return result if result is not None else PollResult(state="pending")

@@ -6,19 +6,20 @@ ARCHITECTURE.md's stated exception (it orchestrates it).
 """
 
 import uuid
-from typing import Literal
 
 from pydantic import BaseModel
 
+from ingestion.embed import EmbeddingError
+from ingestion.extract import ExtractionError
+from ingestion.github_client import GitHubError
 from ingestion.run import run_ingestion
-
-Phase = Literal["queued", "fetching", "extracting", "embedding", "done", "failed"]
+from models import IngestCounts, IngestPhase
 
 
 class RepoJobState(BaseModel):
     repo: str
-    phase: Phase = "queued"
-    counts: dict[str, int] = {"fetched": 0, "extracted": 0, "skipped": 0, "stored": 0}
+    phase: IngestPhase = "queued"
+    counts: IngestCounts = IngestCounts()
     error: str | None = None
 
 
@@ -40,10 +41,6 @@ def start_job(repos: list[str]) -> str:
     return job_id
 
 
-def get_job(job_id: str) -> Job | None:
-    return _jobs.get(job_id)
-
-
 def get_latest_job() -> Job | None:
     """The most recently started job, regardless of whether it's still
     active — `GET /ingest/status` has no job_id param and needs the last
@@ -61,18 +58,18 @@ def run_job(job_id: str) -> None:
     for repo, state in job.repos.items():
         state.phase = "fetching"
         try:
-            result = run_ingestion(repo)
-        except Exception as exc:  # per-repo isolation boundary; see docstring
+            result = run_ingestion(repo, on_phase=lambda phase: setattr(state, "phase", phase))
+        except (GitHubError, ExtractionError, EmbeddingError) as exc:
             state.phase = "failed"
             state.error = str(exc)
             continue
 
         state.phase = "done"
-        state.counts = {
-            "fetched": result.fetched,
-            "extracted": result.extracted,
-            "skipped": result.skipped,
-            "stored": result.stored,
-        }
+        state.counts = IngestCounts(
+            fetched=result.fetched,
+            extracted=result.extracted,
+            skipped=result.skipped,
+            stored=result.stored,
+        )
 
     job.active = False

@@ -4,7 +4,8 @@ import pytest
 
 from ingestion.extract import ExtractionResult
 from ingestion.github_client import CommitRef, GitHubError
-from jobs.ingest_job import get_job, get_latest_job, run_job, start_job
+from jobs.ingest_job import get_latest_job, run_job, start_job
+from models import IngestCounts
 
 DECISION = ExtractionResult(is_decision=True, decision="Use Redis", rationale="Shared state", alternatives=[])
 
@@ -42,9 +43,9 @@ def mocks():
 
 
 def test_start_job_initializes_every_repo_as_queued():
-    job_id = start_job(["owner/a", "owner/b"])
+    start_job(["owner/a", "owner/b"])
 
-    job = get_job(job_id)
+    job = get_latest_job()
     assert job.active is True
     assert job.repos["owner/a"].phase == "queued"
     assert job.repos["owner/b"].phase == "queued"
@@ -57,11 +58,33 @@ def test_run_job_marks_a_successful_repo_done_with_counts(mocks):
     job_id = start_job(["owner/repo"])
     run_job(job_id)
 
-    state = get_job(job_id).repos["owner/repo"]
+    state = get_latest_job().repos["owner/repo"]
     assert state.phase == "done"
-    assert state.counts == {"fetched": 1, "extracted": 1, "skipped": 0, "stored": 1}
+    assert state.counts == IngestCounts(fetched=1, extracted=1, skipped=0, stored=1)
     assert state.error is None
     mocks["set_cursor"].assert_called_once()
+
+
+def test_run_job_passes_through_the_extracting_phase(mocks):
+    """The real spec gap the code review flagged: the job used to jump
+    straight from `fetching` to `done`/`failed` with no observable
+    transition in between, even though `extracting`/`embedding` are part
+    of the documented Phase contract."""
+    mocks["list_commits"].return_value = [_commit()]
+    mocks["extract_decision"].return_value = DECISION
+
+    seen_phases = []
+
+    def record_phase(*args, **kwargs):
+        seen_phases.append(get_latest_job().repos["owner/repo"].phase)
+        return DECISION
+
+    mocks["extract_decision"].side_effect = record_phase
+
+    job_id = start_job(["owner/repo"])
+    run_job(job_id)
+
+    assert "extracting" in seen_phases
 
 
 def test_run_job_captures_the_boundary_error_without_stopping_other_repos(mocks):
@@ -76,7 +99,7 @@ def test_run_job_captures_the_boundary_error_without_stopping_other_repos(mocks)
     job_id = start_job(["owner/bad", "owner/good"])
     run_job(job_id)
 
-    job = get_job(job_id)
+    job = get_latest_job()
     assert job.repos["owner/bad"].phase == "failed"
     assert "rate limited" in job.repos["owner/bad"].error
     assert job.repos["owner/good"].phase == "done"
@@ -104,7 +127,7 @@ def test_run_job_marks_the_job_inactive_once_every_repo_finishes(mocks):
     job_id = start_job(["owner/repo"])
     run_job(job_id)
 
-    assert get_job(job_id).active is False
+    assert get_latest_job().active is False
 
 
 def test_get_latest_job_returns_the_most_recently_started_job():

@@ -46,10 +46,20 @@ class IngestJobResponse(BaseModel):
     job_id: str
 
 
+IngestPhase = Literal["queued", "fetching", "extracting", "embedding", "done", "failed"]
+
+
+class IngestCounts(BaseModel):
+    fetched: int = 0
+    extracted: int = 0
+    skipped: int = 0
+    stored: int = 0
+
+
 class IngestStatusRepo(BaseModel):
     repo: str
-    phase: Literal["queued", "fetching", "extracting", "embedding", "done", "failed"]
-    counts: dict[str, int]
+    phase: IngestPhase
+    counts: IngestCounts
     error: str | None = None
 
 
@@ -113,3 +123,22 @@ class ConfigPatchRequest(ConfigResponse):
 
     ollama_host: str | None = None
     gemini_model: str | None = None
+
+
+class DeviceStartResponse(BaseModel):
+    user_code: str
+    verification_uri: str
+    expires_in: int
+    interval: int
+
+
+class AuthStatusResponse(BaseModel):
+    state: Literal["pending", "authorized", "expired", "denied"]
+    login: str | None = None
+
+
+class SetupStateResponse(BaseModel):
+    github_connected: bool
+    repos_selected: bool
+    first_index_done: bool
+    gemini_key_set: bool

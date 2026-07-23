@@ -12,6 +12,7 @@ from auth.device_flow import (
     DeviceCodeResponse,
     GitHubAuthError,
     PollResult,
+    check_token_once,
     poll_for_token,
     start_device_flow,
 )
@@ -119,3 +120,28 @@ def test_poll_for_token_raises_on_unexpected_error():
 
         with pytest.raises(GitHubAuthError):
             poll_for_token("devcode123", interval=0)
+
+
+def test_check_token_once_returns_pending_without_sleeping():
+    with patch("auth.device_flow.httpx.post") as mock_post, patch(
+        "auth.device_flow.time.sleep"
+    ) as mock_sleep:
+        mock_post.return_value = httpx.Response(200, json={"error": "authorization_pending"})
+
+        result = check_token_once("devcode123")
+
+    assert result == PollResult(state="pending")
+    mock_sleep.assert_not_called()
+
+
+def test_check_token_once_returns_authorized_and_persists_token():
+    with patch("auth.device_flow.httpx.post") as mock_post, patch(
+        "auth.device_flow.httpx.get"
+    ) as mock_get:
+        mock_post.return_value = httpx.Response(200, json={"access_token": "ghp_newtoken"})
+        mock_get.return_value = httpx.Response(200, json={"login": "octocat"})
+
+        result = check_token_once("devcode123")
+
+    assert result == PollResult(state="authorized", login="octocat")
+    assert config_store.load()["github_token"] == "ghp_newtoken"
