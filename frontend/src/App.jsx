@@ -1,35 +1,25 @@
 import { useEffect, useState } from 'react'
-import { getRepos, postQuery } from './api.js'
-import ChatInput from './components/ChatInput.jsx'
-import MessageList from './components/MessageList.jsx'
-import RepoFilter from './components/RepoFilter.jsx'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import AskPage from './ask/AskPage.jsx'
+import { getSetupState } from './api.js'
+import AppShell from './shell/AppShell.jsx'
 
-const EXAMPLE_QUESTIONS = [
-  'Why is authentication done this way?',
-  'What alternatives did we consider for the database?',
-  'Who made the decision to use Redis, and when?',
-]
+function isSetupComplete(state) {
+  return state.github_connected && state.repos_selected && state.first_index_done
+}
 
 function App() {
-  const [repos, setRepos] = useState(undefined)
-  const [selectedRepos, setSelectedRepos] = useState([])
-  const [messages, setMessages] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [chatKey, setChatKey] = useState(0)
-  const [prefill, setPrefill] = useState('')
+  const [setupState, setSetupState] = useState(undefined)
 
   useEffect(() => {
     let cancelled = false
 
-    getRepos()
+    getSetupState()
       .then((result) => {
-        if (cancelled) return
-        setRepos(result.repos)
-        setSelectedRepos(result.repos.map((repo) => repo.repo))
+        if (!cancelled) setSetupState(result)
       })
       .catch(() => {
-        if (cancelled) return
-        setRepos('error')
+        if (!cancelled) setSetupState(null)
       })
 
     return () => {
@@ -37,90 +27,27 @@ function App() {
     }
   }, [])
 
-  function replaceLastMessage(message) {
-    setMessages((prev) => [...prev.slice(0, -1), message])
-  }
+  if (setupState === undefined) return null
 
-  async function runQuery(question) {
-    setLoading(true)
-    try {
-      const result = await postQuery({ question, repos: selectedRepos })
-      replaceLastMessage({
-        role: 'assistant',
-        type: 'answer',
-        answer: result.answer,
-        citations: result.citations,
-      })
-    } catch (err) {
-      replaceLastMessage({
-        role: 'assistant',
-        type: 'error',
-        message: err.message,
-        onRetry: () => retry(question),
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  function retry(question) {
-    replaceLastMessage({ role: 'assistant', type: 'loading' })
-    runQuery(question)
-  }
-
-  function handleAsk(question) {
-    setMessages((prev) => [
-      ...prev,
-      { role: 'user', content: question },
-      { role: 'assistant', type: 'loading' },
-    ])
-    runQuery(question)
-  }
-
-  function handleChipClick(question) {
-    setPrefill(question)
-    setChatKey((key) => key + 1)
-  }
+  const setupComplete = setupState != null && isSetupComplete(setupState)
 
   return (
-    <div className="min-h-svh bg-surface text-ink flex flex-col">
-      <header className="h-14 shrink-0 bg-panel flex items-center justify-between px-4">
-        <span className="text-lg font-semibold">adr-engine</span>
-        <RepoFilter repos={repos} selected={selectedRepos} onChange={setSelectedRepos} />
-      </header>
-
-      <main className="flex-1 overflow-y-auto px-4 py-4">
-        {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center gap-4 text-center">
-            <p className="text-base text-ink-muted">
-              Ask why something in your codebase is the way it is
-            </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              {EXAMPLE_QUESTIONS.map((question) => (
-                <button
-                  key={question}
-                  type="button"
-                  onClick={() => handleChipClick(question)}
-                  className="rounded-lg border border-transparent bg-panel text-ink text-sm px-4 py-2 hover:border-accent"
-                >
-                  {question}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="max-w-3xl mx-auto">
-            <MessageList messages={messages} disabled={loading} />
-          </div>
-        )}
-      </main>
-
-      <div className="sticky bottom-0 shrink-0 bg-panel px-4 py-4">
-        <div className="max-w-3xl mx-auto">
-          <ChatInput key={chatKey} initialValue={prefill} onSubmit={handleAsk} disabled={loading} />
-        </div>
-      </div>
-    </div>
+    <Routes>
+      {setupComplete ? (
+        <Route element={<AppShell />}>
+          <Route path="/" element={<AskPage />} />
+          <Route path="/library" element={<div className="p-6 text-ink-muted">Library</div>} />
+          <Route path="/settings" element={<div className="p-6 text-ink-muted">Settings</div>} />
+          <Route path="/onboarding" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      ) : (
+        <>
+          <Route path="/onboarding" element={<div className="p-6">Onboarding</div>} />
+          <Route path="*" element={<Navigate to="/onboarding" replace />} />
+        </>
+      )}
+    </Routes>
   )
 }
 

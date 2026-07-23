@@ -45,3 +45,7 @@ export function postQuery({ question, repos }) {
 export function getIngestStatus() {
   return request('/ingest/status', { method: 'GET' })
 }
+
+export function getSetupState() {
+  return request('/setup/state', { method: 'GET' })
+}
