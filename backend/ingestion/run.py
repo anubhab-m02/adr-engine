@@ -81,11 +81,18 @@ def _ingest_items(
     return extracted, skipped, units
 
 
-def run_ingestion(repo: str) -> IngestResult:
+def run_ingestion(repo: str, on_phase: Callable[[str], None] | None = None) -> IngestResult:
+    """`on_phase`, if given, is called once with `"extracting"` when
+    fetching finishes and the extract/embed/store loop begins — the only
+    real phase boundary this per-item pipeline has (extraction and
+    embedding happen interleaved per item, not as separate passes)."""
     cursor = store.get_cursor(repo)
 
     commits = github_client.list_commits(repo, since=cursor.get("last_commit_date"))
     prs = github_client.list_prs(repo, since=cursor.get("last_pr_updated_at"))
+
+    if on_phase:
+        on_phase("extracting")
 
     commit_extracted, commit_skipped, commit_units = _ingest_items(
         commits,

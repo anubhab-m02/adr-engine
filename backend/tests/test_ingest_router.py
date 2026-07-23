@@ -1,11 +1,10 @@
-from unittest.mock import call, patch
+from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
 
 import config
 from main import app
-from models import IngestResult
 
 
 @pytest.fixture(autouse=True)
@@ -23,48 +22,50 @@ def _multi_repo_env(monkeypatch):
 client = TestClient(app)
 
 
-def _result(repo: str) -> IngestResult:
-    return IngestResult(repo=repo, fetched=1, extracted=1, skipped=0, stored=1)
-
-
-def test_ingest_with_repo_runs_just_that_repo():
-    with patch("routers.ingest.run_ingestion") as run_ingestion:
-        run_ingestion.return_value = _result("owner/a")
+def test_ingest_with_repo_returns_202_with_a_job_id_for_just_that_repo():
+    with patch("routers.ingest.start_job") as start_job, patch("routers.ingest.run_job"):
+        start_job.return_value = "job-1"
 
         response = client.post("/ingest", json={"repo": "owner/a"})
 
-    assert response.status_code == 200
-    run_ingestion.assert_called_once_with("owner/a")
-    assert response.json() == {"repos": [_result("owner/a").model_dump()]}
+    assert response.status_code == 202
+    assert response.json() == {"job_id": "job-1"}
+    start_job.assert_called_once_with(["owner/a"])
 
 
-def test_ingest_with_empty_json_body_runs_all_configured_repos():
-    with patch("routers.ingest.run_ingestion") as run_ingestion:
-        run_ingestion.side_effect = _result
+def test_ingest_with_empty_json_body_starts_all_configured_repos():
+    with patch("routers.ingest.start_job") as start_job, patch("routers.ingest.run_job"):
+        start_job.return_value = "job-2"
 
         response = client.post("/ingest", json={})
 
-    assert response.status_code == 200
-    assert run_ingestion.call_args_list == [call("owner/a"), call("owner/b")]
-    assert [r["repo"] for r in response.json()["repos"]] == ["owner/a", "owner/b"]
+    assert response.status_code == 202
+    start_job.assert_called_once_with(["owner/a", "owner/b"])
 
 
-def test_ingest_with_no_body_at_all_runs_all_configured_repos():
-    with patch("routers.ingest.run_ingestion") as run_ingestion:
-        run_ingestion.side_effect = _result
+def test_ingest_with_no_body_at_all_starts_all_configured_repos():
+    with patch("routers.ingest.start_job") as start_job, patch("routers.ingest.run_job"):
+        start_job.return_value = "job-3"
 
         response = client.post("/ingest")
 
-    assert response.status_code == 200
-    assert run_ingestion.call_args_list == [call("owner/a"), call("owner/b")]
+    assert response.status_code == 202
+    start_job.assert_called_once_with(["owner/a", "owner/b"])
 
 
-def test_ingest_response_matches_ingest_response_shape():
-    with patch("routers.ingest.run_ingestion") as run_ingestion:
-        run_ingestion.return_value = _result("owner/a")
+def test_ingest_schedules_the_job_as_a_background_task():
+    with patch("routers.ingest.start_job") as start_job, patch("routers.ingest.run_job") as run_job:
+        start_job.return_value = "job-4"
+
+        client.post("/ingest", json={"repo": "owner/a"})
+
+    run_job.assert_called_once_with("job-4")
+
+
+def test_ingest_response_matches_ingest_job_response_shape():
+    with patch("routers.ingest.start_job") as start_job, patch("routers.ingest.run_job"):
+        start_job.return_value = "job-5"
 
         response = client.post("/ingest", json={"repo": "owner/a"})
 
-    body = response.json()
-    assert set(body.keys()) == {"repos"}
-    assert set(body["repos"][0].keys()) == {"repo", "fetched", "extracted", "skipped", "stored"}
+    assert set(response.json().keys()) == {"job_id"}
