@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import StatusPill from './StatusPill.jsx'
 
 const NAV_LINKS = [
   { to: '/', label: 'Ask' },
@@ -23,6 +24,7 @@ function TopNav() {
               {link.label}
             </NavLink>
           ))}
+          <StatusPill />
         </nav>
       </div>
     </header>

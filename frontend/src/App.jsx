@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AskPage from './ask/AskPage.jsx'
 import { getSetupState } from './api.js'
+import { IngestStatusProvider } from './lib/useIngestStatus.js'
 import AppShell from './shell/AppShell.jsx'
 
 function isSetupComplete(state) {
@@ -32,22 +33,24 @@ function App() {
   const setupComplete = setupState != null && isSetupComplete(setupState)
 
   return (
-    <Routes>
-      {setupComplete ? (
-        <Route element={<AppShell />}>
-          <Route path="/" element={<AskPage />} />
-          <Route path="/library" element={<div className="p-6 text-ink-muted">Library</div>} />
-          <Route path="/settings" element={<div className="p-6 text-ink-muted">Settings</div>} />
-          <Route path="/onboarding" element={<Navigate to="/" replace />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-      ) : (
-        <>
-          <Route path="/onboarding" element={<div className="p-6">Onboarding</div>} />
-          <Route path="*" element={<Navigate to="/onboarding" replace />} />
-        </>
-      )}
-    </Routes>
+    <IngestStatusProvider>
+      <Routes>
+        {setupComplete ? (
+          <Route element={<AppShell />}>
+            <Route path="/" element={<AskPage />} />
+            <Route path="/library" element={<div className="p-6 text-ink-muted">Library</div>} />
+            <Route path="/settings" element={<div className="p-6 text-ink-muted">Settings</div>} />
+            <Route path="/onboarding" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+        ) : (
+          <>
+            <Route path="/onboarding" element={<div className="p-6">Onboarding</div>} />
+            <Route path="*" element={<Navigate to="/onboarding" replace />} />
+          </>
+        )}
+      </Routes>
+    </IngestStatusProvider>
   )
 }
 
