@@ -2,12 +2,13 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App.jsx'
-import { getRepos, getSetupState } from './api.js'
+import { getIngestStatus, getRepos, getSetupState } from './api.js'
 
 vi.mock('./api.js', () => ({
   getSetupState: vi.fn(),
   getRepos: vi.fn(),
   postQuery: vi.fn(),
+  getIngestStatus: vi.fn(),
 }))
 
 const INCOMPLETE_STATE = {
@@ -35,6 +36,7 @@ function renderAt(path) {
 beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn()
   getRepos.mockResolvedValue({ repos: [] })
+  getIngestStatus.mockResolvedValue({ active: false, repos: [] })
 })
 
 afterEach(() => {
