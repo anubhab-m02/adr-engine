@@ -12,11 +12,13 @@ const IngestStatusContext = createContext(null)
 
 export function IngestStatusProvider({ children }) {
   const [status, setStatus] = useState(null)
+  const [error, setError] = useState(false)
   const timerRef = useRef(null)
 
   const fetchStatus = useCallback(async () => {
     const result = await getIngestStatus()
     setStatus(result)
+    setError(false)
     return result
   }, [])
 
@@ -24,8 +26,16 @@ export function IngestStatusProvider({ children }) {
     let cancelled = false
 
     async function poll() {
-      const result = await fetchStatus()
-      if (!cancelled && result.active) {
+      // A single failed request (network blip, backend restart) must not
+      // kill the loop — without the catch, an unhandled rejection here
+      // stops polling for good, since nothing re-schedules the timeout.
+      let active = true
+      try {
+        active = (await fetchStatus()).active
+      } catch {
+        if (!cancelled) setError(true)
+      }
+      if (!cancelled && active !== false) {
         timerRef.current = setTimeout(poll, POLL_INTERVAL_MS)
       }
     }
@@ -38,7 +48,7 @@ export function IngestStatusProvider({ children }) {
     }
   }, [fetchStatus])
 
-  return createElement(IngestStatusContext.Provider, { value: { status, refetch: fetchStatus } }, children)
+  return createElement(IngestStatusContext.Provider, { value: { status, error, refetch: fetchStatus } }, children)
 }
 
 export function useIngestStatus() {

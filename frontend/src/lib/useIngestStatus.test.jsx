@@ -94,6 +94,59 @@ describe('IngestStatusProvider', () => {
     expect(screen.getByTestId('b')).toHaveTextContent('idle')
   })
 
+  it('keeps polling after a failed request instead of stopping for good', async () => {
+    const fetchMock = vi.fn()
+    fetchMock.mockRejectedValueOnce(new Error('network error'))
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ active: false, repos: [] }) })
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(
+      <IngestStatusProvider>
+        <Consumer label="a" />
+      </IngestStatusProvider>,
+    )
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(screen.getByTestId('a')).toHaveTextContent('loading')
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000)
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(screen.getByTestId('a')).toHaveTextContent('idle')
+  })
+
+  it('exposes an error flag while a request has failed, clearing it on the next success', async () => {
+    const fetchMock = vi.fn()
+    fetchMock.mockRejectedValueOnce(new Error('network error'))
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ active: false, repos: [] }) })
+    vi.stubGlobal('fetch', fetchMock)
+
+    function ErrorConsumer() {
+      const { error } = useIngestStatus()
+      return <div data-testid="err">{String(error)}</div>
+    }
+
+    render(
+      <IngestStatusProvider>
+        <ErrorConsumer />
+      </IngestStatusProvider>,
+    )
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(screen.getByTestId('err')).toHaveTextContent('true')
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000)
+    })
+    expect(screen.getByTestId('err')).toHaveTextContent('false')
+  })
+
   it('throws when used outside the provider', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
 

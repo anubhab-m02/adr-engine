@@ -1,18 +1,42 @@
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App.jsx'
-import { getRepos, postQuery } from './api.js'
+import { getIngestStatus, getRepos, getSetupState } from './api.js'
 
 vi.mock('./api.js', () => ({
+  getSetupState: vi.fn(),
   getRepos: vi.fn(),
   postQuery: vi.fn(),
+  getIngestStatus: vi.fn(),
 }))
 
-const REPOS = { repos: [{ repo: 'owner/repo-a', indexed_units: 12 }] }
+const INCOMPLETE_STATE = {
+  github_connected: false,
+  repos_selected: false,
+  first_index_done: false,
+  gemini_key_set: false,
+}
+
+const COMPLETE_STATE = {
+  github_connected: true,
+  repos_selected: true,
+  first_index_done: true,
+  gemini_key_set: false,
+}
+
+function renderAt(path) {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <App />
+    </MemoryRouter>,
+  )
+}
 
 beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn()
+  getRepos.mockResolvedValue({ repos: [] })
+  getIngestStatus.mockResolvedValue({ active: false, repos: [] })
 })
 
 afterEach(() => {
@@ -20,98 +44,37 @@ afterEach(() => {
 })
 
 describe('App', () => {
-  it('shows a loading state then an answer after submitting a question', async () => {
-    const user = userEvent.setup()
-    getRepos.mockResolvedValue(REPOS)
-    let resolveQuery
-    postQuery.mockReturnValue(new Promise((resolve) => { resolveQuery = resolve }))
+  it('redirects to /onboarding when setup is incomplete', async () => {
+    getSetupState.mockResolvedValue(INCOMPLETE_STATE)
 
-    render(<App />)
+    renderAt('/library')
 
-    await user.type(screen.getByLabelText('Ask a question'), 'Why OAuth2?')
-    await user.click(screen.getByRole('button', { name: 'Ask' }))
-
-    expect(await screen.findByRole('status')).toBeInTheDocument()
-    expect(postQuery).toHaveBeenCalledWith({ question: 'Why OAuth2?', repos: ['owner/repo-a'] })
-
-    resolveQuery({ answer: 'We use OAuth2 for auth.', citations: [], retrieved_count: 0 })
-
-    expect(await screen.findByText('We use OAuth2 for auth.')).toBeInTheDocument()
+    expect(await screen.findByText('Onboarding')).toBeInTheDocument()
   })
 
-  it('shows an ErrorCard with a working retry on a failed call', async () => {
-    const user = userEvent.setup()
-    getRepos.mockResolvedValue(REPOS)
-    postQuery.mockRejectedValueOnce(new Error('Gemini returned 401'))
+  it('redirects to /onboarding when GET /setup/state fails', async () => {
+    getSetupState.mockRejectedValue(new Error('network error'))
 
-    render(<App />)
+    renderAt('/')
 
-    await user.type(screen.getByLabelText('Ask a question'), 'Why Redis?')
-    await user.click(screen.getByRole('button', { name: 'Ask' }))
-
-    expect(await screen.findByText('Gemini returned 401')).toBeInTheDocument()
-
-    postQuery.mockResolvedValueOnce({
-      answer: 'Redis was already used for caching.',
-      citations: [],
-      retrieved_count: 0,
-    })
-    await user.click(screen.getByRole('button', { name: 'Retry' }))
-
-    expect(await screen.findByText('Redis was already used for caching.')).toBeInTheDocument()
-    expect(postQuery).toHaveBeenCalledTimes(2)
+    expect(await screen.findByText('Onboarding')).toBeInTheDocument()
   })
 
-  it('disables Retry while a retry is in flight, preventing a double-fire race', async () => {
-    const user = userEvent.setup()
-    getRepos.mockResolvedValue(REPOS)
-    postQuery.mockRejectedValueOnce(new Error('Gemini returned 401'))
+  it('renders the requested route inside the app shell when setup is complete', async () => {
+    getSetupState.mockResolvedValue(COMPLETE_STATE)
 
-    render(<App />)
+    renderAt('/library')
 
-    await user.type(screen.getByLabelText('Ask a question'), 'Why Redis?')
-    await user.click(screen.getByRole('button', { name: 'Ask' }))
-
-    expect(await screen.findByText('Gemini returned 401')).toBeInTheDocument()
-
-    let resolveRetry
-    postQuery.mockReturnValueOnce(new Promise((resolve) => { resolveRetry = resolve }))
-
-    const retryButton = screen.getByRole('button', { name: 'Retry' })
-    await user.click(retryButton)
-
-    // Retry is now in flight (rendered as a LoadingCard) — the button that
-    // triggered it is gone, and nothing else can fire a second concurrent
-    // call while this one resolves.
-    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument()
-    expect(await screen.findByRole('status')).toBeInTheDocument()
-
-    resolveRetry({ answer: 'Redis was already used for caching.', citations: [], retrieved_count: 0 })
-
-    expect(await screen.findByText('Redis was already used for caching.')).toBeInTheDocument()
-    expect(postQuery).toHaveBeenCalledTimes(2)
+    expect(await screen.findByRole('link', { name: 'Library', current: 'page' })).toBeInTheDocument()
+    expect(screen.getByText('adr-engine')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ask' })).toBeInTheDocument()
   })
 
-  it('shows a distinct failed state, not an eternal skeleton, when GET /repos fails', async () => {
-    getRepos.mockRejectedValue(new Error('network error'))
+  it('redirects /onboarding away to / once setup is complete', async () => {
+    getSetupState.mockResolvedValue(COMPLETE_STATE)
 
-    render(<App />)
+    renderAt('/onboarding')
 
-    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't load repos")
-    expect(screen.queryByRole('status', { name: 'Loading repos' })).not.toBeInTheDocument()
-  })
-
-  it('fills the input when an example chip is clicked', async () => {
-    const user = userEvent.setup()
-    getRepos.mockResolvedValue(REPOS)
-
-    render(<App />)
-
-    const chip = await screen.findByRole('button', { name: 'Why is authentication done this way?' })
-    await user.click(chip)
-
-    expect(screen.getByLabelText('Ask a question')).toHaveValue(
-      'Why is authentication done this way?',
-    )
+    expect(await screen.findByLabelText('Ask a question')).toBeInTheDocument()
   })
 })
