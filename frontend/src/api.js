@@ -71,10 +71,10 @@ export function patchConfig(patch) {
   })
 }
 
-export function postIngest() {
+export function postIngest({ repos } = {}) {
   return request('/ingest', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({}),
+    body: JSON.stringify(repos ? { repos } : {}),
   })
 }

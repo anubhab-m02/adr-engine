@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { postIngest } from '../api.js'
 import { useIngestStatus } from '../lib/useIngestStatus.js'
@@ -12,13 +12,14 @@ function mockStatus(status) {
 }
 
 describe('IndexStep', () => {
-  it('triggers POST /ingest on mount', () => {
+  it('triggers POST /ingest on mount with the chosen repo list', () => {
     postIngest.mockResolvedValue({ job_id: 'abc' })
     mockStatus(null)
 
-    render(<IndexStep repos={['owner/repo-a']} onComplete={vi.fn()} />)
+    render(<IndexStep repos={['owner/repo-a', 'owner/repo-b']} onComplete={vi.fn()} />)
 
     expect(postIngest).toHaveBeenCalledTimes(1)
+    expect(postIngest).toHaveBeenCalledWith({ repos: ['owner/repo-a', 'owner/repo-b'] })
   })
 
   it('renders IndexProgress for each chosen repo', () => {
@@ -82,5 +83,49 @@ describe('IndexStep', () => {
     render(<IndexStep repos={['owner/repo-a']} onComplete={onComplete} />)
 
     expect(onComplete).not.toHaveBeenCalled()
+  })
+
+  it('shows a Start asking button as soon as one repo finishes, even while others are still active', () => {
+    postIngest.mockResolvedValue({ job_id: 'abc' })
+    mockStatus({
+      active: true,
+      repos: [
+        { repo: 'owner/repo-a', phase: 'done', counts: { fetched: 5, extracted: 5, skipped: 0, stored: 5 } },
+        { repo: 'owner/repo-b', phase: 'fetching', counts: { fetched: 3, extracted: 0, skipped: 0, stored: 0 } },
+      ],
+    })
+
+    render(<IndexStep repos={['owner/repo-a', 'owner/repo-b']} onComplete={vi.fn()} />)
+
+    expect(screen.getByRole('button', { name: 'Start asking' })).toBeInTheDocument()
+  })
+
+  it('clicking Start asking advances immediately without waiting for the rest', () => {
+    postIngest.mockResolvedValue({ job_id: 'abc' })
+    const onComplete = vi.fn()
+    mockStatus({
+      active: true,
+      repos: [
+        { repo: 'owner/repo-a', phase: 'done', counts: { fetched: 5, extracted: 5, skipped: 0, stored: 5 } },
+        { repo: 'owner/repo-b', phase: 'fetching', counts: { fetched: 3, extracted: 0, skipped: 0, stored: 0 } },
+      ],
+    })
+
+    render(<IndexStep repos={['owner/repo-a', 'owner/repo-b']} onComplete={onComplete} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start asking' }))
+
+    expect(onComplete).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not show Start asking before any repo has finished', () => {
+    postIngest.mockResolvedValue({ job_id: 'abc' })
+    mockStatus({
+      active: true,
+      repos: [{ repo: 'owner/repo-a', phase: 'fetching', counts: { fetched: 5, extracted: 0, skipped: 0, stored: 0 } }],
+    })
+
+    render(<IndexStep repos={['owner/repo-a']} onComplete={vi.fn()} />)
+
+    expect(screen.queryByRole('button', { name: 'Start asking' })).not.toBeInTheDocument()
   })
 })

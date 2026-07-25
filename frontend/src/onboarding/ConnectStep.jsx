@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react'
 import { startDeviceFlow } from '../api.js'
 import DeviceCodeCard from './DeviceCodeCard.jsx'
+import RetryCard from './RetryCard.jsx'
 
 function ConnectStep({ onAuthorized }) {
   const [device, setDevice] = useState(undefined)
@@ -41,16 +42,7 @@ function ConnectStep({ onAuthorized }) {
 
   if (device === 'error') {
     return (
-      <div className="rounded-xl bg-panel p-4 border border-danger">
-        <p className="text-danger text-sm">Could not start GitHub sign-in.</p>
-        <button
-          type="button"
-          onClick={restart}
-          className="mt-2 rounded-lg bg-danger text-white text-sm font-semibold px-4 py-2"
-        >
-          Retry
-        </button>
-      </div>
+      <RetryCard message="Could not start GitHub sign-in." messageTone="danger" bordered buttonTone="danger" onRetry={restart} />
     )
   }
 

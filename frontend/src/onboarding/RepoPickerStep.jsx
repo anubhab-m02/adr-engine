@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react'
 import { getGithubRepos, patchConfig } from '../api.js'
 import RepoPickerRow from './RepoPickerRow.jsx'
+import RetryCard from './RetryCard.jsx'
 
 const SEARCH_DEBOUNCE_MS = 300
 
@@ -74,16 +75,13 @@ function RepoPickerStep({ onNext }) {
           ))}
 
         {repos === 'error' && (
-          <div className="rounded-xl border border-danger p-4">
-            <p className="text-sm text-danger">Couldn't load your repos.</p>
-            <button
-              type="button"
-              onClick={() => setAttempt((a) => a + 1)}
-              className="mt-2 rounded-lg bg-danger text-white text-sm font-semibold px-4 py-2"
-            >
-              Retry
-            </button>
-          </div>
+          <RetryCard
+            message="Couldn't load your repos."
+            messageTone="danger"
+            bordered
+            buttonTone="danger"
+            onRetry={() => setAttempt((a) => a + 1)}
+          />
         )}
 
         {Array.isArray(repos) && repos.length === 0 && (
@@ -105,6 +103,23 @@ function RepoPickerStep({ onNext }) {
       >
         Index {selected.length} repo{selected.length === 1 ? '' : 's'}
       </button>
+
+      {/* GitHub gives no reliable signal to detect org-restricted access —
+          restricted repos are just silently absent from the list, not an
+          error. Shown as a standing footnote rather than a fake detected
+          state until there's a real way to tell the two cases apart. */}
+      <p className="mt-2 text-sm text-ink-muted">
+        Missing a repo?{' '}
+        <a
+          href="https://github.com/settings/connections/applications"
+          target="_blank"
+          rel="noreferrer"
+          className="text-accent"
+        >
+          Check your organization's access settings
+        </a>
+        .
+      </p>
     </div>
   )
 }

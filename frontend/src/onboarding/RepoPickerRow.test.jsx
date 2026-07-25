@@ -13,11 +13,11 @@ describe('RepoPickerRow', () => {
     )
 
     expect(screen.getByText('owner/repo')).toBeInTheDocument()
-    expect(screen.getByText('42 commits')).toBeInTheDocument()
-    expect(screen.queryByText('Private')).not.toBeInTheDocument()
+    expect(screen.getByText('42 commits · est. 1 min')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Private')).not.toBeInTheDocument()
   })
 
-  it('abbreviates large commit counts', () => {
+  it('abbreviates large commit counts and estimates minutes', () => {
     render(
       <RepoPickerRow
         repo={{ name: 'owner/repo', private: false, commit_count_estimate: 1200 }}
@@ -26,10 +26,10 @@ describe('RepoPickerRow', () => {
       />,
     )
 
-    expect(screen.getByText('~1.2k commits')).toBeInTheDocument()
+    expect(screen.getByText('~1.2k commits · est. 8 min')).toBeInTheDocument()
   })
 
-  it('shows a private badge for private repos', () => {
+  it('shows a lock icon for private repos', () => {
     render(
       <RepoPickerRow
         repo={{ name: 'owner/repo', private: true, commit_count_estimate: 1 }}
@@ -38,7 +38,7 @@ describe('RepoPickerRow', () => {
       />,
     )
 
-    expect(screen.getByText('Private')).toBeInTheDocument()
+    expect(screen.getByLabelText('Private')).toBeInTheDocument()
   })
 
   it('calls onToggle with the repo name when the checkbox changes', () => {

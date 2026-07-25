@@ -7,14 +7,17 @@
 // `font-mono` instead, per the precedent set in shell/StatusPill.jsx.
 import { useEffect, useRef, useState } from 'react'
 import { getAuthStatus } from '../api.js'
+import RetryCard from './RetryCard.jsx'
 
 const AUTHORIZED_ADVANCE_DELAY_MS = 800
 const COPIED_LABEL_DURATION_MS = 2000
+const CROSSFADE_DURATION_MS = 300
 
 function DeviceCodeCard({ userCode, verificationUri, interval, onAuthorized, onRestart }) {
   const [state, setState] = useState('pending')
   const [login, setLogin] = useState(null)
   const [copied, setCopied] = useState(false)
+  const [authorizedVisible, setAuthorizedVisible] = useState(false)
   const timerRef = useRef(null)
 
   useEffect(() => {
@@ -53,6 +56,14 @@ function DeviceCodeCard({ userCode, verificationUri, interval, onAuthorized, onR
     }
   }, [interval, onAuthorized])
 
+  useEffect(() => {
+    if (state !== 'authorized') return
+    // Two Tailwind transition utilities, no custom keyframes — start
+    // transparent, flip to opaque next frame so the CSS transition runs.
+    const raf = requestAnimationFrame(() => setAuthorizedVisible(true))
+    return () => cancelAnimationFrame(raf)
+  }, [state])
+
   function handleCopy() {
     navigator.clipboard?.writeText(userCode)
     setCopied(true)
@@ -61,54 +72,35 @@ function DeviceCodeCard({ userCode, verificationUri, interval, onAuthorized, onR
 
   if (state === 'authorized') {
     return (
-      <div role="status" className="rounded-xl bg-panel p-4 text-ink">
+      <div
+        role="status"
+        className={`rounded-xl bg-panel p-4 text-ink transition-opacity duration-300 ${
+          authorizedVisible ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{ transitionDuration: `${CROSSFADE_DURATION_MS}ms` }}
+      >
         ✓ Connected as {login}
       </div>
     )
   }
 
   if (state === 'expired') {
-    return (
-      <div className="rounded-xl bg-panel p-4">
-        <p className="text-ink-muted text-sm">Code expired.</p>
-        <button
-          type="button"
-          onClick={onRestart}
-          className="mt-2 rounded-lg bg-accent text-white text-sm font-semibold px-4 py-2"
-        >
-          Get a new code
-        </button>
-      </div>
-    )
+    return <RetryCard message="Code expired." buttonLabel="Get a new code" onRetry={onRestart} />
   }
 
   if (state === 'denied') {
-    return (
-      <div className="rounded-xl bg-panel p-4">
-        <p className="text-danger text-sm">Authorization was denied.</p>
-        <button
-          type="button"
-          onClick={onRestart}
-          className="mt-2 rounded-lg bg-accent text-white text-sm font-semibold px-4 py-2"
-        >
-          Retry
-        </button>
-      </div>
-    )
+    return <RetryCard message="Authorization was denied." messageTone="danger" onRetry={onRestart} />
   }
 
   if (state === 'network-error') {
     return (
-      <div className="rounded-xl bg-panel p-4 border border-danger">
-        <p className="text-danger text-sm">Could not reach the backend. Is it running?</p>
-        <button
-          type="button"
-          onClick={onRestart}
-          className="mt-2 rounded-lg bg-danger text-white text-sm font-semibold px-4 py-2"
-        >
-          Retry
-        </button>
-      </div>
+      <RetryCard
+        message="Could not reach the backend. Is it running?"
+        messageTone="danger"
+        bordered
+        buttonTone="danger"
+        onRetry={onRestart}
+      />
     )
   }
 
