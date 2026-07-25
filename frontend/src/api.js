@@ -49,3 +49,32 @@ export function getIngestStatus() {
 export function getSetupState() {
   return request('/setup/state', { method: 'GET' })
 }
+
+export function startDeviceFlow() {
+  return request('/auth/github/device/start', { method: 'POST' })
+}
+
+export function getAuthStatus() {
+  return request('/auth/github/status', { method: 'GET' })
+}
+
+export function getGithubRepos({ query } = {}) {
+  const search = query ? `?query=${encodeURIComponent(query)}` : ''
+  return request(`/github/repos${search}`, { method: 'GET' })
+}
+
+export function patchConfig(patch) {
+  return request('/config', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+  })
+}
+
+export function postIngest({ repos } = {}) {
+  return request('/ingest', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(repos ? { repos } : {}),
+  })
+}
