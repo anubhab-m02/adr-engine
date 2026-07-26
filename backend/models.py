@@ -90,9 +90,10 @@ class QueryRequest(BaseModel):
 
 
 class QueryResponse(BaseModel):
-    answer: str
+    answer: str | None
     citations: list[DecisionUnit]
     retrieved_count: int
+    mode: Literal["synthesized", "sources_only"]
 
 
 class RepoInfo(BaseModel):
