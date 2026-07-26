@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import MessageList from './MessageList.jsx'
 
 const citation = {
+  id: 'owner/repo:pr:42',
   kind: 'pr',
   ref: '42',
   url: 'https://github.com/owner/repo/pull/42',
@@ -47,11 +48,17 @@ describe('MessageList', () => {
     expect(screen.getByRole('button', { name: 'Retry' })).toBeDisabled()
   })
 
-  it('renders AnswerCard for an assistant answer message', () => {
+  it('renders AnswerPassage with its sources for a synthesized answer message', () => {
     render(
       <MessageList
         messages={[
-          { role: 'assistant', type: 'answer', answer: 'We use OAuth2 for auth.', citations: [citation] },
+          {
+            role: 'assistant',
+            type: 'answer',
+            mode: 'synthesized',
+            answer: 'We use OAuth2 for auth.',
+            citations: [citation],
+          },
         ]}
       />,
     )
@@ -59,13 +66,33 @@ describe('MessageList', () => {
     expect(screen.getByRole('link')).toHaveAttribute('href', citation.url)
   })
 
-  it('renders AnswerCard for an assistant message with an omitted type (defaults to answer)', () => {
+  it('renders AnswerPassage for an assistant message with an omitted type (defaults to answer)', () => {
     render(
       <MessageList
         messages={[{ role: 'assistant', answer: 'We use OAuth2 for auth.', citations: [] }]}
       />,
     )
     expect(screen.getByText('We use OAuth2 for auth.')).toBeInTheDocument()
+  })
+
+  it('renders SourcesView for a sources_only answer message', () => {
+    render(
+      <MessageList
+        messages={[
+          {
+            role: 'assistant',
+            type: 'answer',
+            mode: 'sources_only',
+            answer: null,
+            citations: [citation],
+          },
+        ]}
+      />,
+    )
+    expect(
+      screen.getByText('No Gemini key configured — showing retrieved sources directly.'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link')).toHaveAttribute('href', citation.url)
   })
 
   it('renders ErrorCard with a generic message for an unrecognized type', () => {
