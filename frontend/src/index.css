@@ -1,22 +1,31 @@
 @import "tailwindcss";
+@import "@fontsource-variable/source-serif-4";
 
 @theme {
-  --color-surface: var(--color-zinc-50);
-  --color-panel: var(--color-white);
-  --color-ink: var(--color-zinc-900);
-  --color-ink-muted: var(--color-zinc-500);
-  --color-accent: var(--color-indigo-600);
-  --color-danger: var(--color-red-600);
+  --color-surface: oklch(0.985 0.004 70);
+  --color-panel: oklch(1 0 0);
+  --color-ink: oklch(0.24 0.01 70);
+  --color-ink-muted: oklch(0.47 0.015 70);
+  --color-accent: oklch(0.52 0.11 60);
+  --color-accent-ink: oklch(0.99 0.005 70);
+  --color-highlight: color-mix(in oklch, var(--color-accent) 12%, transparent);
+  --color-danger: oklch(0.50 0.19 27);
+
+  --font-reading: "Source Serif 4 Variable", Georgia, serif;
+  --font-ui: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-surface: var(--color-zinc-900);
-    --color-panel: var(--color-zinc-800);
-    --color-ink: var(--color-zinc-100);
-    --color-ink-muted: var(--color-zinc-400);
-    --color-accent: var(--color-indigo-400);
-    --color-danger: var(--color-red-400);
+    --color-surface: oklch(0.185 0.008 70);
+    --color-panel: oklch(0.23 0.01 70);
+    --color-ink: oklch(0.93 0.005 70);
+    --color-ink-muted: oklch(0.70 0.015 70);
+    --color-accent: oklch(0.75 0.10 65);
+    --color-accent-ink: oklch(0.17 0.02 65);
+    --color-highlight: color-mix(in oklch, var(--color-accent) 16%, transparent);
+    --color-danger: oklch(0.70 0.17 25);
   }
 }
 
