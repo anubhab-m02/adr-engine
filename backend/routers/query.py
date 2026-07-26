@@ -10,6 +10,7 @@ failure -> 502).
 
 from fastapi import APIRouter, HTTPException
 
+from config import get_settings
 from ingestion.embed import EmbeddingError
 from models import QueryRequest, QueryResponse
 from retrieval.search import search
@@ -25,9 +26,19 @@ def query(request: QueryRequest) -> QueryResponse:
     except EmbeddingError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
+    if not get_settings().gemini_api_key:
+        return QueryResponse(
+            answer=None,
+            citations=[r.unit for r in results],
+            retrieved_count=len(results),
+            mode="sources_only",
+        )
+
     try:
         answer, citations = synthesize(request.question, [r.unit for r in results])
     except SynthesisError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
-    return QueryResponse(answer=answer, citations=citations, retrieved_count=len(results))
+    return QueryResponse(
+        answer=answer, citations=citations, retrieved_count=len(results), mode="synthesized"
+    )
