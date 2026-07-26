@@ -1,4 +1,4 @@
-import CitationCard from './CitationCard.jsx'
+import SourceCard from '../ask/SourceCard.jsx'
 import { MESSAGE_CARD_BASE } from './messageCardBase.js'
 
 function AnswerCard({ answer, citations }) {
@@ -10,7 +10,7 @@ function AnswerCard({ answer, citations }) {
       {hasCitations && (
         <div className="mt-4 flex flex-wrap gap-4">
           {citations.map((unit) => (
-            <CitationCard key={unit.url} unit={unit} />
+            <SourceCard key={unit.url} unit={unit} />
           ))}
         </div>
       )}
