@@ -1,30 +1,37 @@
-// Onboarding step 4 (optional): the last step of the flow, so unlike
-// the earlier steps it owns navigation itself rather than handing an
-// onComplete callback up to an OnboardingPage state machine (that
-// orchestrator doesn't exist yet). Per the issue's scope, this step
-// does not live-validate the key — PATCH /config already validates
-// cheaply; full validation UX belongs to Settings' GeminiSection.
+// Onboarding step 4 (optional, last in the flow). Advancing is the
+// caller's responsibility via onComplete, same pattern as
+// ConnectStep/RepoPickerStep/IndexStep — so this composes cleanly
+// whenever an OnboardingPage state machine wires it in, rather than
+// being a special case that owns navigation itself.
+//
+// Per the issue's scope, this step does not live-validate the key —
+// PATCH /config already validates cheaply; full validation UX belongs
+// to Settings' GeminiSection. A failed PATCH still needs *some*
+// feedback, though, so a save error is shown inline and the key is
+// kept so the user isn't forced to retype it.
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { patchConfig } from '../api.js'
 
-function GeminiKeyStep() {
-  const navigate = useNavigate()
+function GeminiKeyStep({ onComplete }) {
   const [key, setKey] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
 
   async function handleSave() {
     setSubmitting(true)
+    setError(null)
     try {
       await patchConfig({ gemini_api_key: key })
-      navigate('/')
+      onComplete()
+    } catch {
+      setError('Could not save the key. Check it and try again.')
     } finally {
       setSubmitting(false)
     }
   }
 
   function handleSkip() {
-    navigate('/')
+    onComplete()
   }
 
   return (
@@ -44,12 +51,18 @@ function GeminiKeyStep() {
         Only the retrieved snippets you ask about are ever sent to Gemini.
       </p>
 
+      {error && (
+        <p role="alert" className="mt-2 text-sm text-danger">
+          {error}
+        </p>
+      )}
+
       <div className="mt-4 flex items-center gap-4">
         <button
           type="button"
           disabled={!key || submitting}
           onClick={handleSave}
-          className="rounded-lg bg-accent text-white text-sm font-semibold px-4 py-2 disabled:opacity-50"
+          className="rounded-lg bg-accent text-accent-ink text-sm font-semibold px-4 py-2 disabled:opacity-50"
         >
           Save
         </button>

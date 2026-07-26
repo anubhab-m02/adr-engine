@@ -11,28 +11,27 @@ function parseAnswer(answer, citations) {
   const numberById = new Map()
   const parts = []
   let lastIndex = 0
-  let key = 0
   let match
 
   CITATION_PATTERN.lastIndex = 0
   while ((match = CITATION_PATTERN.exec(answer)) !== null) {
     if (match.index > lastIndex) {
-      parts.push({ type: 'text', key: key++, value: answer.slice(lastIndex, match.index) })
+      parts.push({ type: 'text', key: parts.length, value: answer.slice(lastIndex, match.index) })
     }
 
     const unitId = match[1]
     if (!knownIds.has(unitId)) {
-      parts.push({ type: 'text', key: key++, value: match[0] })
+      parts.push({ type: 'text', key: parts.length, value: match[0] })
     } else {
       if (!numberById.has(unitId)) numberById.set(unitId, numberById.size + 1)
-      parts.push({ type: 'marker', key: key++, number: numberById.get(unitId), unitId })
+      parts.push({ type: 'marker', key: parts.length, number: numberById.get(unitId), unitId })
     }
 
     lastIndex = CITATION_PATTERN.lastIndex
   }
 
   if (lastIndex < answer.length) {
-    parts.push({ type: 'text', key: key++, value: answer.slice(lastIndex) })
+    parts.push({ type: 'text', key: parts.length, value: answer.slice(lastIndex) })
   }
 
   return parts
