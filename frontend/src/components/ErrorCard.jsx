@@ -8,7 +8,7 @@ function ErrorCard({ message, onRetry, disabled }) {
         type="button"
         onClick={onRetry}
         disabled={disabled}
-        className="mt-2 rounded-lg bg-danger text-white text-sm font-semibold px-4 py-2 disabled:opacity-50"
+        className="mt-2 rounded-lg bg-danger text-accent-ink font-ui text-sm font-semibold px-4 py-2 disabled:opacity-50"
       >
         Retry
       </button>

@@ -52,7 +52,7 @@ function MessageList({ messages, disabled }) {
       {messages.map((message, index) =>
         message.role === 'user' ? (
           <div key={index} className="flex justify-end">
-            <div className="max-w-3xl rounded-xl bg-accent text-white p-4">
+            <div className="max-w-md rounded-xl bg-highlight text-ink p-3 text-sm">
               {message.content}
             </div>
           </div>
