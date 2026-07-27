@@ -2,9 +2,36 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import CitationMarker from './CitationMarker.jsx'
 
+function stubMatchMedia(matches) {
+  window.matchMedia = vi.fn().mockReturnValue({
+    matches,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  })
+}
+
 describe('CitationMarker', () => {
   afterEach(() => {
     document.body.innerHTML = ''
+    delete window.matchMedia
+  })
+
+  it('applies the ink-in animation and a stagger delay by default', () => {
+    stubMatchMedia(false)
+    render(<CitationMarker number={3} unitId="abc123" />)
+
+    const link = screen.getByRole('link', { name: 'Jump to source 3' })
+    expect(link).toHaveClass('animate-citation-ink-in')
+    expect(link.style.animationDelay).toBe('calc(var(--dur-surface) + 300ms)')
+  })
+
+  it('renders instantly with no animation class or delay when reduced motion is preferred', () => {
+    stubMatchMedia(true)
+    render(<CitationMarker number={3} unitId="abc123" />)
+
+    const link = screen.getByRole('link', { name: 'Jump to source 3' })
+    expect(link).not.toHaveClass('animate-citation-ink-in')
+    expect(link.style.animationDelay).toBe('')
   })
 
   it('renders the marker number', () => {

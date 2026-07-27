@@ -2,6 +2,7 @@
 // CitationMarkers parsed from `[unit-id]` markers in the raw answer
 // string. Numbering follows parse order of first appearance in the
 // text itself (per UI-DESIGN.md), not citations' array order.
+import usePrefersReducedMotion from '../lib/usePrefersReducedMotion.js'
 import CitationMarker from './CitationMarker.jsx'
 
 const CITATION_PATTERN = /\[([^[\]]+)\]/g
@@ -39,9 +40,14 @@ function parseAnswer(answer, citations) {
 
 function AnswerPassage({ answer, citations }) {
   const parts = parseAnswer(answer, citations)
+  const reducedMotion = usePrefersReducedMotion()
 
   return (
-    <p className="font-reading text-ink text-[1.0625rem] leading-[1.7] max-w-[70ch]">
+    <p
+      className={`font-reading text-ink text-[1.0625rem] leading-[1.7] max-w-[70ch] ${
+        reducedMotion ? '' : 'animate-answer-settle'
+      }`}
+    >
       {parts.map((part) =>
         part.type === 'marker' ? (
           <CitationMarker key={part.key} number={part.number} unitId={part.unitId} />
