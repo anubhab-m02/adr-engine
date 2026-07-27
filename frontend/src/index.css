@@ -14,6 +14,10 @@
   --font-reading: "Source Serif 4 Variable", Georgia, serif;
   --font-ui: system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-state: 150ms;
+  --dur-surface: 220ms;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -31,4 +35,50 @@
 
 body {
   margin: 0;
+}
+
+/*
+ * The one signature motion moment (UI-DESIGN.md's Ask § "Signature
+ * moment"): AnswerPassage fades up on arrival, then its CitationMarkers
+ * ink in staggered. Components gate applying these classes on
+ * usePrefersReducedMotion themselves (jsdom doesn't evaluate `@media`
+ * against components under test), so this block is a CSS-side backstop,
+ * not the primary reduced-motion mechanism.
+ */
+@keyframes answer-settle {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes citation-ink-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-answer-settle {
+  animation: answer-settle var(--dur-surface) var(--ease-out) both;
+}
+
+.animate-citation-ink-in {
+  opacity: 0;
+  animation: citation-ink-in var(--dur-state) var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-answer-settle,
+  .animate-citation-ink-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }
