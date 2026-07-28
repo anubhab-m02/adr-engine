@@ -2,45 +2,15 @@
 // /github/repos (debounced on search), lets the user multi-select, and
 // submits the choice via PATCH /config — kicking off the actual ingest
 // run is IndexStep's job (step 3), not this one.
-import { useEffect, useState } from 'react'
-import { getGithubRepos, patchConfig } from '../api.js'
+import { useState } from 'react'
+import { patchConfig } from '../api.js'
 import RepoPickerRow from './RepoPickerRow.jsx'
 import RetryCard from './RetryCard.jsx'
-
-const SEARCH_DEBOUNCE_MS = 300
+import useRepoPicker from './useRepoPicker.js'
 
 function RepoPickerStep({ onNext }) {
-  const [query, setQuery] = useState('')
-  const [repos, setRepos] = useState(undefined)
-  const [selected, setSelected] = useState([])
+  const { query, setQuery, repos, selected, toggle, retry } = useRepoPicker()
   const [submitting, setSubmitting] = useState(false)
-  const [attempt, setAttempt] = useState(0)
-
-  useEffect(() => {
-    let cancelled = false
-
-    function fetchRepos() {
-      getGithubRepos(query ? { query } : {})
-        .then((result) => {
-          if (!cancelled) setRepos(result.repos)
-        })
-        .catch(() => {
-          if (!cancelled) setRepos('error')
-        })
-    }
-
-    setRepos(undefined)
-    const timer = setTimeout(fetchRepos, query ? SEARCH_DEBOUNCE_MS : 0)
-
-    return () => {
-      cancelled = true
-      clearTimeout(timer)
-    }
-  }, [query, attempt])
-
-  function toggle(name) {
-    setSelected((current) => (current.includes(name) ? current.filter((r) => r !== name) : [...current, name]))
-  }
 
   async function handleSubmit() {
     setSubmitting(true)
@@ -80,7 +50,7 @@ function RepoPickerStep({ onNext }) {
             messageTone="danger"
             bordered
             buttonTone="danger"
-            onRetry={() => setAttempt((a) => a + 1)}
+            onRetry={retry}
           />
         )}
 
