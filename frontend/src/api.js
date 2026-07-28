@@ -67,6 +67,10 @@ export function getGithubRepos({ query } = {}) {
   return request(`/github/repos${search}`, { method: 'GET' })
 }
 
+export function getConfig() {
+  return request('/config', { method: 'GET' })
+}
+
 export function patchConfig(patch) {
   return request('/config', {
     method: 'PATCH',
