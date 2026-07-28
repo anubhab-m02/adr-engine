@@ -1,10 +1,10 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { getRepos } from '../api.js'
+import { getRepos, patchConfig } from '../api.js'
 import { useIngestStatus } from '../lib/useIngestStatus.js'
 import LibraryPage from './LibraryPage.jsx'
 
-vi.mock('../api.js', () => ({ getRepos: vi.fn() }))
+vi.mock('../api.js', () => ({ getRepos: vi.fn(), patchConfig: vi.fn(), getGithubRepos: vi.fn(), postIngest: vi.fn() }))
 vi.mock('../lib/useIngestStatus.js', () => ({ useIngestStatus: vi.fn() }))
 
 const REPOS = {
@@ -63,5 +63,36 @@ describe('LibraryPage', () => {
 
     expect(await screen.findByText('Embedding 12 decisions…')).toBeInTheDocument()
     expect(screen.getByText('0 decisions')).toBeInTheDocument()
+  })
+
+  it('opens the AddReposPanel from the Add repos button', async () => {
+    getRepos.mockResolvedValue(REPOS)
+    useIngestStatus.mockReturnValue({ status: { active: false, repos: [] }, refetch: vi.fn() })
+
+    render(<LibraryPage />)
+    await screen.findByText('owner/repo-a')
+
+    expect(screen.queryByRole('heading', { name: 'Add repos' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Add repos' }))
+    expect(screen.getByRole('heading', { name: 'Add repos' })).toBeInTheDocument()
+  })
+
+  it('removing a repo calls PATCH /config with that repo excluded and drops its row', async () => {
+    getRepos.mockResolvedValue(REPOS)
+    patchConfig.mockResolvedValue({})
+    useIngestStatus.mockReturnValue({ status: { active: false, repos: [] }, refetch: vi.fn() })
+
+    render(<LibraryPage />)
+    await screen.findByText('owner/repo-a')
+
+    const [removeA] = screen.getAllByRole('button', { name: 'Remove' })
+    fireEvent.click(removeA)
+    const [confirmA] = screen.getAllByRole('button', { name: 'Remove' })
+    fireEvent.click(confirmA)
+    await screen.findByRole('button', { name: 'Remove' })
+
+    expect(patchConfig).toHaveBeenCalledWith({ indexed_repos: ['owner/repo-b'] })
+    expect(screen.queryByText('owner/repo-a')).not.toBeInTheDocument()
+    expect(screen.getByText('owner/repo-b')).toBeInTheDocument()
   })
 })
