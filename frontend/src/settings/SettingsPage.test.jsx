@@ -8,12 +8,17 @@ vi.mock('../api.js', () => ({
   disconnectGithub: vi.fn(),
   getConfig: vi.fn(),
   patchConfig: vi.fn(),
+  clearIndex: vi.fn(),
 }))
 
 describe('SettingsPage', () => {
-  it('renders the GitHub, Gemini, and Models sections', async () => {
+  it('renders the GitHub, Gemini, Models, and Data sections', async () => {
     getAuthStatus.mockResolvedValue({ state: 'authorized', login: 'octocat' })
-    getConfig.mockResolvedValue({ gemini_api_key: 'gk_1…cdef', ollama_host: 'http://localhost:11434' })
+    getConfig.mockResolvedValue({
+      gemini_api_key: 'gk_1…cdef',
+      ollama_host: 'http://localhost:11434',
+      chroma_data_dir: '/data/chroma',
+    })
 
     render(<SettingsPage />)
 
@@ -21,5 +26,6 @@ describe('SettingsPage', () => {
     expect(await screen.findByText('Connected as octocat')).toBeInTheDocument()
     expect(await screen.findByText('gk_1…cdef')).toBeInTheDocument()
     expect(await screen.findByLabelText('Ollama host')).toHaveValue('http://localhost:11434')
+    expect(await screen.findByText('/data/chroma')).toBeInTheDocument()
   })
 })

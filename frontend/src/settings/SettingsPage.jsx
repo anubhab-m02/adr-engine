@@ -1,5 +1,6 @@
 // UI-DESIGN.md's Settings page: single-column shell of per-concern
-// sections. DataSection lands in a following issue.
+// sections.
+import DataSection from './DataSection.jsx'
 import GeminiSection from './GeminiSection.jsx'
 import GitHubSection from './GitHubSection.jsx'
 import ModelsSection from './ModelsSection.jsx'
@@ -12,6 +13,7 @@ function SettingsPage() {
         <GitHubSection />
         <GeminiSection />
         <ModelsSection />
+        <DataSection />
       </div>
     </div>
   )
