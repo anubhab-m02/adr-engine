@@ -1,7 +1,8 @@
 // UI-DESIGN.md's Settings page: single-column shell of per-concern
-// sections. ModelsSection/DataSection land in following issues.
+// sections. DataSection lands in a following issue.
 import GeminiSection from './GeminiSection.jsx'
 import GitHubSection from './GitHubSection.jsx'
+import ModelsSection from './ModelsSection.jsx'
 
 function SettingsPage() {
   return (
@@ -10,6 +11,7 @@ function SettingsPage() {
       <div className="mt-4 flex flex-col gap-4">
         <GitHubSection />
         <GeminiSection />
+        <ModelsSection />
       </div>
     </div>
   )
