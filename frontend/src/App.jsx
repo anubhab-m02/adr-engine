@@ -4,6 +4,7 @@ import AskPage from './ask/AskPage.jsx'
 import LibraryPage from './library/LibraryPage.jsx'
 import { getSetupState } from './api.js'
 import { IngestStatusProvider } from './lib/useIngestStatus.js'
+import OnboardingPage from './onboarding/OnboardingPage.jsx'
 import AppShell from './shell/AppShell.jsx'
 import SettingsPage from './settings/SettingsPage.jsx'
 
@@ -46,7 +47,7 @@ function App() {
           </Route>
         ) : (
           <>
-            <Route path="/onboarding" element={<div className="p-6">Onboarding</div>} />
+            <Route path="/onboarding" element={<OnboardingPage />} />
             <Route path="*" element={<Navigate to="/onboarding" replace />} />
           </>
         )}

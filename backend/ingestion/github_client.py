@@ -7,11 +7,14 @@ and fails clearly on rate-limit exhaustion rather than hanging a run.
 
 import time
 import urllib.parse
+from concurrent.futures import ThreadPoolExecutor
 
 import httpx
 from pydantic import BaseModel
 
 from config import get_settings
+
+_COMMIT_ESTIMATE_MAX_WORKERS = 10
 
 GITHUB_API_URL = "https://api.github.com"
 
@@ -187,14 +190,20 @@ def list_prs(repo: str, since: str | None = None) -> list[PullRequestRef]:
     ]
 
 
-def _estimate_commit_count(repo: str, rate_limiter: _RateLimiter) -> int:
+def _estimate_commit_count(repo: str) -> int:
     # GitHub has no direct "commit count" field. The documented trick: ask
     # for one commit per page and read the last page number off the Link
     # header, avoiding a full commit fetch just to size a repo picker row.
+    #
+    # Each call gets its own rate limiter rather than sharing the
+    # pagination one — these run concurrently (see list_repos) and
+    # _RateLimiter isn't thread-safe. Fine here: this estimate already
+    # degrades to 0 on any GitHubError, so losing shared rate-limit
+    # awareness across just these calls costs nothing but precision.
     try:
         response = _get(
             f"{GITHUB_API_URL}/repos/{repo}/commits",
-            rate_limiter,
+            _RateLimiter(),
             params={"per_page": 1},
         )
     except GitHubError:
@@ -212,13 +221,15 @@ def list_repos(query: str | None = None) -> list[RepoSummary]:
     rate_limiter = _RateLimiter()
     data = _paginate("/user/repos", rate_limiter, params={"per_page": 100})
 
+    # One GitHub round-trip per repo to estimate its commit count — done
+    # sequentially this made a 50-repo account take ~2 minutes to render
+    # the repo picker. Fanned out across a small thread pool instead.
+    with ThreadPoolExecutor(max_workers=_COMMIT_ESTIMATE_MAX_WORKERS) as pool:
+        estimates = list(pool.map(_estimate_commit_count, [item["full_name"] for item in data]))
+
     repos = [
-        RepoSummary(
-            name=item["full_name"],
-            private=item["private"],
-            commit_count_estimate=_estimate_commit_count(item["full_name"], rate_limiter),
-        )
-        for item in data
+        RepoSummary(name=item["full_name"], private=item["private"], commit_count_estimate=estimate)
+        for item, estimate in zip(data, estimates)
     ]
 
     if query:

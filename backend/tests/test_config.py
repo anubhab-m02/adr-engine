@@ -61,7 +61,13 @@ def test_indexed_repos_splits_on_comma_and_strips_whitespace(monkeypatch):
     assert settings.indexed_repos == ["a/b", "c/d", "e/f"]
 
 
-def test_missing_required_var_raises_validation_error(monkeypatch):
+def test_missing_required_var_raises_validation_error(monkeypatch, tmp_path):
+    # Isolate config_store's fallback path from the real local
+    # {CHROMA_DATA_DIR}/config.json — if that file happens to have a
+    # real github_token saved (e.g. from actually using the app), the
+    # model_validator would silently fill the "missing" var back in
+    # from the store and this test would no longer test anything.
+    monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
     _set_required_env(monkeypatch)
     monkeypatch.delenv("GITHUB_TOKEN", raising=False)
 

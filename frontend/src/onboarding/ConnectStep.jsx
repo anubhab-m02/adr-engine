@@ -2,7 +2,7 @@
 // DeviceCodeCard, which owns polling GET /auth/github/status. Advancing
 // to step 2 is the caller's responsibility (via onAuthorized), so this
 // component composes cleanly under OnboardingPage's step machine.
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { startDeviceFlow } from '../api.js'
 import DeviceCodeCard from './DeviceCodeCard.jsx'
 import RetryCard from './RetryCard.jsx'
@@ -10,22 +10,23 @@ import RetryCard from './RetryCard.jsx'
 function ConnectStep({ onAuthorized }) {
   const [device, setDevice] = useState(undefined)
   const [attempt, setAttempt] = useState(0)
+  // POST /auth/github/device/start is not idempotent — each call mints a
+  // new code and replaces the backend's one in-flight device flow. React
+  // StrictMode double-invokes this effect once on mount in dev; without
+  // this guard that fires two real device-flow starts for one screen,
+  // racing whichever the backend ends up tracking against whichever the
+  // user actually sees and approves. Mirrors IndexStep's same guard for
+  // its own non-idempotent POST /ingest.
+  const startedForAttempt = useRef(null)
 
   useEffect(() => {
-    let cancelled = false
+    if (startedForAttempt.current === attempt) return
+    startedForAttempt.current = attempt
+
     setDevice(undefined)
-
     startDeviceFlow()
-      .then((result) => {
-        if (!cancelled) setDevice(result)
-      })
-      .catch(() => {
-        if (!cancelled) setDevice('error')
-      })
-
-    return () => {
-      cancelled = true
-    }
+      .then(setDevice)
+      .catch(() => setDevice('error'))
   }, [attempt])
 
   function restart() {

@@ -11,6 +11,13 @@ vi.mock('./api.js', () => ({
   getIngestStatus: vi.fn(),
 }))
 
+// OnboardingPage has its own dedicated test file for its step machine —
+// here it's just a boundary stub so App's routing/gate tests don't also
+// need to satisfy OnboardingPage's own API calls (getConfig, etc.).
+vi.mock('./onboarding/OnboardingPage.jsx', () => ({
+  default: () => <div>Onboarding stub</div>,
+}))
+
 const INCOMPLETE_STATE = {
   github_connected: false,
   repos_selected: false,
@@ -49,7 +56,7 @@ describe('App', () => {
 
     renderAt('/library')
 
-    expect(await screen.findByText('Onboarding')).toBeInTheDocument()
+    expect(await screen.findByText('Onboarding stub')).toBeInTheDocument()
   })
 
   it('redirects to /onboarding when GET /setup/state fails', async () => {
@@ -57,7 +64,7 @@ describe('App', () => {
 
     renderAt('/')
 
-    expect(await screen.findByText('Onboarding')).toBeInTheDocument()
+    expect(await screen.findByText('Onboarding stub')).toBeInTheDocument()
   })
 
   it('renders the requested route inside the app shell when setup is complete', async () => {
