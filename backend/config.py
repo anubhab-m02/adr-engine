@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     ollama_host: str = "http://localhost:11434"
     ollama_extraction_model: str
     ollama_embedding_model: str
-    gemini_api_key: str
+    gemini_api_key: str = ""
     gemini_model: str = "gemini-2.5-flash"
     chroma_data_dir: str = "./chroma_data"
     github_rate_limit_wait_ceiling_seconds: float = 60

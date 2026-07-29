@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import AnswerPassage from './AnswerPassage.jsx'
 
 const citations = [
@@ -7,11 +7,41 @@ const citations = [
   { id: 'unit-b', url: 'https://github.com/owner/repo/commit/abc' },
 ]
 
+function stubMatchMedia(matches) {
+  window.matchMedia = vi.fn().mockReturnValue({
+    matches,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  })
+}
+
 describe('AnswerPassage', () => {
+  afterEach(() => {
+    delete window.matchMedia
+  })
+
   it('renders the answer text', () => {
     render(<AnswerPassage answer="We use OAuth2 for auth [unit-a]." citations={citations} />)
 
     expect(screen.getByText(/We use OAuth2 for auth/)).toBeInTheDocument()
+  })
+
+  it('fades up on arrival and staggers its markers ink-in by default', () => {
+    stubMatchMedia(false)
+    render(<AnswerPassage answer="Redis was chosen [unit-b]." citations={citations} />)
+
+    expect(screen.getByText(/Redis was chosen/).closest('p')).toHaveClass('animate-answer-settle')
+    expect(screen.getByRole('link')).toHaveClass('animate-citation-ink-in')
+  })
+
+  it('skips the fade-up and marker stagger when reduced motion is preferred', () => {
+    stubMatchMedia(true)
+    render(<AnswerPassage answer="Redis was chosen [unit-b]." citations={citations} />)
+
+    expect(screen.getByText(/Redis was chosen/).closest('p')).not.toHaveClass('animate-answer-settle')
+    const link = screen.getByRole('link')
+    expect(link).not.toHaveClass('animate-citation-ink-in')
+    expect(link.style.animationDelay).toBe('')
   })
 
   it('renders citation markers numbered by first appearance in the text', () => {

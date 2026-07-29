@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AskPage from './ask/AskPage.jsx'
+import LibraryPage from './library/LibraryPage.jsx'
 import { getSetupState } from './api.js'
 import { IngestStatusProvider } from './lib/useIngestStatus.js'
 import AppShell from './shell/AppShell.jsx'
+import SettingsPage from './settings/SettingsPage.jsx'
 
 function isSetupComplete(state) {
   return state.github_connected && state.repos_selected && state.first_index_done
@@ -38,8 +40,8 @@ function App() {
         {setupComplete ? (
           <Route element={<AppShell />}>
             <Route path="/" element={<AskPage />} />
-            <Route path="/library" element={<div className="p-6 text-ink-muted">Library</div>} />
-            <Route path="/settings" element={<div className="p-6 text-ink-muted">Settings</div>} />
+            <Route path="/library" element={<LibraryPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         ) : (

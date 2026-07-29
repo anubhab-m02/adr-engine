@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react'
-import AnswerCard from './AnswerCard.jsx'
+import AnswerPassage from '../ask/AnswerPassage.jsx'
+import SourceCardList from '../ask/SourceCardList.jsx'
+import SourcesView from '../ask/SourcesView.jsx'
 import ErrorCard from './ErrorCard.jsx'
 import LoadingCard from './LoadingCard.jsx'
 
@@ -12,7 +14,16 @@ function AssistantMessage({ message, disabled }) {
   // genuinely unrecognized value (a typo, a future untyped state) is a
   // bug, not a silent answer with undefined content.
   if (!message.type || message.type === 'answer') {
-    return <AnswerCard answer={message.answer} citations={message.citations ?? []} />
+    const citations = message.citations ?? []
+    if (message.mode === 'sources_only') {
+      return <SourcesView citations={citations} />
+    }
+    return (
+      <div className="max-w-3xl">
+        <AnswerPassage answer={message.answer} citations={citations} />
+        {citations.length > 0 && <SourceCardList citations={citations} className="mt-4 flex flex-wrap gap-4" />}
+      </div>
+    )
   }
   return (
     <ErrorCard
@@ -35,7 +46,7 @@ function MessageList({ messages, disabled }) {
       {messages.map((message, index) =>
         message.role === 'user' ? (
           <div key={index} className="flex justify-end">
-            <div className="max-w-3xl rounded-xl bg-accent text-white p-4">
+            <div className="max-w-md rounded-xl bg-highlight text-ink p-3 text-sm">
               {message.content}
             </div>
           </div>

@@ -35,9 +35,15 @@ class DeviceCodeResponse(BaseModel):
     interval: int
 
 
+class GitHubUser(BaseModel):
+    login: str
+    avatar_url: str | None = None
+
+
 class PollResult(BaseModel):
     state: Literal["pending", "authorized", "expired", "denied"]
     login: str | None = None
+    avatar_url: str | None = None
 
 
 def start_device_flow() -> DeviceCodeResponse:
@@ -88,7 +94,7 @@ def _fetch_token(device_code: str) -> dict:
     return response.json()
 
 
-def _fetch_login(token: str) -> str | None:
+def _fetch_user(token: str) -> GitHubUser | None:
     try:
         response = httpx.get(
             GITHUB_USER_URL,
@@ -101,7 +107,17 @@ def _fetch_login(token: str) -> str | None:
     if response.is_error:
         return None
 
-    return response.json().get("login")
+    data = response.json()
+    return GitHubUser(login=data.get("login"), avatar_url=data.get("avatar_url"))
+
+
+def verify_stored_token(token: str) -> GitHubUser | None:
+    """Check whether a previously-stored token is still valid, returning
+    the account it belongs to if so, or None if GitHub rejects it (token
+    revoked/expired outside the app). Used by GET /auth/github/status's
+    no-pending-flow fallback to detect a stale connection instead of
+    trusting mere presence of a stored token."""
+    return _fetch_user(token)
 
 
 def _interpret_token_response(data: dict) -> tuple[PollResult | None, int | None]:
@@ -112,7 +128,12 @@ def _interpret_token_response(data: dict) -> tuple[PollResult | None, int | None
     if "access_token" in data:
         token = data["access_token"]
         config_store.save({"github_token": token})
-        return PollResult(state="authorized", login=_fetch_login(token)), None
+        user = _fetch_user(token)
+        return PollResult(
+            state="authorized",
+            login=user.login if user else None,
+            avatar_url=user.avatar_url if user else None,
+        ), None
 
     error = data.get("error")
     if error == "authorization_pending":

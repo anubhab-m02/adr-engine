@@ -90,9 +90,10 @@ class QueryRequest(BaseModel):
 
 
 class QueryResponse(BaseModel):
-    answer: str
+    answer: str | None
     citations: list[DecisionUnit]
     retrieved_count: int
+    mode: Literal["synthesized", "sources_only"]
 
 
 class RepoInfo(BaseModel):
@@ -136,6 +137,7 @@ class DeviceStartResponse(BaseModel):
 class AuthStatusResponse(BaseModel):
     state: Literal["pending", "authorized", "expired", "denied"]
     login: str | None = None
+    avatar_url: str | None = None
 
 
 class SetupStateResponse(BaseModel):

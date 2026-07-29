@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
+import config
 from ingestion.embed import EmbeddingError
 from main import app
 from models import RetrieveResult
@@ -35,6 +36,7 @@ def test_query_returns_answer_with_resolved_citations_and_retrieved_count(make_u
         "answer": "Redis was chosen [owner/repo:pr:1].",
         "citations": [unit.model_dump() for unit in cited],
         "retrieved_count": 3,
+        "mode": "synthesized",
     }
 
 
@@ -77,3 +79,39 @@ def test_query_translates_embedding_error_to_503():
 
     assert response.status_code == 503
     assert "failed to reach Ollama" in response.json()["detail"]
+
+
+def test_query_returns_sources_only_when_no_gemini_key_is_configured(monkeypatch, make_unit):
+    monkeypatch.setenv("GEMINI_API_KEY", "")
+    config.get_settings.cache_clear()
+
+    results = [_result(make_unit, "1"), _result(make_unit, "2")]
+
+    with patch("routers.query.search") as search, patch("routers.query.synthesize") as synthesize:
+        search.return_value = results
+
+        response = client.post("/query", json={"question": "why redis?"})
+
+    assert response.status_code == 200
+    synthesize.assert_not_called()
+    assert response.json() == {
+        "answer": None,
+        "citations": [r.unit.model_dump() for r in results],
+        "retrieved_count": 2,
+        "mode": "sources_only",
+    }
+
+
+def test_query_still_synthesizes_when_gemini_key_is_configured(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "key")
+    config.get_settings.cache_clear()
+
+    with patch("routers.query.search") as search, patch("routers.query.synthesize") as synthesize:
+        search.return_value = []
+        synthesize.return_value = ("Nothing in the indexed history covers this question.", [])
+
+        response = client.post("/query", json={"question": "why redis?"})
+
+    assert response.status_code == 200
+    synthesize.assert_called_once()
+    assert response.json()["mode"] == "synthesized"

@@ -48,6 +48,7 @@ function AskPage() {
       replaceLastMessage({
         role: 'assistant',
         type: 'answer',
+        mode: result.mode,
         answer: result.answer,
         citations: result.citations,
       })

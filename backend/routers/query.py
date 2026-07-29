@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException
 from ingestion.embed import EmbeddingError
 from models import QueryRequest, QueryResponse
 from retrieval.search import search
-from synthesis.answer import SynthesisError, synthesize
+from synthesis.answer import SynthesisError, synthesis_available, synthesize
 
 router = APIRouter()
 
@@ -25,9 +25,19 @@ def query(request: QueryRequest) -> QueryResponse:
     except EmbeddingError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
+    if not synthesis_available():
+        return QueryResponse(
+            answer=None,
+            citations=[r.unit for r in results],
+            retrieved_count=len(results),
+            mode="sources_only",
+        )
+
     try:
         answer, citations = synthesize(request.question, [r.unit for r in results])
     except SynthesisError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
-    return QueryResponse(answer=answer, citations=citations, retrieved_count=len(results))
+    return QueryResponse(
+        answer=answer, citations=citations, retrieved_count=len(results), mode="synthesized"
+    )

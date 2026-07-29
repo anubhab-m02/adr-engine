@@ -58,9 +58,17 @@ export function getAuthStatus() {
   return request('/auth/github/status', { method: 'GET' })
 }
 
+export function disconnectGithub() {
+  return request('/auth/github', { method: 'DELETE' })
+}
+
 export function getGithubRepos({ query } = {}) {
   const search = query ? `?query=${encodeURIComponent(query)}` : ''
   return request(`/github/repos${search}`, { method: 'GET' })
+}
+
+export function getConfig() {
+  return request('/config', { method: 'GET' })
 }
 
 export function patchConfig(patch) {
