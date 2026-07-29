@@ -1,4 +1,4 @@
-import SourceCard from './SourceCard.jsx'
+import SourceCardList from './SourceCardList.jsx'
 
 // Degraded-mode rendering for `/query`'s `mode: "sources_only"` — no
 // Gemini key configured, so we show the retrieved units directly instead
@@ -10,11 +10,7 @@ function SourcesView({ citations }) {
       <p className="font-reading text-ink text-[1.0625rem] leading-[1.7]">
         No Gemini key configured — showing retrieved sources directly.
       </p>
-      <div className="mt-4 flex flex-col gap-4">
-        {citations.map((unit) => (
-          <SourceCard key={unit.url} unit={unit} />
-        ))}
-      </div>
+      <SourceCardList citations={citations} className="mt-4 flex flex-col gap-4" />
     </div>
   )
 }

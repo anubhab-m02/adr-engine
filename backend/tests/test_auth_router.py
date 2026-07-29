@@ -8,7 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import routers.auth as auth_router_module
-from auth.device_flow import DeviceCodeResponse, PollResult
+from auth.device_flow import DeviceCodeResponse, GitHubUser, PollResult
 from main import app
 
 client = TestClient(app)
@@ -61,22 +61,41 @@ def test_status_reflects_pending_authorized_expired_and_denied():
 
     with patch("routers.auth.check_token_once", return_value=PollResult(state="pending")):
         response = client.get("/auth/github/status")
-    assert response.json() == {"state": "pending", "login": None}
+    assert response.json() == {"state": "pending", "login": None, "avatar_url": None}
 
-    with patch("routers.auth.check_token_once", return_value=PollResult(state="authorized", login="octocat")):
+    with patch(
+        "routers.auth.check_token_once",
+        return_value=PollResult(state="authorized", login="octocat", avatar_url="https://example.com/a.png"),
+    ):
         response = client.get("/auth/github/status")
-    assert response.json() == {"state": "authorized", "login": "octocat"}
+    assert response.json() == {"state": "authorized", "login": "octocat", "avatar_url": "https://example.com/a.png"}
 
 
-def test_status_falls_back_to_authorized_when_a_token_already_exists():
+def test_status_falls_back_to_authorized_when_the_stored_token_still_verifies():
     import config_store
 
     config_store.save({"github_token": "ghp_existing"})
 
-    response = client.get("/auth/github/status")
+    with patch(
+        "routers.auth.verify_stored_token",
+        return_value=GitHubUser(login="octocat", avatar_url="https://example.com/a.png"),
+    ):
+        response = client.get("/auth/github/status")
 
     assert response.status_code == 200
-    assert response.json()["state"] == "authorized"
+    assert response.json() == {"state": "authorized", "login": "octocat", "avatar_url": "https://example.com/a.png"}
+
+
+def test_status_returns_expired_when_the_stored_token_no_longer_verifies():
+    import config_store
+
+    config_store.save({"github_token": "ghp_revoked"})
+
+    with patch("routers.auth.verify_stored_token", return_value=None):
+        response = client.get("/auth/github/status")
+
+    assert response.status_code == 200
+    assert response.json()["state"] == "expired"
 
 
 def test_delete_clears_the_stored_token():

@@ -10,7 +10,7 @@ single-user app has at most one device flow running at a time.
 from fastapi import APIRouter, HTTPException
 
 import config_store
-from auth.device_flow import DeviceCodeResponse, check_token_once, start_device_flow
+from auth.device_flow import DeviceCodeResponse, check_token_once, start_device_flow, verify_stored_token
 from models import AuthStatusResponse, DeviceStartResponse
 
 router = APIRouter()
@@ -33,14 +33,22 @@ def start() -> DeviceStartResponse:
 @router.get("/auth/github/status", response_model=AuthStatusResponse)
 def status() -> AuthStatusResponse:
     if _pending is None:
-        if config_store.load()["github_token"]:
-            return AuthStatusResponse(state="authorized")
-        raise HTTPException(status_code=400, detail="no device flow in progress")
+        token = config_store.load()["github_token"]
+        if not token:
+            raise HTTPException(status_code=400, detail="no device flow in progress")
+
+        user = verify_stored_token(token)
+        if user is None:
+            # Stored token no longer works (revoked/expired outside the
+            # app) — distinct from "never connected", per UI-DESIGN.md's
+            # Settings states table.
+            return AuthStatusResponse(state="expired")
+        return AuthStatusResponse(state="authorized", login=user.login, avatar_url=user.avatar_url)
 
     result = check_token_once(_pending.device_code)
     if result.state != "pending":
         _clear_pending()
-    return AuthStatusResponse(state=result.state, login=result.login)
+    return AuthStatusResponse(state=result.state, login=result.login, avatar_url=result.avatar_url)
 
 
 @router.delete("/auth/github")

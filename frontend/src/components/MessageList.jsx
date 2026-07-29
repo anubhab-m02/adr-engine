@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import AnswerPassage from '../ask/AnswerPassage.jsx'
-import SourceCard from '../ask/SourceCard.jsx'
+import SourceCardList from '../ask/SourceCardList.jsx'
 import SourcesView from '../ask/SourcesView.jsx'
 import ErrorCard from './ErrorCard.jsx'
 import LoadingCard from './LoadingCard.jsx'
@@ -21,13 +21,7 @@ function AssistantMessage({ message, disabled }) {
     return (
       <div className="max-w-3xl">
         <AnswerPassage answer={message.answer} citations={citations} />
-        {citations.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-4">
-            {citations.map((unit) => (
-              <SourceCard key={unit.url} unit={unit} />
-            ))}
-          </div>
-        )}
+        {citations.length > 0 && <SourceCardList citations={citations} className="mt-4 flex flex-wrap gap-4" />}
       </div>
     )
   }

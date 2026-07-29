@@ -92,3 +92,9 @@ def synthesize(question: str, units: list[DecisionUnit]) -> tuple[str, list[Deci
 
     answer = _call_gemini(_build_prompt(question, units))
     return answer, _resolve_citations(answer, units)
+
+
+def synthesis_available() -> bool:
+    """Whether synthesis can run at all — false when no Gemini key is
+    configured, in which case /query degrades to sources_only mode."""
+    return bool(get_settings().gemini_api_key)

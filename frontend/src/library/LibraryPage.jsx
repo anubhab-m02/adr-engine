@@ -43,7 +43,7 @@ function LibraryPage() {
         <button
           type="button"
           onClick={() => setShowAddPanel(true)}
-          className="rounded-lg bg-accent text-white text-sm font-semibold px-4 py-2"
+          className="rounded-lg bg-accent text-accent-ink text-sm font-semibold px-4 py-2"
         >
           Add repos
         </button>

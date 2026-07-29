@@ -4,6 +4,7 @@
 // for inline confirmation (no modal, per UI-DESIGN.md) before calling the
 // onRemove callback LibraryPage supplies.
 import { useState } from 'react'
+import InlineConfirm from '../components/InlineConfirm.jsx'
 import { useIngestStatus } from '../lib/useIngestStatus.js'
 import IndexProgress from './IndexProgress.jsx'
 
@@ -33,28 +34,15 @@ function RepoRow({ repo, onRemove }) {
   if (confirming) {
     return (
       <div className="bg-panel rounded-xl p-4 flex items-center justify-between gap-4">
-        <p className="text-sm text-ink">
-          Remove {repo.repo} and its {repo.indexed_units} indexed{' '}
-          {repo.indexed_units === 1 ? 'decision' : 'decisions'}?
-          {error && (
-            <span role="alert" className="block text-danger">
-              {error}
-            </span>
-          )}
-        </p>
-        <div className="flex items-center gap-3 shrink-0">
-          <button
-            type="button"
-            disabled={removing}
-            onClick={handleConfirmRemove}
-            className="text-sm font-semibold text-danger disabled:opacity-50"
-          >
-            Remove
-          </button>
-          <button type="button" onClick={() => setConfirming(false)} className="text-sm text-ink-muted">
-            Cancel
-          </button>
-        </div>
+        <InlineConfirm
+          message={`Remove ${repo.repo} and its ${repo.indexed_units} indexed ${
+            repo.indexed_units === 1 ? 'decision' : 'decisions'
+          }?`}
+          onConfirm={handleConfirmRemove}
+          onCancel={() => setConfirming(false)}
+          disabled={removing}
+          error={error}
+        />
       </div>
     )
   }

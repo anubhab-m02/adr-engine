@@ -137,6 +137,7 @@ class DeviceStartResponse(BaseModel):
 class AuthStatusResponse(BaseModel):
     state: Literal["pending", "authorized", "expired", "denied"]
     login: str | None = None
+    avatar_url: str | None = None
 
 
 class SetupStateResponse(BaseModel):

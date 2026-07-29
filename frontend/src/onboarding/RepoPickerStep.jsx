@@ -4,8 +4,7 @@
 // run is IndexStep's job (step 3), not this one.
 import { useState } from 'react'
 import { patchConfig } from '../api.js'
-import RepoPickerRow from './RepoPickerRow.jsx'
-import RetryCard from './RetryCard.jsx'
+import RepoPickerList from './RepoPickerList.jsx'
 import useRepoPicker from './useRepoPicker.js'
 
 function RepoPickerStep({ onNext }) {
@@ -38,32 +37,14 @@ function RepoPickerStep({ onNext }) {
         className="mt-4 w-full rounded-lg border border-transparent bg-surface px-3 py-2 text-sm text-ink"
       />
 
-      <div className="mt-2">
-        {repos === undefined &&
-          Array.from({ length: 5 }).map((_, index) => (
-            <div key={index} className="mb-1.5 h-9 animate-pulse rounded-lg bg-surface" />
-          ))}
-
-        {repos === 'error' && (
-          <RetryCard
-            message="Couldn't load your repos."
-            messageTone="danger"
-            bordered
-            buttonTone="danger"
-            onRetry={retry}
-          />
-        )}
-
-        {Array.isArray(repos) && repos.length === 0 && (
-          <p className="text-sm text-ink-muted">{query ? 'No repos match.' : 'No repos found for this account.'}</p>
-        )}
-
-        {Array.isArray(repos) &&
-          repos.length > 0 &&
-          repos.map((repo) => (
-            <RepoPickerRow key={repo.name} repo={repo} selected={selected.includes(repo.name)} onToggle={toggle} />
-          ))}
-      </div>
+      <RepoPickerList
+        query={query}
+        repos={repos}
+        selected={selected}
+        onToggle={toggle}
+        onRetry={retry}
+        emptyMessage="No repos found for this account."
+      />
 
       <button
         type="button"

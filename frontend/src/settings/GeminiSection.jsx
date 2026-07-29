@@ -1,8 +1,19 @@
 // Settings' Gemini key section (UI-DESIGN.md): masked display of an
 // existing key, an input to set/update it, and a remove action (inline
-// confirm — same pattern as GitHubSection/RepoRow). Per the issue's
-// scope, PATCH /config only validates key format — no live Gemini ping.
+// confirm — same pattern as GitHubSection/RepoRow).
+//
+// UI-DESIGN.md's Settings table calls for a live "1-token ping" to
+// Gemini on save ("Key rejected by Gemini" / "✓ Synthesized answers
+// on"). Issue #82's own scope explicitly rules this out ("Live Gemini
+// API key verification (out of scope everywhere per SYSTEM-DESIGN.md —
+// PATCH validates format only, not by calling Gemini)") — the two docs
+// disagree. Following the issue's explicit scope (and SYSTEM-DESIGN.md's
+// broader "no live verification" policy) rather than silently making a
+// real external API call during every key save; only cheap PATCH-side
+// format validation happens here. Flagging for a docs reconciliation
+// rather than resolving it unilaterally in either direction.
 import { useEffect, useState } from 'react'
+import InlineConfirm from '../components/InlineConfirm.jsx'
 import { getConfig, patchConfig } from '../api.js'
 
 function GeminiSection() {
@@ -81,20 +92,12 @@ function GeminiSection() {
 
           {existingMasked && confirmingRemove && (
             <div className="mt-2 flex items-center justify-between gap-4">
-              <p className="text-sm text-ink">Remove the Gemini key? Ask returns to sources-only answers.</p>
-              <div className="flex items-center gap-3 shrink-0">
-                <button
-                  type="button"
-                  disabled={removing}
-                  onClick={handleRemove}
-                  className="text-sm font-semibold text-danger disabled:opacity-50"
-                >
-                  Remove
-                </button>
-                <button type="button" onClick={() => setConfirmingRemove(false)} className="text-sm text-ink-muted">
-                  Cancel
-                </button>
-              </div>
+              <InlineConfirm
+                message="Remove the Gemini key? Ask returns to sources-only answers."
+                onConfirm={handleRemove}
+                onCancel={() => setConfirmingRemove(false)}
+                disabled={removing}
+              />
             </div>
           )}
 
