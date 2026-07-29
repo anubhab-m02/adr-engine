@@ -6,6 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import pytest
 from fastapi.testclient import TestClient
 
+import config_store
 from main import app
 
 client = TestClient(app)
@@ -16,7 +17,7 @@ def _isolated_store(tmp_path, monkeypatch):
     monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
 
 
-def test_get_config_on_empty_store_returns_defaults():
+def test_get_config_on_empty_store_returns_defaults(tmp_path):
     response = client.get("/config")
 
     assert response.status_code == 200
@@ -28,7 +29,16 @@ def test_get_config_on_empty_store_returns_defaults():
         "ollama_extraction_model": None,
         "ollama_embedding_model": None,
         "gemini_model": "gemini-2.5-flash",
+        "chroma_data_dir": str(tmp_path),
     }
+
+
+def test_patch_ignores_chroma_data_dir_since_it_is_env_derived(tmp_path):
+    response = client.patch("/config", json={"chroma_data_dir": "/somewhere/else"})
+
+    assert response.status_code == 200
+    assert response.json()["chroma_data_dir"] == str(tmp_path)
+    assert "chroma_data_dir" not in config_store.load()
 
 
 def test_patch_persists_and_is_reflected_in_a_subsequent_get():
