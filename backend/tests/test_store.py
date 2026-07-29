@@ -121,6 +121,22 @@ def test_count_units_with_no_matches_returns_zero(store_module):
     assert store_module.count_units("owner/repo") == 0
 
 
+def test_clear_all_empties_collection_and_cursor_file(store_module, make_unit):
+    store_module.upsert_units([make_unit()], embeddings=[[0.1, 0.2, 0.3]])
+    store_module.set_cursor("owner/repo", {"last_commit_date": "2026-01-01T00:00:00Z"})
+
+    store_module.clear_all()
+
+    assert store_module.get_collection().count() == 0
+    assert store_module.get_cursor("owner/repo") == {}
+
+
+def test_clear_all_on_empty_store_is_a_noop(store_module):
+    store_module.clear_all()
+
+    assert store_module.get_collection().count() == 0
+
+
 def test_set_cursor_preserves_other_repos(store_module):
     store_module.set_cursor("owner/repo", {"last_commit_date": "2026-01-01T00:00:00Z"})
     store_module.set_cursor("owner/other", {"last_commit_date": "2026-02-01T00:00:00Z"})

@@ -24,6 +24,21 @@ def get_collection() -> chromadb.Collection:
     )
 
 
+def clear_all() -> None:
+    """Wipe every indexed decision and ingestion cursor (full-wipe "clear
+    index" action, not per-repo removal). Deletes by id rather than
+    dropping the collection so this is a no-op on an empty/fresh store
+    instead of erroring on a not-yet-created collection."""
+    collection = get_collection()
+    ids = collection.get(include=[])["ids"]
+    if ids:
+        collection.delete(ids=ids)
+
+    path = _cursor_path()
+    if path.exists():
+        path.unlink()
+
+
 def _document_text(unit: DecisionUnit) -> str:
     return f"{unit.title}\n{unit.decision}\n{unit.rationale}"
 
