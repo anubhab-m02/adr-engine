@@ -33,7 +33,7 @@ function RepoRow({ repo, onRemove }) {
 
   if (confirming) {
     return (
-      <div className="bg-panel rounded-xl p-4 flex items-center justify-between gap-4">
+      <div className="bg-panel rounded-xl p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <InlineConfirm
           message={`Remove ${repo.repo} and its ${repo.indexed_units} indexed ${
             repo.indexed_units === 1 ? 'decision' : 'decisions'
@@ -48,9 +48,22 @@ function RepoRow({ repo, onRemove }) {
   }
 
   return (
-    <div className="bg-panel rounded-xl p-4 flex items-center justify-between gap-4">
-      <span className="font-mono text-sm text-ink">{repo.repo}</span>
-      <div className="flex items-center gap-4">
+    // <640px: two lines — name+actions, then status (UI-DESIGN.md's
+    // responsive table). `sm:contents` lets the name/Remove wrapper drop
+    // out of the box model at sm+ so the single Remove button can be
+    // reordered next to the status line without a second DOM instance.
+    <div className="bg-panel rounded-xl p-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <div className="flex items-center justify-between gap-4 sm:contents">
+        <span className="font-mono text-sm text-ink truncate min-w-0">{repo.repo}</span>
+        <button
+          type="button"
+          onClick={() => setConfirming(true)}
+          className="text-sm text-ink-muted shrink-0 sm:order-3"
+        >
+          Remove
+        </button>
+      </div>
+      <div className="sm:order-2">
         {active ? (
           <IndexProgress repo={repo.repo} />
         ) : (
@@ -58,9 +71,6 @@ function RepoRow({ repo, onRemove }) {
             {repo.indexed_units} {repo.indexed_units === 1 ? 'decision' : 'decisions'}
           </p>
         )}
-        <button type="button" onClick={() => setConfirming(true)} className="text-sm text-ink-muted">
-          Remove
-        </button>
       </div>
     </div>
   )
