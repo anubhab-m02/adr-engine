@@ -5,11 +5,16 @@
 function RetryCard({ message, messageTone = 'muted', bordered = false, buttonLabel = 'Retry', buttonTone = 'accent', onRetry }) {
   return (
     <div className={`rounded-xl bg-panel p-4 ${bordered ? 'border border-danger' : ''}`}>
-      <p className={`text-sm ${messageTone === 'danger' ? 'text-danger' : 'text-ink-muted'}`}>{message}</p>
+      <p
+        role={messageTone === 'danger' ? 'alert' : 'status'}
+        className={`text-sm ${messageTone === 'danger' ? 'text-danger' : 'text-ink-muted'}`}
+      >
+        {message}
+      </p>
       <button
         type="button"
         onClick={onRetry}
-        className={`mt-2 rounded-lg text-white text-sm font-semibold px-4 py-2 ${
+        className={`mt-2 rounded-lg text-accent-ink text-sm font-semibold px-4 py-2 ${
           buttonTone === 'danger' ? 'bg-danger' : 'bg-accent'
         }`}
       >
