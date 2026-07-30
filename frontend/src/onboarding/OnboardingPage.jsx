@@ -80,7 +80,7 @@ function OnboardingPage() {
 
   return (
     <div className="min-h-svh bg-surface flex flex-col">
-      <div className="flex-1 flex items-center justify-center p-6">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
         {step === 'connect' && <ConnectStep onAuthorized={() => setStep('repos')} />}
         {step === 'repos' && <RepoPickerStep onNext={handleRepoPickerNext} />}
         {step === 'index' && <IndexStep repos={repos} onComplete={() => setStep('gemini')} />}

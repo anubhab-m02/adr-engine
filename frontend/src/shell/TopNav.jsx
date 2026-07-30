@@ -49,7 +49,7 @@ function linkClassName({ isActive }) {
 function TopNav() {
   return (
     <header className="h-14 shrink-0 bg-panel">
-      <div className="max-w-5xl mx-auto h-full flex items-center justify-between px-4">
+      <div className="max-w-5xl mx-auto h-full flex items-center justify-between px-4 lg:px-6">
         <span className="text-lg font-semibold">adr-engine</span>
         <nav className="flex items-center gap-4">
           {NAV_LINKS.map(({ to, label, Icon }) => (

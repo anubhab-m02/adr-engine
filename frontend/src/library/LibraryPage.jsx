@@ -37,7 +37,7 @@ function LibraryPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6">
+    <div className="max-w-5xl mx-auto px-4 lg:px-6 py-6">
       <div className="flex items-center justify-between">
         <h1 className="font-reading text-lg text-ink">Library</h1>
         <button
