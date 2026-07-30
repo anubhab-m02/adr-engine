@@ -49,4 +49,24 @@ describe('ChatInput', () => {
     expect(screen.getByLabelText('Ask a question')).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Ask' })).toBeDisabled()
   })
+
+  it('grows the textarea with content instead of clipping it (no fixed height)', async () => {
+    const scrollHeights = { current: 24 }
+    vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockImplementation(
+      () => scrollHeights.current,
+    )
+
+    const user = userEvent.setup()
+    render(<ChatInput onSubmit={vi.fn()} disabled={false} />)
+    const textarea = screen.getByLabelText('Ask a question')
+
+    expect(textarea.style.height).toBe('24px')
+
+    scrollHeights.current = 72
+    await user.type(textarea, 'a much longer question that wraps to several lines')
+
+    expect(textarea.style.height).toBe('72px')
+
+    vi.restoreAllMocks()
+  })
 })
