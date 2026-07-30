@@ -62,7 +62,7 @@ function IndexStep({ repos, onComplete }) {
         <button
           type="button"
           onClick={handleStartAsking}
-          className="mt-4 rounded-lg bg-accent text-white text-sm font-semibold px-4 py-2"
+          className="mt-4 rounded-lg bg-accent text-accent-ink text-sm font-semibold px-4 py-2"
         >
           Start asking
         </button>
