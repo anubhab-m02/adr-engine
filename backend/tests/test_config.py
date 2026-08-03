@@ -7,6 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pydantic import ValidationError
 
+import config_store
 from config import Settings, get_settings
 
 REQUIRED_ENV = {
@@ -73,6 +74,22 @@ def test_missing_required_var_raises_validation_error(monkeypatch, tmp_path):
 
     with pytest.raises(ValidationError):
         Settings()
+
+
+def test_empty_env_var_still_falls_back_to_config_store(monkeypatch, tmp_path):
+    # A `.env` line like `GEMINI_API_KEY=` (declared but empty) used to
+    # permanently shadow a real value saved in config_store via Settings
+    # UI, since the fallback only ran when the key was fully absent from
+    # env. Reported live: saving a Gemini key in Settings kept showing
+    # "no Gemini key configured" until the .env line itself was removed.
+    monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
+    _set_required_env(monkeypatch)
+    monkeypatch.setenv("GEMINI_API_KEY", "")
+    config_store.save({"gemini_api_key": "gk_from_store"})
+
+    settings = Settings()
+
+    assert settings.gemini_api_key == "gk_from_store"
 
 
 def test_get_settings_is_cached(monkeypatch):
