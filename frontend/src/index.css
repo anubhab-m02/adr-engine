@@ -38,6 +38,18 @@ body {
 }
 
 /*
+ * UI-DESIGN.md's Accessibility § "Focus visible always: 2px
+ * --color-accent ring, outline-offset: 2px" — applied globally rather
+ * than per-component so every interactive element (buttons, links,
+ * inputs, the ChatInput textarea's own focus ring included) gets the
+ * same on-brand indicator instead of relying on each browser's default.
+ */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/*
  * The one signature motion moment (UI-DESIGN.md's Ask § "Signature
  * moment"): AnswerPassage fades up on arrival, then its CitationMarkers
  * ink in staggered. Components gate applying these classes on

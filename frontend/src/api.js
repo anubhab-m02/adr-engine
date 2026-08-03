@@ -79,6 +79,10 @@ export function patchConfig(patch) {
   })
 }
 
+export function clearIndex() {
+  return request('/repos', { method: 'DELETE' })
+}
+
 export function postIngest({ repos } = {}) {
   return request('/ingest', {
     method: 'POST',

@@ -10,7 +10,7 @@ function RepoPickerList({ query, repos, selected, onToggle, onRetry, emptyMessag
     <div className="mt-2">
       {repos === undefined &&
         Array.from({ length: 5 }).map((_, index) => (
-          <div key={index} className="mb-1.5 h-9 animate-pulse rounded-lg bg-surface" />
+          <div key={index} className="mb-1.5 h-9 animate-pulse rounded-lg bg-highlight" />
         ))}
 
       {repos === 'error' && (

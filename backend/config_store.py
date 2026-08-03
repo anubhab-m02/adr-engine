@@ -34,9 +34,12 @@ class ConfigValidationError(ValueError):
     """Raised when a PATCH value fails store-level validation."""
 
 
+def chroma_data_dir() -> str:
+    return os.getenv("CHROMA_DATA_DIR", DEFAULT_CHROMA_DATA_DIR)
+
+
 def _config_path() -> Path:
-    data_dir = os.getenv("CHROMA_DATA_DIR", DEFAULT_CHROMA_DATA_DIR)
-    return Path(data_dir) / "config.json"
+    return Path(chroma_data_dir()) / "config.json"
 
 
 def load() -> dict:

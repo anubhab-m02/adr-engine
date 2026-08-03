@@ -50,7 +50,7 @@ function RepoPickerStep({ onNext }) {
         type="button"
         disabled={selected.length === 0 || submitting}
         onClick={handleSubmit}
-        className="mt-4 rounded-lg bg-accent text-white text-sm font-semibold px-4 py-2 disabled:opacity-50"
+        className="mt-4 rounded-lg bg-accent text-accent-ink text-sm font-semibold px-4 py-2 disabled:opacity-50"
       >
         Index {selected.length} repo{selected.length === 1 ? '' : 's'}
       </button>

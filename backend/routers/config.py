@@ -17,14 +17,19 @@ router = APIRouter()
 
 @router.get("/config", response_model=ConfigResponse)
 def get_config() -> ConfigResponse:
-    return ConfigResponse(**config_store.mask(config_store.load()))
+    return ConfigResponse(**config_store.mask(config_store.load()), chroma_data_dir=config_store.chroma_data_dir())
 
 
 @router.patch("/config", response_model=ConfigResponse)
 def patch_config(patch: ConfigPatchRequest) -> ConfigResponse:
+    # chroma_data_dir is env-derived (matches chroma_client.py), never
+    # actually persisted through the store, so it's dropped before saving.
+    payload = patch.model_dump(exclude_unset=True)
+    payload.pop("chroma_data_dir", None)
+
     try:
-        updated = config_store.save(patch.model_dump(exclude_unset=True))
+        updated = config_store.save(payload)
     except config_store.ConfigValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
-    return ConfigResponse(**config_store.mask(updated))
+    return ConfigResponse(**config_store.mask(updated), chroma_data_dir=config_store.chroma_data_dir())

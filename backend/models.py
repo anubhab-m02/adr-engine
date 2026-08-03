@@ -117,6 +117,7 @@ class ConfigResponse(BaseModel):
     ollama_extraction_model: str | None = None
     ollama_embedding_model: str | None = None
     gemini_model: str
+    chroma_data_dir: str
 
 
 class ConfigPatchRequest(ConfigResponse):
@@ -125,6 +126,7 @@ class ConfigPatchRequest(ConfigResponse):
 
     ollama_host: str | None = None
     gemini_model: str | None = None
+    chroma_data_dir: str | None = None
 
 
 class DeviceStartResponse(BaseModel):

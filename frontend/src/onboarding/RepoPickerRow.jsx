@@ -26,10 +26,10 @@ function RepoPickerRow({ repo, selected, onToggle }) {
 
   return (
     <label className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-surface cursor-pointer">
-      <input type="checkbox" checked={selected} onChange={() => onToggle(repo.name)} />
-      <span className="font-mono text-sm text-ink">{repo.name}</span>
+      <input type="checkbox" checked={selected} onChange={() => onToggle(repo.name)} className="shrink-0" />
+      <span className="font-mono text-sm text-ink truncate min-w-0">{repo.name}</span>
       {repo.private && <LockIcon aria-label="Private" className="text-ink-muted shrink-0" />}
-      {estimate && <span className="ml-auto text-sm text-ink-muted">{estimate}</span>}
+      {estimate && <span className="ml-auto shrink-0 text-sm text-ink-muted">{estimate}</span>}
     </label>
   )
 }
