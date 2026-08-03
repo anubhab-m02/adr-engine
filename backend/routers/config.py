@@ -10,6 +10,7 @@ parses the request, calls the store, and shapes the response.
 from fastapi import APIRouter, HTTPException
 
 import config_store
+from config import get_settings
 from models import ConfigPatchRequest, ConfigResponse
 
 router = APIRouter()
@@ -31,5 +32,11 @@ def patch_config(patch: ConfigPatchRequest) -> ConfigResponse:
         updated = config_store.save(payload)
     except config_store.ConfigValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    # Other routers (query, repos, github_client...) read config.Settings,
+    # which is @lru_cache'd — without this, a saved change here (e.g. a
+    # new Gemini key) is invisible to them until process restart. Mirrors
+    # DELETE /repos's same cache_clear() after its own config_store write.
+    get_settings.cache_clear()
 
     return ConfigResponse(**config_store.mask(updated), chroma_data_dir=config_store.chroma_data_dir())
