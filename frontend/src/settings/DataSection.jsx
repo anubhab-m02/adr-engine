@@ -1,6 +1,8 @@
 // Settings' Data section (UI-DESIGN.md): read-only index location and
 // a full-wipe "Clear index" action (destructive, inline confirm — same
-// pattern as GitHubSection/GeminiSection/RepoRow).
+// pattern as GitHubSection/GeminiSection/RepoRow). Decision count (also
+// named in UI-DESIGN.md's Data row) is deliberately not shown — no such
+// field exists in ConfigResponse yet; tracked as a follow-up in #95.
 import { useEffect, useState } from 'react'
 import InlineConfirm from '../components/InlineConfirm.jsx'
 import { clearIndex, getConfig } from '../api.js'
