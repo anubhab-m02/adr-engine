@@ -81,7 +81,12 @@ def test_query_translates_embedding_error_to_503():
     assert "failed to reach Ollama" in response.json()["detail"]
 
 
-def test_query_returns_sources_only_when_no_gemini_key_is_configured(monkeypatch, make_unit):
+def test_query_returns_sources_only_when_no_gemini_key_is_configured(monkeypatch, make_unit, tmp_path):
+    # Isolate config_store's fallback path (config.py's _fill_from_config_store):
+    # an empty-but-present GEMINI_API_KEY now correctly falls back to the
+    # store, so this test must not see the real local config_store.json's
+    # own key, or it'd synthesize instead of testing the no-key path.
+    monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("GEMINI_API_KEY", "")
     config.get_settings.cache_clear()
 

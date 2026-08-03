@@ -39,7 +39,13 @@ class Settings(BaseSettings):
 
         stored = config_store.load()
         for key, value in stored.items():
-            if value is not None and key not in data:
+            # `data.get(key) == ""` (not just `key not in data`) so an env
+            # var that's declared but empty (e.g. .env's `GEMINI_API_KEY=`
+            # with nothing after the `=`) still falls back to the store
+            # instead of permanently shadowing it with "". An empty list
+            # (e.g. indexed_repos cleared via DELETE /repos) is a real,
+            # deliberate value and must NOT be treated the same way.
+            if value is not None and (key not in data or data[key] == ""):
                 data[key] = value
         return data
 

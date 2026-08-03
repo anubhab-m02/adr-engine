@@ -7,6 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import config_store
+from config import get_settings
 from main import app
 
 client = TestClient(app)
@@ -74,6 +75,24 @@ def test_patch_rejects_an_empty_string_field():
     response = client.patch("/config", json={"github_token": "   "})
 
     assert response.status_code == 422
+
+
+def test_patch_invalidates_the_cached_settings_singleton(monkeypatch):
+    # get_settings() is @lru_cache'd; other routers (query, repos,
+    # github_client...) read it instead of config_store directly, so a
+    # PATCH here must invalidate that cache or they'd keep serving the
+    # pre-patch value (e.g. a stale/empty Gemini key) until process
+    # restart, per the "no Gemini key" bug found running the live app.
+    # GEMINI_API_KEY must be unset here since env always wins over the
+    # store (config.py) — this test is about the store's value reaching
+    # a fresh Settings(), not about env precedence.
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    get_settings.cache_clear()
+    get_settings()  # populate the cache with the pre-patch value
+
+    client.patch("/config", json={"gemini_api_key": "gk_1234567890abcdef"})
+
+    assert get_settings().gemini_api_key == "gk_1234567890abcdef"
 
 
 def test_patch_can_clear_indexed_repos_without_touching_other_fields():
