@@ -50,6 +50,7 @@ class CommitRef(BaseModel):
     author: str
     date: str
     url: str
+    files_changed: list[str] = []
 
 
 class PullRequestRef(BaseModel):
