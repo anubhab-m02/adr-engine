@@ -121,6 +121,34 @@ def test_count_units_with_no_matches_returns_zero(store_module):
     assert store_module.count_units("owner/repo") == 0
 
 
+def test_files_changed_round_trips_through_upsert_and_query(store_module, make_unit):
+    unit = make_unit(files_changed=["backend/auth.py", "backend/models.py"])
+    store_module.upsert_units([unit], embeddings=[[1, 0]])
+
+    [(returned, _score)] = store_module.query_units([1, 0], k=1)
+
+    assert returned.files_changed == ["backend/auth.py", "backend/models.py"]
+
+
+def test_files_changed_defaults_to_empty_list_for_units_stored_without_it(
+    store_module, make_unit
+):
+    unit = make_unit()
+    metadata = store_module._metadata(unit)
+    del metadata["files_changed"]
+
+    store_module.get_collection().upsert(
+        ids=[unit.id],
+        embeddings=[[1, 0]],
+        documents=[store_module._document_text(unit)],
+        metadatas=[metadata],
+    )
+
+    [(returned, _score)] = store_module.query_units([1, 0], k=1)
+
+    assert returned.files_changed == []
+
+
 def test_clear_all_empties_collection_and_cursor_file(store_module, make_unit):
     store_module.upsert_units([make_unit()], embeddings=[[0.1, 0.2, 0.3]])
     store_module.set_cursor("owner/repo", {"last_commit_date": "2026-01-01T00:00:00Z"})
