@@ -46,12 +46,14 @@ def _document_text(unit: DecisionUnit) -> str:
 def _metadata(unit: DecisionUnit) -> dict:
     metadata = unit.model_dump(exclude={"id"})
     metadata["alternatives"] = json.dumps(metadata["alternatives"])
+    metadata["files_changed"] = json.dumps(metadata["files_changed"])
     return metadata
 
 
 def _unit_from_metadata(id: str, metadata: dict) -> DecisionUnit:
     fields = dict(metadata)
     fields["alternatives"] = json.loads(fields["alternatives"])
+    fields["files_changed"] = json.loads(fields.get("files_changed", "[]"))
     return DecisionUnit(id=id, **fields)
 
 

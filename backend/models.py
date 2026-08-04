@@ -24,6 +24,7 @@ class DecisionUnit(BaseModel):
     rationale: str
     alternatives: list[str]
     source_excerpt: str
+    files_changed: list[str] = []
 
 
 class IngestRequest(BaseModel):
