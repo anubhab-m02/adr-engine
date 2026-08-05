@@ -48,6 +48,35 @@ def get_latest_job() -> Job | None:
     return _jobs.get(_latest_job_id) if _latest_job_id else None
 
 
+def _run_repo(repo: str, state: RepoJobState) -> None:
+    """Run ingestion for a single repo, updating `state` in place as it
+    progresses. `on_progress` reports counts as each commit/PR is
+    processed, so a `GET /ingest/status` poll mid-run sees real numbers
+    instead of static zeros."""
+    state.phase = "fetching"
+    state.error = None
+    state.counts = IngestCounts()
+
+    def on_progress(counts: IngestCounts) -> None:
+        state.counts = counts
+
+    state.phase = "extracting"
+    try:
+        result = run_ingestion(repo, on_progress=on_progress)
+    except (GitHubError, ExtractionError, EmbeddingError) as exc:
+        state.phase = "failed"
+        state.error = str(exc)
+        return
+
+    state.phase = "done"
+    state.counts = IngestCounts(
+        fetched=result.fetched,
+        extracted=result.extracted,
+        skipped=result.skipped,
+        stored=result.stored,
+    )
+
+
 def run_job(job_id: str) -> None:
     """Run every repo in the job, isolating failures per repo so one
     repo's boundary error doesn't stop the others' progress (the
@@ -56,20 +85,17 @@ def run_job(job_id: str) -> None:
     job = _jobs[job_id]
 
     for repo, state in job.repos.items():
-        state.phase = "fetching"
-        try:
-            result = run_ingestion(repo, on_phase=lambda phase: setattr(state, "phase", phase))
-        except (GitHubError, ExtractionError, EmbeddingError) as exc:
-            state.phase = "failed"
-            state.error = str(exc)
-            continue
+        _run_repo(repo, state)
 
-        state.phase = "done"
-        state.counts = IngestCounts(
-            fetched=result.fetched,
-            extracted=result.extracted,
-            skipped=result.skipped,
-            stored=result.stored,
-        )
+    job.active = False
 
+
+def retry_job(job_id: str, repo: str) -> None:
+    """Re-run a single repo within an existing job, leaving every other
+    repo's state untouched."""
+    job = _jobs[job_id]
+    state = job.repos[repo]
+
+    job.active = True
+    _run_repo(repo, state)
     job.active = False
