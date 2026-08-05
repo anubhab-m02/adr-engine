@@ -25,6 +25,7 @@ DEFAULTS = {
     "ollama_extraction_model": None,
     "ollama_embedding_model": None,
     "gemini_model": "gemini-2.5-flash",
+    "local_repo_paths": {},
 }
 
 _SECRET_FIELDS = {"github_token", "gemini_api_key"}
@@ -78,3 +79,13 @@ def _mask_value(value: str | None) -> str | None:
 def mask(raw: dict) -> dict:
     """Return a copy of `raw` with secret fields masked for API responses."""
     return {key: _mask_value(value) if key in _SECRET_FIELDS else value for key, value in raw.items()}
+
+
+def get_local_repo_path(repo: str) -> str | None:
+    return load()["local_repo_paths"].get(repo)
+
+
+def set_local_repo_path(repo: str, path: str) -> dict:
+    paths = dict(load()["local_repo_paths"])
+    paths[repo] = path
+    return save({"local_repo_paths": paths})
