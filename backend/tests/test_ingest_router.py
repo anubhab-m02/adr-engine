@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -89,3 +90,35 @@ def test_ingest_response_matches_ingest_job_response_shape():
         response = client.post("/ingest", json={"repo": "owner/a"})
 
     assert set(response.json().keys()) == {"job_id"}
+
+
+def test_retry_ingest_returns_404_for_a_repo_with_no_known_job():
+    with patch("routers.ingest.get_latest_job") as get_latest_job:
+        get_latest_job.return_value = None
+
+        response = client.post("/ingest/retry/owner/a")
+
+    assert response.status_code == 404
+
+
+def test_retry_ingest_returns_404_when_the_repo_is_not_in_the_latest_job():
+    job = SimpleNamespace(id="job-1", repos={"owner/a": SimpleNamespace()})
+    with patch("routers.ingest.get_latest_job") as get_latest_job:
+        get_latest_job.return_value = job
+
+        response = client.post("/ingest/retry/owner/unknown")
+
+    assert response.status_code == 404
+
+
+def test_retry_ingest_schedules_retry_job_for_a_known_repo():
+    job = SimpleNamespace(id="job-1", repos={"owner/a": SimpleNamespace()})
+    with patch("routers.ingest.get_latest_job") as get_latest_job, \
+            patch("routers.ingest.retry_job") as retry_job:
+        get_latest_job.return_value = job
+
+        response = client.post("/ingest/retry/owner/a")
+
+    assert response.status_code == 202
+    assert response.json() == {"job_id": "job-1"}
+    retry_job.assert_called_once_with("job-1", "owner/a")
