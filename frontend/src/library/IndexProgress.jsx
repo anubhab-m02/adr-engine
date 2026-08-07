@@ -2,6 +2,7 @@
 // 3 and the Library page (UI-DESIGN.md). Presentational only — reads the
 // shared useIngestStatus poller, no local polling of its own.
 import { useIngestStatus } from '../lib/useIngestStatus.js'
+import RetryButton from './RetryButton.jsx'
 
 const PHASE_LABELS = {
   queued: () => 'Queued…',
@@ -17,16 +18,19 @@ function extractProgressPercent(counts) {
 }
 
 function IndexProgress({ repo }) {
-  const { status } = useIngestStatus()
+  const { status, refetch } = useIngestStatus()
   const repoState = status?.repos.find((r) => r.repo === repo)
 
   if (!repoState) return null
 
   if (repoState.phase === 'failed') {
     return (
-      <p className="text-sm text-danger" role="status">
-        {repoState.error}
-      </p>
+      <div>
+        <p className="text-sm text-danger" role="status">
+          {repoState.error}
+        </p>
+        <RetryButton repo={repo} onRetried={refetch} />
+      </div>
     )
   }
 
