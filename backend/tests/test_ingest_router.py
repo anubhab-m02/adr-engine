@@ -74,6 +74,32 @@ def test_ingest_with_no_body_at_all_starts_all_configured_repos():
     start_job.assert_called_once_with(["owner/a", "owner/b"])
 
 
+def test_ingest_seeds_repo_privacy_for_each_entry():
+    with patch("routers.ingest.start_job") as start_job, patch("routers.ingest.run_job"), \
+            patch("routers.ingest.config_store.set_repo_privacy") as set_repo_privacy:
+        start_job.return_value = "job-privacy"
+
+        response = client.post(
+            "/ingest",
+            json={"repos": ["owner/a", "owner/b"], "repo_privacy": {"owner/a": True, "owner/b": False}},
+        )
+
+    assert response.status_code == 202
+    set_repo_privacy.assert_any_call("owner/a", True)
+    set_repo_privacy.assert_any_call("owner/b", False)
+    assert set_repo_privacy.call_count == 2
+
+
+def test_ingest_without_repo_privacy_does_not_touch_config_store():
+    with patch("routers.ingest.start_job") as start_job, patch("routers.ingest.run_job"), \
+            patch("routers.ingest.config_store.set_repo_privacy") as set_repo_privacy:
+        start_job.return_value = "job-no-privacy"
+
+        client.post("/ingest", json={"repo": "owner/a"})
+
+    set_repo_privacy.assert_not_called()
+
+
 def test_ingest_schedules_the_job_as_a_background_task():
     with patch("routers.ingest.start_job") as start_job, patch("routers.ingest.run_job") as run_job:
         start_job.return_value = "job-4"

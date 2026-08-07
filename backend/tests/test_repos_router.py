@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 
 import chroma_client
 import config
+import config_store
 from ingestion import store
 from main import app
 
@@ -40,8 +41,8 @@ def test_repos_returns_counts_per_repo(make_unit):
     assert response.status_code == 200
     assert response.json() == {
         "repos": [
-            {"repo": "owner/a", "indexed_units": 2},
-            {"repo": "owner/b", "indexed_units": 1},
+            {"repo": "owner/a", "indexed_units": 2, "cloud_synthesis_allowed": True},
+            {"repo": "owner/b", "indexed_units": 1, "cloud_synthesis_allowed": True},
         ]
     }
 
@@ -57,8 +58,8 @@ def test_repos_with_zero_indexed_units_still_appears(make_unit):
     assert response.status_code == 200
     assert response.json() == {
         "repos": [
-            {"repo": "owner/a", "indexed_units": 1},
-            {"repo": "owner/b", "indexed_units": 0},
+            {"repo": "owner/a", "indexed_units": 1, "cloud_synthesis_allowed": True},
+            {"repo": "owner/b", "indexed_units": 0, "cloud_synthesis_allowed": True},
         ]
     }
 
@@ -86,3 +87,33 @@ def test_delete_repos_clears_units_cursors_and_indexed_repos(make_unit, monkeypa
     assert response.status_code == 200
     assert client.get("/repos").json() == {"repos": []}
     assert store.get_cursor("owner/a") == {}
+
+
+def test_get_repos_reflects_derived_private_default(make_unit):
+    config_store.set_repo_privacy("owner/a", private=True)
+    store.upsert_units(
+        [make_unit(id="owner/a:pr:1", repo="owner/a", url="https://github.com/owner/a/pull/1")],
+        embeddings=[[1, 0]],
+    )
+
+    response = client.get("/repos")
+
+    repo_a = next(r for r in response.json()["repos"] if r["repo"] == "owner/a")
+    assert repo_a["cloud_synthesis_allowed"] is False
+
+
+def test_patch_repo_overrides_cloud_synthesis_allowed(make_unit):
+    config_store.set_repo_privacy("owner/a", private=True)
+    store.upsert_units(
+        [make_unit(id="owner/a:pr:1", repo="owner/a", url="https://github.com/owner/a/pull/1")],
+        embeddings=[[1, 0]],
+    )
+
+    response = client.patch("/repos/owner/a", json={"cloud_synthesis_allowed": True})
+
+    assert response.status_code == 200
+    assert response.json() == {"repo": "owner/a", "indexed_units": 1, "cloud_synthesis_allowed": True}
+
+    follow_up = client.get("/repos")
+    repo_a = next(r for r in follow_up.json()["repos"] if r["repo"] == "owner/a")
+    assert repo_a["cloud_synthesis_allowed"] is True
