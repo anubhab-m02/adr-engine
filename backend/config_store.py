@@ -25,6 +25,8 @@ DEFAULTS = {
     "ollama_extraction_model": None,
     "ollama_embedding_model": None,
     "gemini_model": "gemini-2.5-flash",
+    "local_repo_paths": {},
+    "repo_settings": {},
 }
 
 _SECRET_FIELDS = {"github_token", "gemini_api_key"}
@@ -78,3 +80,43 @@ def _mask_value(value: str | None) -> str | None:
 def mask(raw: dict) -> dict:
     """Return a copy of `raw` with secret fields masked for API responses."""
     return {key: _mask_value(value) if key in _SECRET_FIELDS else value for key, value in raw.items()}
+
+
+def get_local_repo_path(repo: str) -> str | None:
+    return load()["local_repo_paths"].get(repo)
+
+
+def set_local_repo_path(repo: str, path: str) -> dict:
+    paths = dict(load()["local_repo_paths"])
+    paths[repo] = path
+    return save({"local_repo_paths": paths})
+
+
+def get_cloud_synthesis_allowed(repo: str) -> bool:
+    setting = load()["repo_settings"].get(repo)
+    if setting is None:
+        return True
+    return setting["cloud_synthesis_allowed"]
+
+
+def set_repo_privacy(repo: str, private: bool) -> dict:
+    """Seed `cloud_synthesis_allowed` from GitHub visibility.
+
+    A no-op when the repo already has an explicit override (set via
+    `set_cloud_synthesis_allowed`) so re-indexing never clobbers a user's
+    choice.
+    """
+    current = load()
+    existing = current["repo_settings"].get(repo)
+    if existing is not None and existing["explicit"]:
+        return current
+
+    settings = dict(current["repo_settings"])
+    settings[repo] = {"cloud_synthesis_allowed": not private, "explicit": False}
+    return save({"repo_settings": settings})
+
+
+def set_cloud_synthesis_allowed(repo: str, allowed: bool) -> dict:
+    settings = dict(load()["repo_settings"])
+    settings[repo] = {"cloud_synthesis_allowed": allowed, "explicit": True}
+    return save({"repo_settings": settings})

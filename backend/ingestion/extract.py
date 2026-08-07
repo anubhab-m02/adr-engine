@@ -20,6 +20,9 @@ Title: {title}
 Body:
 {body}
 
+Diff:
+{diff}
+
 Respond with a single JSON object and nothing else.
 
 If this represents a real engineering decision (a deliberate choice with a \
@@ -47,8 +50,8 @@ class ExtractionResult(BaseModel):
     alternatives: list[str]
 
 
-def _build_prompt(title: str, body: str, reinforce: bool = False) -> str:
-    prompt = _PROMPT_TEMPLATE.format(title=title, body=body)
+def _build_prompt(title: str, body: str, diff: str = "", reinforce: bool = False) -> str:
+    prompt = _PROMPT_TEMPLATE.format(title=title, body=body, diff=diff)
     if reinforce:
         prompt = f"{prompt}\n{_RETRY_REINFORCEMENT}"
     return prompt
@@ -96,9 +99,9 @@ def _parse(raw: str) -> ExtractionResult | None:
         return None
 
 
-def extract_decision(title: str, body: str) -> ExtractionResult | None:
-    result = _parse(_call_ollama(_build_prompt(title, body)))
+def extract_decision(title: str, body: str, diff: str = "") -> ExtractionResult | None:
+    result = _parse(_call_ollama(_build_prompt(title, body, diff)))
     if result is not None:
         return result
 
-    return _parse(_call_ollama(_build_prompt(title, body, reinforce=True)))
+    return _parse(_call_ollama(_build_prompt(title, body, diff, reinforce=True)))

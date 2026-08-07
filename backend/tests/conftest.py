@@ -55,6 +55,7 @@ def sample_decision_unit() -> DecisionUnit:
         rationale="JWTs couldn't be revoked without maintaining a blocklist.",
         alternatives=["JWT with a revocation blocklist", "opaque tokens via Redis"],
         source_excerpt="JWTs couldn't be revoked without maintaining a blocklist.",
+        files_changed=["backend/auth.py", "backend/models.py"],
     )
 
 
@@ -79,6 +80,7 @@ def make_unit():
             "rationale": "Needed shared state across instances",
             "alternatives": ["in-memory cache", "Memcached"],
             "source_excerpt": "Discussion about caching options.",
+            "files_changed": ["backend/cache.py"],
         }
         fields.update(overrides)
         return DecisionUnit(**fields)

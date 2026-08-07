@@ -101,3 +101,27 @@ def test_get_settings_is_cached(monkeypatch):
 
     assert first is second
     get_settings.cache_clear()
+
+
+def test_get_local_repo_path_unset_returns_none(tmp_path, monkeypatch):
+    monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
+
+    assert config_store.get_local_repo_path("owner/repo") is None
+
+
+def test_set_then_get_local_repo_path_round_trips(tmp_path, monkeypatch):
+    monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
+
+    config_store.set_local_repo_path("owner/repo", "/home/user/code/repo")
+
+    assert config_store.get_local_repo_path("owner/repo") == "/home/user/code/repo"
+
+
+def test_local_repo_paths_do_not_clobber_each_other(tmp_path, monkeypatch):
+    monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
+
+    config_store.set_local_repo_path("owner/repo-a", "/local/repo-a")
+    config_store.set_local_repo_path("owner/repo-b", "/local/repo-b")
+
+    assert config_store.get_local_repo_path("owner/repo-a") == "/local/repo-a"
+    assert config_store.get_local_repo_path("owner/repo-b") == "/local/repo-b"
