@@ -74,7 +74,7 @@ def _commit_diff(repo: str, commit: CommitRef, local_path: str | None) -> str:
         if local_path
         else github_client.get_commit_diff(repo, commit.sha)
     )
-    return diff_filter.filter_diff(raw_diff, commit.files_changed)
+    return diff_filter.filter_diff(raw_diff)
 
 
 def _record_progress(

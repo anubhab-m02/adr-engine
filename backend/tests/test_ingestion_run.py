@@ -194,7 +194,7 @@ def test_run_ingestion_passes_the_filtered_diff_to_extract_decision(mocks):
 
     run_ingestion("owner/repo")
 
-    expected_diff = diff_filter.filter_diff(raw_diff, ["backend/auth.py"])
+    expected_diff = diff_filter.filter_diff(raw_diff)
     _args, kwargs = mocks["extract_decision"].call_args
     assert kwargs["diff"] == expected_diff
     assert expected_diff == raw_diff
