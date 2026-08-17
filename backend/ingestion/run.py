@@ -101,6 +101,35 @@ def _record_progress(
         on_progress(counts)
 
 
+def _process_items(
+    repo: str,
+    items: list,
+    title_body_diff: Callable[[object], tuple[str, str, str]],
+    build_unit: Callable[[object, str, extract.ExtractionResult], DecisionUnit],
+    update_cursor: Callable[[dict, object], None],
+    cursor: dict,
+    counts: IngestCounts,
+    on_progress: Callable[[IngestCounts], None] | None,
+) -> None:
+    """Shared extract -> embed -> store -> progress -> cursor loop for
+    both commits and PRs; only how to get (title, body, diff), how to
+    build a unit, and how to advance the cursor differ per item kind."""
+    for item in items:
+        title, body, diff = title_body_diff(item)
+        result = extract.extract_decision(title, body, diff=diff)
+        is_decision = result is not None and result.is_decision
+
+        if is_decision:
+            vector = embed.embed_text(result.decision)
+            unit = build_unit(item, body, result)
+            store.upsert_units([unit], embeddings=[vector])
+
+        _record_progress(is_decision, counts, on_progress)
+
+        update_cursor(cursor, item)
+        store.set_cursor(repo, dict(cursor))
+
+
 def _process_commits(
     repo: str,
     commits: list[CommitRef],
@@ -109,25 +138,25 @@ def _process_commits(
     counts: IngestCounts,
     on_progress: Callable[[IngestCounts], None] | None,
 ) -> None:
-    last_date = cursor.get("last_commit_date")
-
-    for commit in commits:
+    def title_body_diff(commit: CommitRef) -> tuple[str, str, str]:
         title, body = _split_commit_message(commit.message)
-        diff = _commit_diff(repo, commit, local_path)
-        result = extract.extract_decision(title, body, diff=diff)
-        is_decision = result is not None and result.is_decision
+        return title, body, _commit_diff(repo, commit, local_path)
 
-        if is_decision:
-            vector = embed.embed_text(result.decision)
-            unit = _commit_unit(repo, commit, result)
-            store.upsert_units([unit], embeddings=[vector])
-
-        _record_progress(is_decision, counts, on_progress)
-
+    def update_cursor(cursor: dict, commit: CommitRef) -> None:
+        last_date = cursor.get("last_commit_date")
         if last_date is None or commit.date > last_date:
-            last_date = commit.date
-        cursor["last_commit_date"] = last_date
-        store.set_cursor(repo, dict(cursor))
+            cursor["last_commit_date"] = commit.date
+
+    _process_items(
+        repo,
+        commits,
+        title_body_diff,
+        build_unit=lambda commit, _body, result: _commit_unit(repo, commit, result),
+        update_cursor=update_cursor,
+        cursor=cursor,
+        counts=counts,
+        on_progress=on_progress,
+    )
 
 
 def _process_prs(
@@ -137,25 +166,24 @@ def _process_prs(
     counts: IngestCounts,
     on_progress: Callable[[IngestCounts], None] | None,
 ) -> None:
-    last_date = cursor.get("last_pr_updated_at")
+    def title_body_diff(pr: PullRequestRef) -> tuple[str, str, str]:
+        return pr.title, _pr_body(pr), ""
 
-    for pr in prs:
-        body = _pr_body(pr)
-        result = extract.extract_decision(pr.title, body)
-        is_decision = result is not None and result.is_decision
-
-        if is_decision:
-            vector = embed.embed_text(result.decision)
-            unit = _pr_unit(repo, pr, body, result)
-            store.upsert_units([unit], embeddings=[vector])
-
-        _record_progress(is_decision, counts, on_progress)
-
+    def update_cursor(cursor: dict, pr: PullRequestRef) -> None:
+        last_date = cursor.get("last_pr_updated_at")
         if pr.merged_at and (last_date is None or pr.merged_at > last_date):
-            last_date = pr.merged_at
-        if last_date is not None:
-            cursor["last_pr_updated_at"] = last_date
-        store.set_cursor(repo, dict(cursor))
+            cursor["last_pr_updated_at"] = pr.merged_at
+
+    _process_items(
+        repo,
+        prs,
+        title_body_diff,
+        build_unit=lambda pr, body, result: _pr_unit(repo, pr, body, result),
+        update_cursor=update_cursor,
+        cursor=cursor,
+        counts=counts,
+        on_progress=on_progress,
+    )
 
 
 def run_ingestion(repo: str, on_progress: Callable[[IngestCounts], None] | None = None) -> IngestResult:
