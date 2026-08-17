@@ -20,7 +20,9 @@ backend/
     ingest_job.py       # Phase 2: background ingestion task + in-process job state
   ingestion/
     github_client.py    # GitHub REST → typed models; pagination; rate-limit aware
-    extract.py          # commit/PR text → DecisionUnit | NotADecision (Ollama)
+    local_git.py         # Track A: local clone → typed models via the `git` CLI, no API/token
+    diff_filter.py        # Track A: excludes lockfile/generated/vendored hunks, caps diff size
+    extract.py          # commit/PR text + filtered diff → DecisionUnit | NotADecision (Ollama)
     embed.py            # text → vector (Ollama nomic-embed-text)
     store.py            # DecisionUnit upsert/query against Chroma; cursor I/O
     run.py              # orchestrator: fetch → extract → embed → store
@@ -28,10 +30,16 @@ backend/
     search.py           # query embedding + top-k + relevance floor
   synthesis/
     answer.py           # retrieved units → Gemini prompt → parsed answer+citations
+  eval/                  # Track A: recall@5 quality gate
+    harness.py             # frozen fixture → recall@5, floor/broken/ratchet exit codes
+    docs_eval_questions.py # parses golden questions straight out of docs/eval-questions.md
+    build_fixture.py       # one-off: real ingestion → fixtures/ (not run in CI)
+    fixtures/               # checked-in frozen DecisionUnits + embeddings
   routers/              # ALL thin: parse, call one service, shape response
     ingest.py           # POST /ingest (202) + GET /ingest/status
     retrieve.py         # POST /retrieve
     query.py            # POST /query
+    repos.py             # Phase 2: GET/DELETE/PATCH /repos
     auth.py             # Phase 2: /auth/github/* device flow
     config.py           # Phase 2: GET/PATCH /config
     setup.py            # Phase 2: GET /setup/state
