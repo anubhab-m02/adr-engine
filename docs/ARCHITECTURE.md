@@ -20,7 +20,9 @@ backend/
     ingest_job.py       # Phase 2: background ingestion task + in-process job state
   ingestion/
     github_client.py    # GitHub REST → typed models; pagination; rate-limit aware
-    extract.py          # commit/PR text → DecisionUnit | NotADecision (Ollama)
+    local_git.py         # Track A: local clone → typed models via the `git` CLI, no API/token
+    diff_filter.py        # Track A: excludes lockfile/generated/vendored hunks, caps diff size
+    extract.py          # commit/PR text + filtered diff → DecisionUnit | NotADecision (Ollama)
     embed.py            # text → vector (Ollama nomic-embed-text)
     store.py            # DecisionUnit upsert/query against Chroma; cursor I/O
     run.py              # orchestrator: fetch → extract → embed → store
@@ -28,10 +30,16 @@ backend/
     search.py           # query embedding + top-k + relevance floor
   synthesis/
     answer.py           # retrieved units → Gemini prompt → parsed answer+citations
+  eval/                  # Track A: recall@5 quality gate
+    harness.py             # frozen fixture → recall@5, floor/broken/ratchet exit codes
+    docs_eval_questions.py # parses golden questions straight out of docs/eval-questions.md
+    build_fixture.py       # one-off: real ingestion → fixtures/ (not run in CI)
+    fixtures/               # checked-in frozen DecisionUnits + embeddings
   routers/              # ALL thin: parse, call one service, shape response
     ingest.py           # POST /ingest (202) + GET /ingest/status
     retrieve.py         # POST /retrieve
     query.py            # POST /query
+    repos.py             # Phase 2: GET/DELETE/PATCH /repos
     auth.py             # Phase 2: /auth/github/* device flow
     config.py           # Phase 2: GET/PATCH /config
     setup.py            # Phase 2: GET /setup/state
@@ -75,6 +83,25 @@ docs/                   # this file + SYSTEM-DESIGN.md + UI-DESIGN.md + eval-que
 - LLM calls are isolated in exactly three places: `extract.py` (local),
   `embed.py` (local), `answer.py` (cloud). Nothing else talks to a model.
 
+## Diff filtering for extraction
+
+`backend/ingestion/diff_filter.py` runs on every unified diff before it
+reaches `extract.py`, so the local extraction model never sees lockfile
+churn or multi-thousand-line diffs:
+
+- Whole-file hunks are dropped for paths matching: `package-lock.json`,
+  `yarn.lock`, `pnpm-lock.yaml`, `Cargo.lock`, `poetry.lock`, `go.sum`,
+  `*.min.js`, `*.min.css`, `dist/*`, `build/*`, `node_modules/*`,
+  `vendor/*` — each pattern also matches nested under any subdirectory
+  (e.g. a lockfile inside a `frontend/` subpackage).
+- What's left is capped at 400 lines total: the first 300 kept, the last
+  100 kept, the middle dropped with the omitted line count stated inline
+  (`... [N lines omitted] ...`).
+- That 400/300/100 split was sized off BuFin's own measured diff
+  distribution over its last 100 commits (median 45 lines, p90 361, max
+  3,140) — large enough to keep the typical diff whole, small enough to
+  cap the rare outlier.
+
 ## Testing conventions (binding for the daily agent)
 
 - **No test may require network, Ollama, Chroma-with-real-embeddings, or
@@ -89,6 +116,19 @@ docs/                   # this file + SYSTEM-DESIGN.md + UI-DESIGN.md + eval-que
   fake vectors, not real embeddings.
 - `pytest` from `backend/` must pass in a clean environment. This is the
   daily agent's self-verification gate before opening/updating its PR.
+
+## Eval fixture regeneration (binding)
+
+`backend/eval/fixtures/decision_units.json` and `embeddings.json` are a
+frozen snapshot of real ingestion output, tied to whichever embedding
+model produced the vectors inside it. Whenever `OLLAMA_EMBEDDING_MODEL`
+changes, the fixture MUST be regenerated via `python -m
+eval.build_fixture` before merging. A PR that changes
+`OLLAMA_EMBEDDING_MODEL` without regenerating the fixture is breaking the
+eval harness even if `eval/harness.py` still exits 0 in CI — recall@5
+computed against embeddings from a different model than the one currently
+configured measures nothing meaningful, it just happens to produce a
+number.
 
 ## Error-handling conventions
 

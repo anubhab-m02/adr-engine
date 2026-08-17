@@ -90,3 +90,7 @@ export function postIngest({ repos } = {}) {
     body: JSON.stringify(repos ? { repos } : {}),
   })
 }
+
+export function retryIngest(repo) {
+  return request(`/ingest/retry/${repo}`, { method: 'POST' })
+}

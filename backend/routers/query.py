@@ -25,7 +25,7 @@ def query(request: QueryRequest) -> QueryResponse:
     except EmbeddingError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
-    if not synthesis_available():
+    if not synthesis_available(request.repos):
         return QueryResponse(
             answer=None,
             citations=[r.unit for r in results],

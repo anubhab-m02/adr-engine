@@ -3,6 +3,7 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 import config
+import config_store
 from ingestion.embed import EmbeddingError
 from main import app
 from models import RetrieveResult
@@ -116,6 +117,62 @@ def test_query_still_synthesizes_when_gemini_key_is_configured(monkeypatch):
         synthesize.return_value = ("Nothing in the indexed history covers this question.", [])
 
         response = client.post("/query", json={"question": "why redis?"})
+
+    assert response.status_code == 200
+    synthesize.assert_called_once()
+    assert response.json()["mode"] == "synthesized"
+
+
+def test_query_falls_back_to_sources_only_when_unscoped_and_an_indexed_repo_disallows_cloud_synthesis(
+    monkeypatch, tmp_path
+):
+    # REQUIRED_ENV configures INDEXED_REPOS="owner/repo"; an unscoped query
+    # (no `repos` in the request) still touches it, so it must be checked too.
+    monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
+    config_store.set_cloud_synthesis_allowed("owner/repo", False)
+
+    with patch("routers.query.search") as search, patch("routers.query.synthesize") as synthesize:
+        search.return_value = []
+
+        response = client.post("/query", json={"question": "why redis?"})
+
+    assert response.status_code == 200
+    synthesize.assert_not_called()
+    assert response.json()["mode"] == "sources_only"
+
+
+def test_query_falls_back_to_sources_only_when_a_scoped_repo_disallows_cloud_synthesis(
+    monkeypatch, tmp_path, make_unit
+):
+    monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
+    config_store.set_cloud_synthesis_allowed("owner/private-repo", False)
+
+    results = [_result(make_unit, "1")]
+
+    with patch("routers.query.search") as search, patch("routers.query.synthesize") as synthesize:
+        search.return_value = results
+
+        response = client.post(
+            "/query", json={"question": "why redis?", "repos": ["owner/private-repo"]}
+        )
+
+    assert response.status_code == 200
+    synthesize.assert_not_called()
+    assert response.json()["mode"] == "sources_only"
+
+
+def test_query_synthesizes_when_scoped_only_to_allowed_repos(monkeypatch, tmp_path):
+    monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
+    config_store.set_cloud_synthesis_allowed("owner/private-repo", False)
+    config_store.set_cloud_synthesis_allowed("owner/public-repo", True)
+
+    with patch("routers.query.search") as search, patch("routers.query.synthesize") as synthesize:
+        search.return_value = []
+        synthesize.return_value = ("Nothing in the indexed history covers this question.", [])
+
+        response = client.post(
+            "/query", json={"question": "why redis?", "repos": ["owner/public-repo"]}
+        )
 
     assert response.status_code == 200
     synthesize.assert_called_once()

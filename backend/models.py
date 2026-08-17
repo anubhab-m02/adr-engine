@@ -24,11 +24,13 @@ class DecisionUnit(BaseModel):
     rationale: str
     alternatives: list[str]
     source_excerpt: str
+    files_changed: list[str] = []
 
 
 class IngestRequest(BaseModel):
     repo: str | None = None
     repos: list[str] | None = None
+    repo_privacy: dict[str, bool] | None = None
 
 
 class IngestResult(BaseModel):
@@ -99,10 +101,15 @@ class QueryResponse(BaseModel):
 class RepoInfo(BaseModel):
     repo: str
     indexed_units: int
+    cloud_synthesis_allowed: bool = True
 
 
 class ReposResponse(BaseModel):
     repos: list[RepoInfo]
+
+
+class RepoPrivacyPatchRequest(BaseModel):
+    cloud_synthesis_allowed: bool
 
 
 class GitHubReposResponse(BaseModel):

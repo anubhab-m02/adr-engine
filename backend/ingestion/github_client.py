@@ -50,6 +50,7 @@ class CommitRef(BaseModel):
     author: str
     date: str
     url: str
+    files_changed: list[str] = []
 
 
 class PullRequestRef(BaseModel):
@@ -106,12 +107,14 @@ def _headers() -> dict:
     }
 
 
-def _get(url: str, rate_limiter: _RateLimiter, params: dict | None = None) -> httpx.Response:
+def _get(
+    url: str, rate_limiter: _RateLimiter, params: dict | None = None, headers: dict | None = None
+) -> httpx.Response:
     rate_limiter.check()
     try:
         response = httpx.get(
             url,
-            headers=_headers(),
+            headers=headers or _headers(),
             params=params,
             timeout=get_settings().github_request_timeout_seconds,
         )
@@ -159,6 +162,14 @@ def list_commits(repo: str, since: str | None = None) -> list[CommitRef]:
         )
         for item in data
     ]
+
+
+def get_commit_diff(repo: str, sha: str) -> str:
+    """Unified diff text for `sha`, fetched via the commit-as-diff media
+    type rather than the default JSON representation."""
+    headers = {**_headers(), "Accept": "application/vnd.github.v3.diff"}
+    response = _get(f"{GITHUB_API_URL}/repos/{repo}/commits/{sha}", _RateLimiter(), headers=headers)
+    return response.text
 
 
 def _list_review_comments(repo: str, number: int, rate_limiter: _RateLimiter) -> list[str]:

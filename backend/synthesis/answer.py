@@ -10,6 +10,7 @@ import re
 
 import httpx
 
+import config_store
 from config import get_settings
 from models import DecisionUnit
 
@@ -94,7 +95,16 @@ def synthesize(question: str, units: list[DecisionUnit]) -> tuple[str, list[Deci
     return answer, _resolve_citations(answer, units)
 
 
-def synthesis_available() -> bool:
+def synthesis_available(repos: list[str] | None) -> bool:
     """Whether synthesis can run at all — false when no Gemini key is
-    configured, in which case /query degrades to sources_only mode."""
-    return bool(get_settings().gemini_api_key)
+    configured, or when any repo the query touches disallows cloud
+    synthesis, in which case /query degrades to sources_only mode.
+
+    `repos` mirrors QueryRequest.repos: an explicit scope, or None for
+    an unscoped query, which touches every currently indexed repo.
+    """
+    if not get_settings().gemini_api_key:
+        return False
+
+    target_repos = repos if repos else get_settings().indexed_repos
+    return all(config_store.get_cloud_synthesis_allowed(repo) for repo in target_repos)
