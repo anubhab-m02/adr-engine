@@ -102,6 +102,7 @@ class RepoInfo(BaseModel):
     repo: str
     indexed_units: int
     cloud_synthesis_allowed: bool = True
+    indexed_at: str | None = None
 
 
 class ReposResponse(BaseModel):

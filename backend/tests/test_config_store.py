@@ -64,3 +64,36 @@ def test_stored_value_used_when_env_var_unset(tmp_path, monkeypatch):
 
     assert settings.gemini_api_key == "gk_from_store"
     config.get_settings.cache_clear()
+
+
+def test_get_indexed_at_defaults_to_none_for_an_unindexed_repo(tmp_path, monkeypatch):
+    monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
+
+    assert config_store.get_indexed_at("owner/repo") is None
+
+
+def test_set_indexed_at_round_trips(tmp_path, monkeypatch):
+    monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
+
+    config_store.set_indexed_at("owner/repo", "2026-01-01T00:00:00+00:00")
+
+    assert config_store.get_indexed_at("owner/repo") == "2026-01-01T00:00:00+00:00"
+
+
+def test_set_indexed_at_overwrites_on_reindex(tmp_path, monkeypatch):
+    monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
+
+    config_store.set_indexed_at("owner/repo", "2026-01-01T00:00:00+00:00")
+    config_store.set_indexed_at("owner/repo", "2026-01-02T00:00:00+00:00")
+
+    assert config_store.get_indexed_at("owner/repo") == "2026-01-02T00:00:00+00:00"
+
+
+def test_set_indexed_at_does_not_clobber_other_repos(tmp_path, monkeypatch):
+    monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
+
+    config_store.set_indexed_at("owner/a", "2026-01-01T00:00:00+00:00")
+    config_store.set_indexed_at("owner/b", "2026-01-02T00:00:00+00:00")
+
+    assert config_store.get_indexed_at("owner/a") == "2026-01-01T00:00:00+00:00"
+    assert config_store.get_indexed_at("owner/b") == "2026-01-02T00:00:00+00:00"
