@@ -20,8 +20,7 @@ router = APIRouter()
 @router.post("/ingest", response_model=IngestJobResponse, status_code=202)
 def ingest(background_tasks: BackgroundTasks, request: IngestRequest = IngestRequest()) -> IngestJobResponse:
     repos = request.repos or ([request.repo] if request.repo else None) or get_settings().indexed_repos
-    for repo, private in (request.repo_privacy or {}).items():
-        config_store.set_repo_privacy(repo, private)
+    config_store.seed_repo_privacy(request.repo_privacy or {})
     job_id = start_job(repos)
     background_tasks.add_task(run_job, job_id)
     return IngestJobResponse(job_id=job_id)

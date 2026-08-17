@@ -63,3 +63,20 @@ def test_repo_settings_do_not_clobber_each_other(tmp_path, monkeypatch):
 
     assert config_store.get_cloud_synthesis_allowed("owner/repo-a") is False
     assert config_store.get_cloud_synthesis_allowed("owner/repo-b") is True
+
+
+def test_seed_repo_privacy_applies_set_repo_privacy_to_every_entry(tmp_path, monkeypatch):
+    monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
+
+    config_store.seed_repo_privacy({"owner/a": True, "owner/b": False})
+
+    assert config_store.get_cloud_synthesis_allowed("owner/a") is False
+    assert config_store.get_cloud_synthesis_allowed("owner/b") is True
+
+
+def test_seed_repo_privacy_on_an_empty_dict_is_a_noop(tmp_path, monkeypatch):
+    monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
+
+    config_store.seed_repo_privacy({})
+
+    assert config_store.load()["repo_settings"] == {}

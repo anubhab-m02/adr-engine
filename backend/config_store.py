@@ -116,6 +116,14 @@ def set_repo_privacy(repo: str, private: bool) -> dict:
     return save({"repo_settings": settings})
 
 
+def seed_repo_privacy(repo_privacy: dict[str, bool]) -> None:
+    """`set_repo_privacy` for every repo in `repo_privacy` — lets
+    `POST /ingest` seed each newly-indexed repo's default in one call
+    instead of looping over the store itself."""
+    for repo, private in repo_privacy.items():
+        set_repo_privacy(repo, private)
+
+
 def set_cloud_synthesis_allowed(repo: str, allowed: bool) -> dict:
     settings = dict(load()["repo_settings"])
     settings[repo] = {"cloud_synthesis_allowed": allowed, "explicit": True}
