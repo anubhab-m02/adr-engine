@@ -185,6 +185,24 @@ def test_run_ingestion_threads_files_changed_into_the_stored_unit(mocks):
     assert units[0].files_changed == ["backend/auth.py"]
 
 
+def test_run_ingestion_derives_files_changed_from_the_diff_for_github_transport_commits(mocks):
+    # Regression test: github_client.list_commits never populates
+    # CommitRef.files_changed (GitHub's commit-list endpoint doesn't
+    # return file names), so a GitHub-transport commit used to store its
+    # unit with files_changed permanently empty. run_ingestion now derives
+    # it from the diff it already fetches for extraction, no extra call.
+    raw_diff = "diff --git a/backend/auth.py b/backend/auth.py\n+use sessions\n"
+    mocks["list_commits"].return_value = [_commit()]  # files_changed left unset ([])
+    mocks["list_prs"].return_value = []
+    mocks["get_commit_diff"].return_value = raw_diff
+    mocks["extract_decision"].return_value = DECISION
+
+    run_ingestion("owner/repo")
+
+    ((units, *_), _kwargs) = mocks["upsert_units"].call_args
+    assert units[0].files_changed == ["backend/auth.py"]
+
+
 def test_run_ingestion_passes_the_filtered_diff_to_extract_decision(mocks):
     raw_diff = "diff --git a/backend/auth.py b/backend/auth.py\n+use sessions\n"
     mocks["list_commits"].return_value = [_commit(files_changed=["backend/auth.py"])]

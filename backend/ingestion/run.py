@@ -74,6 +74,14 @@ def _commit_diff(repo: str, commit: CommitRef, local_path: str | None) -> str:
         if local_path
         else github_client.get_commit_diff(repo, commit.sha)
     )
+
+    # GitHub's commit-list endpoint doesn't return file names (local_git
+    # already populates this from `git diff-tree` in list_commits), so
+    # derive it here from the diff already being fetched rather than an
+    # extra per-commit API call.
+    if not commit.files_changed:
+        commit.files_changed = diff_filter.extract_changed_files(raw_diff)
+
     return diff_filter.filter_diff(raw_diff)
 
 
