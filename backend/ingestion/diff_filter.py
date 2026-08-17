@@ -13,28 +13,18 @@ sections would otherwise silently drop every hunk (positional zip
 against a shorter/empty list yields nothing).
 """
 
-import fnmatch
 import re
 
-_EXCLUDED_PATTERNS = [
+_EXCLUDED_BASENAMES = {
     "package-lock.json",
     "yarn.lock",
     "pnpm-lock.yaml",
     "Cargo.lock",
     "poetry.lock",
     "go.sum",
-    "*.min.js",
-    "*.min.css",
-    "dist/*",
-    "build/*",
-    "node_modules/*",
-    "vendor/*",
-]
-
-# Every pattern also gets a nested equivalent so an excluded path matches
-# regardless of which subdirectory it lives under (e.g. a lockfile inside
-# a frontend/ subpackage).
-_ALL_PATTERNS = _EXCLUDED_PATTERNS + [f"*/{pattern}" for pattern in _EXCLUDED_PATTERNS]
+}
+_EXCLUDED_SUFFIXES = (".min.js", ".min.css")
+_EXCLUDED_DIR_SEGMENTS = {"dist", "build", "node_modules", "vendor"}
 
 _MAX_LINES = 400
 _HEAD_LINES = 300
@@ -44,7 +34,13 @@ _DIFF_HEADER = re.compile(r"^diff --git a/.+ b/(?P<path>.+)$")
 
 
 def _is_excluded(path: str) -> bool:
-    return any(fnmatch.fnmatch(path, pattern) for pattern in _ALL_PATTERNS)
+    segments = path.split("/")
+    name = segments[-1]
+    return (
+        name in _EXCLUDED_BASENAMES
+        or name.endswith(_EXCLUDED_SUFFIXES)
+        or any(segment in _EXCLUDED_DIR_SEGMENTS for segment in segments[:-1])
+    )
 
 
 def _split_file_sections(raw_diff: str) -> list[str]:
