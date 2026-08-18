@@ -7,17 +7,24 @@ import CitationMarker from './CitationMarker.jsx'
 
 const CITATION_PATTERN = /\[([^[\]]+)\]/g
 
-function parseAnswer(answer, citations) {
-  const knownIds = new Set(citations.map((unit) => unit.id))
-  const numberById = new Map()
+// Splits into paragraphs first, then parses citation markers within each
+// one, so each paragraph's parts are addressable on their own (a margin
+// note needs to know "paragraph 2 cites marker 3" to sit beside paragraph
+// 2). Marker numbering still runs off one shared map, so it follows
+// first-appearance order across the whole answer, not reset per paragraph.
+function parseParagraph(paragraph, knownIds, numberById, paragraphIndex) {
   const parts = []
   let lastIndex = 0
   let match
 
   CITATION_PATTERN.lastIndex = 0
-  while ((match = CITATION_PATTERN.exec(answer)) !== null) {
+  while ((match = CITATION_PATTERN.exec(paragraph)) !== null) {
     if (match.index > lastIndex) {
-      parts.push({ type: 'text', key: parts.length, value: answer.slice(lastIndex, match.index) })
+      parts.push({
+        type: 'text',
+        key: parts.length,
+        value: paragraph.slice(lastIndex, match.index),
+      })
     }
 
     const unitId = match[1]
@@ -31,31 +38,46 @@ function parseAnswer(answer, citations) {
     lastIndex = CITATION_PATTERN.lastIndex
   }
 
-  if (lastIndex < answer.length) {
-    parts.push({ type: 'text', key: parts.length, value: answer.slice(lastIndex) })
+  if (lastIndex < paragraph.length) {
+    parts.push({ type: 'text', key: parts.length, value: paragraph.slice(lastIndex) })
   }
 
-  return parts
+  return { key: paragraphIndex, parts }
+}
+
+function parseAnswer(answer, citations) {
+  const knownIds = new Set(citations.map((unit) => unit.id))
+  const numberById = new Map()
+
+  return answer
+    .split('\n\n')
+    .filter((paragraph) => paragraph.trim().length > 0)
+    .map((paragraph, index) => parseParagraph(paragraph, knownIds, numberById, index))
 }
 
 function AnswerPassage({ answer, citations }) {
-  const parts = parseAnswer(answer, citations)
+  const paragraphs = parseAnswer(answer, citations)
   const reducedMotion = usePrefersReducedMotion()
 
   return (
-    <p
-      className={`font-reading text-ink text-[1.0625rem] leading-[1.7] max-w-[70ch] ${
-        reducedMotion ? '' : 'animate-answer-settle'
-      }`}
-    >
-      {parts.map((part) =>
-        part.type === 'marker' ? (
-          <CitationMarker key={part.key} number={part.number} unitId={part.unitId} />
-        ) : (
-          <span key={part.key}>{part.value}</span>
-        ),
-      )}
-    </p>
+    <>
+      {paragraphs.map((paragraph) => (
+        <p
+          key={paragraph.key}
+          className={`font-reading text-ink text-[1.0625rem] leading-[1.7] max-w-[70ch] ${
+            reducedMotion ? '' : 'animate-answer-settle'
+          }`}
+        >
+          {paragraph.parts.map((part) =>
+            part.type === 'marker' ? (
+              <CitationMarker key={part.key} number={part.number} unitId={part.unitId} />
+            ) : (
+              <span key={part.key}>{part.value}</span>
+            ),
+          )}
+        </p>
+      ))}
+    </>
   )
 }
 
