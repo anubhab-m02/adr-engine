@@ -94,6 +94,19 @@ def synthesize(question: str, units: list[DecisionUnit]) -> tuple[str, list[Deci
     return answer, _resolve_citations(answer, units)
 
 
+def validate_gemini() -> tuple[bool, str | None]:
+    """Real, minimal call to confirm the configured Gemini key/model works.
+
+    Reuses `_call_gemini` rather than a second Gemini client, per
+    ARCHITECTURE.md's "LLM calls isolated in exactly three places" rule.
+    """
+    try:
+        _call_gemini("Reply with exactly one word: OK")
+    except SynthesisError as exc:
+        return False, str(exc)
+    return True, None
+
+
 def synthesis_available(repos: list[str] | None) -> bool:
     """Whether synthesis can run at all — false when no Gemini key is
     configured, or when any repo the query touches disallows cloud

@@ -154,6 +154,11 @@ class AuthStatusResponse(BaseModel):
     avatar_url: str | None = None
 
 
+class ValidationResponse(BaseModel):
+    ok: bool
+    detail: str | None = None
+
+
 class SetupStateResponse(BaseModel):
     github_connected: bool
     repos_selected: bool

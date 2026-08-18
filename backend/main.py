@@ -12,6 +12,7 @@ from routers.query import router as query_router
 from routers.repos import router as repos_router
 from routers.retrieve import router as retrieve_router
 from routers.setup import router as setup_router
+from routers.validation import router as validation_router
 
 app = FastAPI(title="adr-engine")
 
@@ -34,6 +35,7 @@ app.include_router(github_router)
 app.include_router(config_router)
 app.include_router(auth_router)
 app.include_router(setup_router)
+app.include_router(validation_router)
 
 
 @app.get("/health")
