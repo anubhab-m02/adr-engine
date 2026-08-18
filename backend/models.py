@@ -96,6 +96,8 @@ class QueryResponse(BaseModel):
     citations: list[DecisionUnit]
     retrieved_count: int
     mode: Literal["synthesized", "sources_only"]
+    sent_to_cloud: bool
+    cloud_synthesis_fields: list[str] | None = None
 
 
 class RepoInfo(BaseModel):
