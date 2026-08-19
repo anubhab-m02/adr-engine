@@ -29,7 +29,12 @@ function relativeDate(dateString) {
   return formatter.format(Math.round(duration), 'year')
 }
 
-function SourceCard({ unit, number }) {
+// `widthClassName` defaults to a fixed card width for the stacked-list
+// contexts (SourceCardList, SourcesView). AnswerPage's margin track passes
+// `w-full` instead, so the card fills whatever width the grid column
+// currently has — the narrow 900-1280px track and the full 260px one
+// above it — rather than a fixed width that would overflow the narrow one.
+function SourceCard({ unit, number, widthClassName = 'w-full sm:w-64' }) {
   const accessibleName = `Citation: ${unit.title}, ${unit.kind} in ${unit.repo}`
 
   return (
@@ -39,7 +44,7 @@ function SourceCard({ unit, number }) {
       target="_blank"
       rel="noreferrer"
       aria-label={accessibleName}
-      className="block w-full sm:w-64 rounded-xl border border-transparent bg-panel p-4 transition-colors hover:border-accent"
+      className={`block ${widthClassName} rounded-xl border border-transparent bg-panel p-4 transition-colors hover:border-accent`}
     >
       <div className="flex items-center gap-2">
         {number != null && <span className="font-ui text-xs text-ink-muted">{number}</span>}
