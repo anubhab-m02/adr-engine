@@ -110,7 +110,12 @@ function AskPage() {
           </div>
         ) : (
           <div className="max-w-3xl mx-auto">
-            <MessageList messages={messages} disabled={loading} />
+            <MessageList
+              messages={messages}
+              repos={Array.isArray(repos) ? repos : []}
+              selectedRepos={selectedRepos}
+              disabled={loading}
+            />
           </div>
         )}
       </main>
