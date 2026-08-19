@@ -92,7 +92,7 @@ describe('AnswerPage', () => {
     }
   })
 
-  describe('>=1280px margin grid', () => {
+  describe('>=900px margin grid', () => {
     it('places a cited paragraph in the reading column and its source card in the margin column, same grid row', () => {
       const { container } = render(
         <AnswerPage
@@ -104,20 +104,24 @@ describe('AnswerPage', () => {
         />,
       )
 
-      const grid = container.querySelector('.xl\\:grid')
+      const grid = container.querySelector('.min-\\[900px\\]\\:grid')
       expect(grid).toBeInTheDocument()
 
       const paragraph = screen.getByText(/We use OAuth2 for auth/).closest('p')
-      expect(paragraph).toHaveClass('xl:col-start-1')
+      expect(paragraph).toHaveClass('min-[900px]:col-start-1')
 
-      const marginGroup = grid.querySelector('.xl\\:col-start-2')
+      const marginGroup = grid.querySelector('.min-\\[900px\\]\\:col-start-2')
       expect(marginGroup).toBeInTheDocument()
-      expect(marginGroup).toHaveClass('hidden', 'xl:flex')
+      expect(marginGroup).toHaveClass('hidden', 'min-[900px]:flex')
       const marginLink = marginGroup.querySelector('a')
       expect(marginLink).toHaveAttribute('href', citation.url)
+      // The card fills its grid column instead of a fixed width, so it
+      // doesn't overflow the narrower 900-1280px track.
+      expect(marginLink).toHaveClass('w-full')
+      expect(marginLink).not.toHaveClass('sm:w-64')
 
       // paragraph and its margin group are siblings under the same
-      // xl:contents wrapper, i.e. the same implicit grid row.
+      // min-[900px]:contents wrapper, i.e. the same implicit grid row.
       expect(paragraph.parentElement).toBe(marginGroup.parentElement)
     })
 
@@ -132,7 +136,7 @@ describe('AnswerPage', () => {
         />,
       )
 
-      expect(container.querySelector('.xl\\:col-start-2')).not.toBeInTheDocument()
+      expect(container.querySelector('.min-\\[900px\\]\\:col-start-2')).not.toBeInTheDocument()
     })
 
     it('gives each margin source card its marker number', () => {
@@ -149,6 +153,40 @@ describe('AnswerPage', () => {
 
       expect(screen.getAllByText('1')).not.toHaveLength(0)
       expect(screen.getAllByText('2')).not.toHaveLength(0)
+    })
+
+    it('falls back to a stacked source list, hidden only once the grid takes over at 900px', () => {
+      const { container } = render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth [owner/repo:pr:42]."
+          citations={[citation]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      const fallback = container.querySelector('.min-\\[900px\\]\\:hidden')
+      expect(fallback).toBeInTheDocument()
+      expect(fallback.querySelector('a')).toHaveAttribute('href', citation.url)
+    })
+  })
+
+  describe('900-1280px narrow margin track', () => {
+    it('defines a narrower margin column than the >=1280px track, widening at xl', () => {
+      const { container } = render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth [owner/repo:pr:42]."
+          citations={[citation]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      const grid = container.querySelector('.min-\\[900px\\]\\:grid')
+      expect(grid).toHaveClass('min-[900px]:grid-cols-[minmax(0,68ch)_180px]')
+      expect(grid).toHaveClass('xl:grid-cols-[minmax(0,68ch)_260px]')
     })
   })
 })
