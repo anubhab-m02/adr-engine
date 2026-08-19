@@ -87,6 +87,68 @@ describe('AnswerPage', () => {
     )
 
     expect(screen.getByText(/We use OAuth2 for auth/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Citation:/ })).toHaveAttribute('href', citation.url)
+    for (const link of screen.getAllByRole('link', { name: /Citation:/ })) {
+      expect(link).toHaveAttribute('href', citation.url)
+    }
+  })
+
+  describe('>=1280px margin grid', () => {
+    it('places a cited paragraph in the reading column and its source card in the margin column, same grid row', () => {
+      const { container } = render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth [owner/repo:pr:42]."
+          citations={[citation]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      const grid = container.querySelector('.xl\\:grid')
+      expect(grid).toBeInTheDocument()
+
+      const paragraph = screen.getByText(/We use OAuth2 for auth/).closest('p')
+      expect(paragraph).toHaveClass('xl:col-start-1')
+
+      const marginGroup = grid.querySelector('.xl\\:col-start-2')
+      expect(marginGroup).toBeInTheDocument()
+      expect(marginGroup).toHaveClass('hidden', 'xl:flex')
+      const marginLink = marginGroup.querySelector('a')
+      expect(marginLink).toHaveAttribute('href', citation.url)
+
+      // paragraph and its margin group are siblings under the same
+      // xl:contents wrapper, i.e. the same implicit grid row.
+      expect(paragraph.parentElement).toBe(marginGroup.parentElement)
+    })
+
+    it('renders no margin-column element for a paragraph that cites nothing', () => {
+      const { container } = render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="No citation in this one."
+          citations={[citation]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(container.querySelector('.xl\\:col-start-2')).not.toBeInTheDocument()
+    })
+
+    it('gives each margin source card its marker number', () => {
+      const other = { ...citation, id: 'owner/repo:commit:abc', url: 'https://github.com/owner/repo/commit/abc' }
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer={'First [owner/repo:pr:42].\n\nSecond [owner/repo:commit:abc].'}
+          citations={[citation, other]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(screen.getAllByText('1')).not.toHaveLength(0)
+      expect(screen.getAllByText('2')).not.toHaveLength(0)
+    })
   })
 })
