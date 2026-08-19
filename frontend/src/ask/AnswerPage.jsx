@@ -1,8 +1,13 @@
 // The annotated page for one question, replacing the chat-bubble
 // rendering of an assistant turn. Per docs/superpowers/specs/2026-08-04-v2-design.md
 // Track B: the question is set as a heading carrying a provenance dek
-// ("searched N repos · M decisions") stated before the answer is read.
-import AnswerPassage from './AnswerPassage.jsx'
+// ("searched N repos · M decisions") stated before the answer is read,
+// and at >=1280px each paragraph's citations sit in a right margin track
+// beside it, rather than collected in a list at the foot of the answer.
+import usePrefersReducedMotion from '../lib/usePrefersReducedMotion.js'
+import { AnswerParagraph } from './AnswerPassage.jsx'
+import { parseAnswer } from './parseAnswer.js'
+import SourceCard from './SourceCard.jsx'
 import SourceCardList from './SourceCardList.jsx'
 
 function decisionCount(repos, selectedRepos) {
@@ -12,24 +17,55 @@ function decisionCount(repos, selectedRepos) {
     .reduce((total, repo) => total + repo.indexed_units, 0)
 }
 
+// The units a paragraph cites, in first-appearance order and deduped (a
+// repeated marker within one paragraph gets one margin card, not two).
+function paragraphUnits(paragraph, citationsById) {
+  const seen = new Set()
+  const units = []
+  for (const part of paragraph.parts) {
+    if (part.type !== 'marker' || seen.has(part.unitId)) continue
+    seen.add(part.unitId)
+    const unit = citationsById.get(part.unitId)
+    if (unit) units.push({ unit, number: part.number })
+  }
+  return units
+}
+
 function AnswerPage({ question, answer, citations, repos, selectedRepos }) {
   const repoCount = selectedRepos.length
   const decisions = decisionCount(repos, selectedRepos)
+  const reducedMotion = usePrefersReducedMotion()
+  const paragraphs = parseAnswer(answer, citations)
+  const citationsById = new Map(citations.map((unit) => [unit.id, unit]))
 
   return (
-    <article className="max-w-3xl">
+    <article className="max-w-3xl xl:max-w-none">
       <h1 className="font-ui text-2xl text-ink">{question}</h1>
       <p className="font-ui text-sm text-ink-muted mt-1">
         searched {repoCount} repo{repoCount === 1 ? '' : 's'} · {decisions} decision
         {decisions === 1 ? '' : 's'}
       </p>
 
-      <div className="mt-6">
-        <AnswerPassage answer={answer} citations={citations} />
+      <div className="mt-6 xl:grid xl:grid-cols-[minmax(0,68ch)_260px] xl:gap-x-12">
+        {paragraphs.map((paragraph) => {
+          const units = paragraphUnits(paragraph, citationsById)
+          return (
+            <div key={paragraph.key} className="xl:contents">
+              <AnswerParagraph paragraph={paragraph} reducedMotion={reducedMotion} className="xl:col-start-1" />
+              {units.length > 0 && (
+                <div className="hidden xl:flex xl:flex-col xl:justify-center xl:gap-4 xl:col-start-2">
+                  {units.map(({ unit, number }) => (
+                    <SourceCard key={unit.id} unit={unit} number={number} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
 
       {citations.length > 0 && (
-        <SourceCardList citations={citations} className="mt-4 flex flex-wrap gap-4" />
+        <SourceCardList citations={citations} className="mt-4 flex flex-wrap gap-4 xl:hidden" />
       )}
     </article>
   )
