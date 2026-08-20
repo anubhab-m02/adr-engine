@@ -114,4 +114,20 @@ describe('AskPage', () => {
       'Why is authentication done this way?',
     )
   })
+
+  it('renders the input area as a plain footer, not a sticky floating bar', async () => {
+    getRepos.mockResolvedValue(REPOS)
+
+    const { container } = render(<AskPage />)
+    await screen.findByLabelText('Ask a question')
+
+    expect(container.querySelector('.sticky')).not.toBeInTheDocument()
+
+    const input = screen.getByLabelText('Ask a question')
+    const footer = input.closest('form').parentElement.parentElement
+    expect(footer.className).not.toMatch(/\bsticky\b/)
+    // the footer is the last element of the page's own content, i.e. it
+    // scrolls with the composed page rather than floating over it
+    expect(footer.parentElement.lastElementChild).toBe(footer)
+  })
 })
