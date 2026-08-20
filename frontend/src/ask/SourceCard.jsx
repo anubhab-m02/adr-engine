@@ -34,7 +34,13 @@ function relativeDate(dateString) {
 // `w-full` instead, so the card fills whatever width the grid column
 // currently has — the narrow 900-1280px track and the full 260px one
 // above it — rather than a fixed width that would overflow the narrow one.
-function SourceCard({ unit, number, widthClassName = 'w-full sm:w-64' }) {
+//
+// `highlighted` washes the card with `--color-highlight` instead of its
+// default `bg-panel` fill — CitationMarker drives this externally (by id,
+// not by prop, since it doesn't render the card it's washing), but the
+// prop stays the source of truth for what "highlighted" looks like so the
+// two never drift out of sync.
+function SourceCard({ unit, number, widthClassName = 'w-full sm:w-64', highlighted = false }) {
   const accessibleName = `Citation: ${unit.title}, ${unit.kind} in ${unit.repo}`
 
   return (
@@ -44,7 +50,7 @@ function SourceCard({ unit, number, widthClassName = 'w-full sm:w-64' }) {
       target="_blank"
       rel="noreferrer"
       aria-label={accessibleName}
-      className={`block ${widthClassName} rounded-xl border border-transparent bg-panel p-4 transition-colors hover:border-accent`}
+      className={`block ${widthClassName} rounded-xl border border-transparent ${highlighted ? 'bg-highlight' : 'bg-panel'} p-4 transition-colors hover:border-accent`}
     >
       <div className="flex items-center gap-2">
         {number != null && <span className="font-ui text-xs text-ink-muted">{number}</span>}
