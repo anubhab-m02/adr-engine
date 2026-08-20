@@ -57,7 +57,7 @@ describe('MessageList', () => {
             role: 'assistant',
             type: 'answer',
             mode: 'synthesized',
-            answer: 'We use OAuth2 for auth.',
+            answer: 'We use OAuth2 for auth [owner/repo:pr:42].',
             citations: [citation],
           },
         ]}
@@ -67,8 +67,8 @@ describe('MessageList', () => {
     )
     expect(screen.getByRole('heading', { name: 'Why OAuth2?' })).toBeInTheDocument()
     expect(screen.getByText('searched 1 repo · 5 decisions')).toBeInTheDocument()
-    expect(screen.getByText('We use OAuth2 for auth.')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Citation:/ })).toHaveAttribute('href', citation.url)
+    expect(screen.getByText(/We use OAuth2 for auth/)).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: /Citation:/ })[0]).toHaveAttribute('href', citation.url)
   })
 
   it('renders an AnswerPage for an assistant message with an omitted type (defaults to answer)', () => {

@@ -6,12 +6,14 @@
 // track beside it, rather than collected in a list at the foot of the
 // answer. The track narrows from 900-1280px (Tailwind's `min-[900px]:`,
 // since the default breakpoints skip straight from 768px to 1024px) and
-// widens to its full size at >=1280px (`xl:`).
+// widens to its full size at >=1280px (`xl:`). Below 900px there's no
+// margin track at all: each paragraph's source cards collapse inline,
+// directly after that paragraph, rather than batching every citation in
+// one list at the foot of the answer.
 import usePrefersReducedMotion from '../lib/usePrefersReducedMotion.js'
 import { AnswerParagraph } from './AnswerPassage.jsx'
 import { parseAnswer } from './parseAnswer.js'
 import SourceCard from './SourceCard.jsx'
-import SourceCardList from './SourceCardList.jsx'
 
 function decisionCount(repos, selectedRepos) {
   const selected = new Set(selectedRepos)
@@ -66,14 +68,17 @@ function AnswerPage({ question, answer, citations, repos, selectedRepos }) {
                   ))}
                 </div>
               )}
+              {units.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-4 min-[900px]:hidden">
+                  {units.map(({ unit, number }) => (
+                    <SourceCard key={unit.id} unit={unit} number={number} />
+                  ))}
+                </div>
+              )}
             </div>
           )
         })}
       </div>
-
-      {citations.length > 0 && (
-        <SourceCardList citations={citations} className="mt-4 flex flex-wrap gap-4 min-[900px]:hidden" />
-      )}
     </article>
   )
 }
