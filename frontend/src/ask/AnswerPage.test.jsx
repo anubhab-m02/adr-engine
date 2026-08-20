@@ -189,4 +189,65 @@ describe('AnswerPage', () => {
       expect(grid).toHaveClass('xl:grid-cols-[minmax(0,68ch)_260px]')
     })
   })
+
+  describe('<900px inline citation collapse', () => {
+    const other = { ...citation, id: 'owner/repo:commit:abc', url: 'https://github.com/owner/repo/commit/abc' }
+
+    it('places each note as the next sibling after its own paragraph, not grouped at the end', () => {
+      const { container } = render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer={'First [owner/repo:pr:42].\n\nSecond [owner/repo:commit:abc].'}
+          citations={[citation, other]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      const wrappers = container.querySelectorAll('.min-\\[900px\\]\\:contents')
+      expect(wrappers).toHaveLength(2)
+      const [firstWrapper, secondWrapper] = wrappers
+
+      // each paragraph's inline note is a child of the same wrapper as the
+      // paragraph itself, positioned after it — a real sibling relationship,
+      // not membership in one shared list at the foot of the answer.
+      const firstParagraph = firstWrapper.querySelector('p')
+      const firstInline = firstWrapper.querySelector('.min-\\[900px\\]\\:hidden')
+      expect(firstInline).toBeInTheDocument()
+      expect(firstInline.querySelector('a')).toHaveAttribute('href', citation.url)
+      const firstChildren = Array.from(firstWrapper.children)
+      expect(firstChildren.indexOf(firstInline)).toBeGreaterThan(firstChildren.indexOf(firstParagraph))
+
+      const secondParagraph = secondWrapper.querySelector('p')
+      const secondInline = secondWrapper.querySelector('.min-\\[900px\\]\\:hidden')
+      expect(secondInline).toBeInTheDocument()
+      expect(secondInline.querySelector('a')).toHaveAttribute('href', other.url)
+
+      // real document order: the first paragraph's note precedes the second
+      // paragraph entirely, instead of both notes being batched after it.
+      const position = firstInline.compareDocumentPosition(secondParagraph)
+      expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+
+      // exactly one inline note group per cited paragraph — no additional
+      // grouped list collecting every citation at the foot of the answer.
+      expect(container.querySelectorAll('.min-\\[900px\\]\\:hidden')).toHaveLength(2)
+    })
+
+    it('renders no inline note for a paragraph that cites nothing', () => {
+      const { container } = render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer={'No citation here.\n\nSecond [owner/repo:pr:42].'}
+          citations={[citation]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      const wrappers = container.querySelectorAll('.min-\\[900px\\]\\:contents')
+      expect(wrappers).toHaveLength(2)
+      expect(wrappers[0].querySelector('.min-\\[900px\\]\\:hidden')).not.toBeInTheDocument()
+      expect(wrappers[1].querySelector('.min-\\[900px\\]\\:hidden')).toBeInTheDocument()
+    })
+  })
 })
