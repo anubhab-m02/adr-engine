@@ -84,12 +84,12 @@ function AskPage() {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="min-h-full flex flex-col">
       <header className="h-14 shrink-0 bg-panel flex items-center justify-between px-4 lg:px-6">
         <RepoFilter repos={repos} selected={selectedRepos} onChange={setSelectedRepos} />
       </header>
 
-      <main className="flex-1 overflow-y-auto px-4 lg:px-6 py-4">
+      <main className="flex-1 px-4 lg:px-6 py-4">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center gap-4 text-center">
             <p className="text-base text-ink-muted">
@@ -120,7 +120,7 @@ function AskPage() {
         )}
       </main>
 
-      <div className="sticky bottom-0 shrink-0 bg-panel px-4 lg:px-6 py-4">
+      <div className="shrink-0 bg-panel px-4 lg:px-6 py-4">
         <div className="max-w-3xl mx-auto">
           <ChatInput key={chatKey} initialValue={prefill} onSubmit={handleAsk} disabled={loading} />
         </div>
