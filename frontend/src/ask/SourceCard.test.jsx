@@ -82,4 +82,18 @@ describe('SourceCard', () => {
     expect(link).toHaveClass('w-full')
     expect(link).not.toHaveClass('sm:w-64')
   })
+
+  it('defaults to the panel background, not highlighted', () => {
+    render(<SourceCard unit={prUnit} />)
+    const link = screen.getByRole('link')
+    expect(link).toHaveClass('bg-panel')
+    expect(link).not.toHaveClass('bg-highlight')
+  })
+
+  it('washes with the highlight background when highlighted', () => {
+    render(<SourceCard unit={prUnit} highlighted />)
+    const link = screen.getByRole('link')
+    expect(link).toHaveClass('bg-highlight')
+    expect(link).not.toHaveClass('bg-panel')
+  })
 })
