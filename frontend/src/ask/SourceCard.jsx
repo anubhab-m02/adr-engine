@@ -40,7 +40,17 @@ function relativeDate(dateString) {
 // not by prop, since it doesn't render the card it's washing), but the
 // prop stays the source of truth for what "highlighted" looks like so the
 // two never drift out of sync.
-function SourceCard({ unit, number, widthClassName = 'w-full sm:w-64', highlighted = false }) {
+//
+// `expanded` swaps the title line for the unit's `decision`/`rationale`
+// text — used by SourcesView's degraded mode, where there's no
+// synthesized passage to carry that content instead.
+function SourceCard({
+  unit,
+  number,
+  widthClassName = 'w-full sm:w-64',
+  highlighted = false,
+  expanded = false,
+}) {
   const accessibleName = `Citation: ${unit.title}, ${unit.kind} in ${unit.repo}`
 
   return (
@@ -58,7 +68,18 @@ function SourceCard({ unit, number, widthClassName = 'w-full sm:w-64', highlight
           {badgeText(unit)}
         </span>
       </div>
-      <p className="font-ui text-base text-ink mt-2 line-clamp-2">{unit.title}</p>
+      {expanded ? (
+        <>
+          <p className="font-reading text-ink text-base leading-relaxed mt-2 line-clamp-3">
+            {unit.decision}
+          </p>
+          <p className="font-reading text-ink-muted text-sm leading-relaxed mt-2">
+            {unit.rationale}
+          </p>
+        </>
+      ) : (
+        <p className="font-ui text-base text-ink mt-2 line-clamp-2">{unit.title}</p>
+      )}
       <p className="text-sm text-ink-muted mt-2">
         {unit.author} · {relativeDate(unit.date)} · {unit.repo}
       </p>
