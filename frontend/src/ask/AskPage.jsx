@@ -10,6 +10,19 @@ const EXAMPLE_QUESTIONS = [
   'Who made the decision to use Redis, and when?',
 ]
 
+// Repos aren't loaded yet, failed to load, or none are indexed — the
+// static fallback list, not an empty chip row. There's no per-repo
+// "topic" signal yet (that's later decision-browser work), so the
+// generated question stays generic rather than naming a topic the repo
+// may not actually have decisions about.
+function exampleQuestions(repos) {
+  if (!Array.isArray(repos) || repos.length === 0) return EXAMPLE_QUESTIONS
+  return repos.slice(0, 3).map(({ repo }) => {
+    const shortName = repo.includes('/') ? repo.split('/')[1] : repo
+    return `Why is ${shortName} built this way?`
+  })
+}
+
 function AskPage() {
   const [repos, setRepos] = useState(undefined)
   const [selectedRepos, setSelectedRepos] = useState([])
@@ -96,7 +109,7 @@ function AskPage() {
               Ask why something in your codebase is the way it is
             </p>
             <div className="flex flex-wrap justify-center gap-4">
-              {EXAMPLE_QUESTIONS.map((question) => (
+              {exampleQuestions(repos).map((question) => (
                 <button
                   key={question}
                   type="button"
