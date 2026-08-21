@@ -107,12 +107,49 @@ describe('AskPage', () => {
 
     render(<AskPage />)
 
-    const chip = await screen.findByRole('button', { name: 'Why is authentication done this way?' })
+    const chip = await screen.findByRole('button', { name: 'Why is repo-a built this way?' })
     await user.click(chip)
 
-    expect(screen.getByLabelText('Ask a question')).toHaveValue(
-      'Why is authentication done this way?',
-    )
+    expect(screen.getByLabelText('Ask a question')).toHaveValue('Why is repo-a built this way?')
+  })
+
+  it('generates up to 3 example chips from indexed repo short names', async () => {
+    getRepos.mockResolvedValue({
+      repos: [
+        { repo: 'owner/repo-a', indexed_units: 12 },
+        { repo: 'owner/repo-b', indexed_units: 3 },
+        { repo: 'owner/repo-c', indexed_units: 1 },
+        { repo: 'owner/repo-d', indexed_units: 1 },
+      ],
+    })
+
+    render(<AskPage />)
+
+    expect(await screen.findByRole('button', { name: 'Why is repo-a built this way?' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Why is repo-b built this way?' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Why is repo-c built this way?' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Why is repo-d built this way?' })).not.toBeInTheDocument()
+  })
+
+  it('falls back to the static example questions while repos are still loading', () => {
+    getRepos.mockReturnValue(new Promise(() => {}))
+
+    render(<AskPage />)
+
+    expect(
+      screen.getByRole('button', { name: 'Why is authentication done this way?' }),
+    ).toBeInTheDocument()
+  })
+
+  it('falls back to the static example questions when GET /repos fails', async () => {
+    getRepos.mockRejectedValue(new Error('network error'))
+
+    render(<AskPage />)
+
+    await screen.findByRole('alert')
+    expect(
+      screen.getByRole('button', { name: 'Why is authentication done this way?' }),
+    ).toBeInTheDocument()
   })
 
   it('renders the input area as a plain footer, not a sticky floating bar', async () => {
