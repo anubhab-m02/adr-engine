@@ -94,9 +94,7 @@ describe('MessageList', () => {
         ]}
       />,
     )
-    expect(
-      screen.getByText('No Gemini key configured — showing retrieved sources directly.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('1 decision found —')).toBeInTheDocument()
     expect(screen.getByRole('link')).toHaveAttribute('href', citation.url)
   })
 

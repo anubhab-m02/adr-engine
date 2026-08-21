@@ -8,6 +8,8 @@ const prUnit = {
   ref: '42',
   url: 'https://github.com/owner/repo/pull/42',
   title: 'Switch auth to OAuth2 for third-party integrations',
+  decision: 'Switched auth to OAuth2 device flow.',
+  rationale: 'Avoids storing long-lived tokens for third-party integrations.',
   author: 'octocat',
   date: '2024-01-01T00:00:00Z',
   repo: 'owner/repo',
@@ -95,5 +97,18 @@ describe('SourceCard', () => {
     const link = screen.getByRole('link')
     expect(link).toHaveClass('bg-highlight')
     expect(link).not.toHaveClass('bg-panel')
+  })
+
+  it('renders decision and rationale text instead of the title when expanded', () => {
+    render(<SourceCard unit={prUnit} expanded />)
+    expect(screen.getByText(prUnit.decision)).toBeInTheDocument()
+    expect(screen.getByText(prUnit.rationale)).toBeInTheDocument()
+    expect(screen.queryByText(prUnit.title)).not.toBeInTheDocument()
+  })
+
+  it('renders the title instead of decision/rationale by default', () => {
+    render(<SourceCard unit={prUnit} />)
+    expect(screen.getByText(prUnit.title)).toBeInTheDocument()
+    expect(screen.queryByText(prUnit.decision)).not.toBeInTheDocument()
   })
 })
