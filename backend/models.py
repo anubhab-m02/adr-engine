@@ -96,12 +96,15 @@ class QueryResponse(BaseModel):
     citations: list[DecisionUnit]
     retrieved_count: int
     mode: Literal["synthesized", "sources_only"]
+    sent_to_cloud: bool
+    cloud_synthesis_fields: list[str] | None = None
 
 
 class RepoInfo(BaseModel):
     repo: str
     indexed_units: int
     cloud_synthesis_allowed: bool = True
+    indexed_at: str | None = None
 
 
 class ReposResponse(BaseModel):
@@ -125,6 +128,7 @@ class ConfigResponse(BaseModel):
     ollama_embedding_model: str | None = None
     gemini_model: str
     chroma_data_dir: str
+    decision_count: int
 
 
 class ConfigPatchRequest(ConfigResponse):
@@ -134,6 +138,7 @@ class ConfigPatchRequest(ConfigResponse):
     ollama_host: str | None = None
     gemini_model: str | None = None
     chroma_data_dir: str | None = None
+    decision_count: int | None = None
 
 
 class DeviceStartResponse(BaseModel):
@@ -147,6 +152,11 @@ class AuthStatusResponse(BaseModel):
     state: Literal["pending", "authorized", "expired", "denied"]
     login: str | None = None
     avatar_url: str | None = None
+
+
+class ValidationResponse(BaseModel):
+    ok: bool
+    detail: str | None = None
 
 
 class SetupStateResponse(BaseModel):

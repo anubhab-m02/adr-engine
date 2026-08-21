@@ -32,19 +32,18 @@ If the decisions above don't cover the question, respond with exactly: \
 
 _CITATION_PATTERN = re.compile(r"\[([^\[\]]+)\]")
 
+# The DecisionUnit fields _format_unit sends to Gemini. QueryResponse.
+# cloud_synthesis_fields reports this same list, so it can never drift out
+# of sync with what's actually sent.
+SENT_TO_GEMINI_FIELDS = ["id", "title", "decision", "rationale", "url"]
+
 
 class SynthesisError(Exception):
     """Raised when Gemini can't be reached, or returns an error, for synthesis."""
 
 
 def _format_unit(unit: DecisionUnit) -> str:
-    return (
-        f"id: {unit.id}\n"
-        f"title: {unit.title}\n"
-        f"decision: {unit.decision}\n"
-        f"rationale: {unit.rationale}\n"
-        f"url: {unit.url}"
-    )
+    return "\n".join(f"{field}: {getattr(unit, field)}" for field in SENT_TO_GEMINI_FIELDS)
 
 
 def _build_prompt(question: str, units: list[DecisionUnit]) -> str:
@@ -93,6 +92,19 @@ def synthesize(question: str, units: list[DecisionUnit]) -> tuple[str, list[Deci
 
     answer = _call_gemini(_build_prompt(question, units))
     return answer, _resolve_citations(answer, units)
+
+
+def validate_gemini() -> tuple[bool, str | None]:
+    """Real, minimal call to confirm the configured Gemini key/model works.
+
+    Reuses `_call_gemini` rather than a second Gemini client, per
+    ARCHITECTURE.md's "LLM calls isolated in exactly three places" rule.
+    """
+    try:
+        _call_gemini("Reply with exactly one word: OK")
+    except SynthesisError as exc:
+        return False, str(exc)
+    return True, None
 
 
 def synthesis_available(repos: list[str] | None) -> bool:

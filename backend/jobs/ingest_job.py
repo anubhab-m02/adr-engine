@@ -6,9 +6,11 @@ ARCHITECTURE.md's stated exception (it orchestrates it).
 """
 
 import uuid
+from datetime import datetime, timezone
 
 from pydantic import BaseModel
 
+import config_store
 from ingestion.embed import EmbeddingError
 from ingestion.extract import ExtractionError
 from ingestion.github_client import GitHubError
@@ -31,6 +33,10 @@ class Job(BaseModel):
 
 _jobs: dict[str, Job] = {}
 _latest_job_id: str | None = None
+
+
+def _current_timestamp() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 def start_job(repos: list[str]) -> str:
@@ -75,6 +81,7 @@ def _run_repo(repo: str, state: RepoJobState) -> None:
         skipped=result.skipped,
         stored=result.stored,
     )
+    config_store.set_indexed_at(repo, _current_timestamp())
 
 
 def run_job(job_id: str) -> None:

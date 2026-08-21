@@ -7,7 +7,7 @@ import config_store
 from ingestion.embed import EmbeddingError
 from main import app
 from models import RetrieveResult
-from synthesis.answer import SynthesisError
+from synthesis.answer import SENT_TO_GEMINI_FIELDS, SynthesisError
 
 client = TestClient(app)
 
@@ -38,6 +38,8 @@ def test_query_returns_answer_with_resolved_citations_and_retrieved_count(make_u
         "citations": [unit.model_dump() for unit in cited],
         "retrieved_count": 3,
         "mode": "synthesized",
+        "sent_to_cloud": True,
+        "cloud_synthesis_fields": SENT_TO_GEMINI_FIELDS,
     }
 
 
@@ -105,6 +107,8 @@ def test_query_returns_sources_only_when_no_gemini_key_is_configured(monkeypatch
         "citations": [r.unit.model_dump() for r in results],
         "retrieved_count": 2,
         "mode": "sources_only",
+        "sent_to_cloud": False,
+        "cloud_synthesis_fields": None,
     }
 
 
@@ -159,6 +163,39 @@ def test_query_falls_back_to_sources_only_when_a_scoped_repo_disallows_cloud_syn
     assert response.status_code == 200
     synthesize.assert_not_called()
     assert response.json()["mode"] == "sources_only"
+
+
+def test_query_reports_nothing_sent_to_cloud_in_sources_only_mode(monkeypatch, tmp_path):
+    monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("GEMINI_API_KEY", "")
+    config.get_settings.cache_clear()
+
+    with patch("routers.query.search") as search, patch("routers.query.synthesize") as synthesize:
+        search.return_value = []
+
+        response = client.post("/query", json={"question": "why redis?"})
+
+    assert response.status_code == 200
+    synthesize.assert_not_called()
+    body = response.json()
+    assert body["sent_to_cloud"] is False
+    assert body["cloud_synthesis_fields"] is None
+
+
+def test_query_reports_real_sent_field_list_in_synthesized_mode(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "key")
+    config.get_settings.cache_clear()
+
+    with patch("routers.query.search") as search, patch("routers.query.synthesize") as synthesize:
+        search.return_value = []
+        synthesize.return_value = ("Nothing in the indexed history covers this question.", [])
+
+        response = client.post("/query", json={"question": "why redis?"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["sent_to_cloud"] is True
+    assert body["cloud_synthesis_fields"] == SENT_TO_GEMINI_FIELDS
 
 
 def test_query_synthesizes_when_scoped_only_to_allowed_repos(monkeypatch, tmp_path):

@@ -81,4 +81,41 @@ describe('AnswerPassage', () => {
 
     expect(screen.queryByRole('link')).not.toBeInTheDocument()
   })
+
+  it('renders one <p> per paragraph for a multi-paragraph answer', () => {
+    const { container } = render(
+      <AnswerPassage
+        answer={'Redis was chosen for caching [unit-a].\n\nPostgres stayed for the ledger [unit-b].'}
+        citations={citations}
+      />,
+    )
+
+    const paragraphs = container.querySelectorAll('p')
+    expect(paragraphs).toHaveLength(2)
+    expect(paragraphs[0]).toHaveTextContent('Redis was chosen for caching')
+    expect(paragraphs[1]).toHaveTextContent('Postgres stayed for the ledger')
+  })
+
+  it('numbers markers by first appearance across the whole answer, not reset per paragraph', () => {
+    render(
+      <AnswerPassage
+        answer={'Redis was chosen [unit-b].\n\nFirst proposed by [unit-a], then [unit-b] again.'}
+        citations={citations}
+      />,
+    )
+
+    const links = screen.getAllByRole('link')
+    expect(links).toHaveLength(3)
+    expect(links[0]).toHaveAccessibleName('Jump to source 1')
+    expect(links[1]).toHaveAccessibleName('Jump to source 2')
+    expect(links[2]).toHaveAccessibleName('Jump to source 1')
+  })
+
+  it('renders a single <p> for a single-paragraph answer, unchanged from before', () => {
+    const { container } = render(
+      <AnswerPassage answer="Redis was chosen [unit-b]." citations={citations} />,
+    )
+
+    expect(container.querySelectorAll('p')).toHaveLength(1)
+  })
 })

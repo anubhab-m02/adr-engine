@@ -27,6 +27,7 @@ DEFAULTS = {
     "gemini_model": "gemini-2.5-flash",
     "local_repo_paths": {},
     "repo_settings": {},
+    "repo_metadata": {},
 }
 
 _SECRET_FIELDS = {"github_token", "gemini_api_key"}
@@ -128,3 +129,16 @@ def set_cloud_synthesis_allowed(repo: str, allowed: bool) -> dict:
     settings = dict(load()["repo_settings"])
     settings[repo] = {"cloud_synthesis_allowed": allowed, "explicit": True}
     return save({"repo_settings": settings})
+
+
+def get_indexed_at(repo: str) -> str | None:
+    metadata = load()["repo_metadata"].get(repo)
+    return metadata["indexed_at"] if metadata else None
+
+
+def set_indexed_at(repo: str, timestamp: str) -> dict:
+    """Record `repo`'s ingestion completion time. Called when a job's
+    phase reaches `"done"`; a re-index overwrites the prior timestamp."""
+    metadata = dict(load()["repo_metadata"])
+    metadata[repo] = {"indexed_at": timestamp}
+    return save({"repo_metadata": metadata})
