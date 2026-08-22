@@ -9,6 +9,13 @@ vi.mock('../api.js', () => ({
   postQuery: vi.fn(),
 }))
 
+// AskPage registers a new-question handler with the command palette's
+// shared context (see CommandPalette.test.jsx for that integration) — a
+// real NewQuestionProvider isn't needed for AskPage's own behavior.
+vi.mock('../lib/useNewQuestion.js', () => ({
+  useRegisterNewQuestionHandler: vi.fn(),
+}))
+
 const REPOS = { repos: [{ repo: 'owner/repo-a', indexed_units: 12 }] }
 
 beforeEach(() => {

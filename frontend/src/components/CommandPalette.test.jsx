@@ -1,16 +1,51 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import userEvent from '@testing-library/user-event'
+import { MemoryRouter, useLocation } from 'react-router-dom'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import CommandPalette from './CommandPalette.jsx'
+import AskPage from '../ask/AskPage.jsx'
+import { getRepos, postQuery } from '../api.js'
+import { NewQuestionProvider } from '../lib/useNewQuestion.js'
+
+vi.mock('../api.js', () => ({
+  getRepos: vi.fn(),
+  postQuery: vi.fn(),
+}))
+
+function LocationDisplay() {
+  const location = useLocation()
+  return <div data-testid="location">{location.pathname}</div>
+}
+
+function renderPalette({ path = '/' } = {}) {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <NewQuestionProvider>
+        <CommandPalette />
+        <LocationDisplay />
+      </NewQuestionProvider>
+    </MemoryRouter>,
+  )
+}
+
+beforeEach(() => {
+  Element.prototype.scrollIntoView = vi.fn()
+  getRepos.mockResolvedValue({ repos: [] })
+})
+
+afterEach(() => {
+  vi.resetAllMocks()
+})
 
 describe('CommandPalette', () => {
   it('is closed by default', () => {
-    render(<CommandPalette />)
+    renderPalette()
 
     expect(screen.queryByRole('dialog', { name: 'Command palette' })).not.toBeInTheDocument()
   })
 
   it('opens on Ctrl+K and closes on Escape', () => {
-    render(<CommandPalette />)
+    renderPalette()
 
     fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
     expect(screen.getByRole('dialog', { name: 'Command palette' })).toBeInTheDocument()
@@ -20,7 +55,7 @@ describe('CommandPalette', () => {
   })
 
   it('opens on Cmd+K too', () => {
-    render(<CommandPalette />)
+    renderPalette()
 
     fireEvent.keyDown(window, { key: 'k', metaKey: true })
 
@@ -28,7 +63,7 @@ describe('CommandPalette', () => {
   })
 
   it('toggles closed when Ctrl+K is pressed again while open', () => {
-    render(<CommandPalette />)
+    renderPalette()
 
     fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
     fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
@@ -37,7 +72,7 @@ describe('CommandPalette', () => {
   })
 
   it('closes when clicking the backdrop', () => {
-    const { container } = render(<CommandPalette />)
+    const { container } = renderPalette()
     fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
 
     fireEvent.click(container.querySelector('.fixed.inset-0'))
@@ -45,33 +80,53 @@ describe('CommandPalette', () => {
     expect(screen.queryByRole('dialog', { name: 'Command palette' })).not.toBeInTheDocument()
   })
 
-  it('shows a placeholder message when there are no actions to show', () => {
-    render(<CommandPalette />)
+  it('lists the four baseline actions and filters them as the query changes', () => {
+    renderPalette()
     fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+
+    expect(screen.getByRole('option', { name: 'Go to Ask' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Go to Library' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Go to Settings' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'New question' })).toBeInTheDocument()
+
+    const input = screen.getByRole('textbox', { name: 'Command palette search' })
+    fireEvent.change(input, { target: { value: 'library' } })
+
+    expect(screen.getByRole('option', { name: 'Go to Library' })).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'Go to Ask' })).not.toBeInTheDocument()
+  })
+
+  it('shows a placeholder message when the query matches nothing', () => {
+    renderPalette()
+    fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Command palette search' }), {
+      target: { value: 'nonexistent command' },
+    })
 
     expect(screen.getByText('No matching commands')).toBeInTheDocument()
   })
 
-  it('filters the action list as the query changes, and arrow keys move the highlighted selection', () => {
-    render(<CommandPalette />)
+  it('moves the highlighted selection with arrow keys and runs it on Enter', () => {
+    renderPalette()
     fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
 
     const input = screen.getByRole('textbox', { name: 'Command palette search' })
-    fireEvent.change(input, { target: { value: 'anything' } })
-
-    // With no registered actions yet, any query still yields the empty state.
-    expect(screen.getByText('No matching commands')).toBeInTheDocument()
-
     fireEvent.keyDown(input, { key: 'ArrowDown' })
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    expect(screen.getByRole('option', { name: 'Go to Settings' })).toHaveAttribute('aria-selected', 'true')
+
     fireEvent.keyDown(input, { key: 'ArrowUp' })
+    expect(screen.getByRole('option', { name: 'Go to Library' })).toHaveAttribute('aria-selected', 'true')
+
     fireEvent.keyDown(input, { key: 'Enter' })
 
-    // Still open: Enter with no matching action is a no-op, not a crash.
-    expect(screen.getByRole('dialog', { name: 'Command palette' })).toBeInTheDocument()
+    expect(screen.getByTestId('location')).toHaveTextContent('/library')
+    expect(screen.queryByRole('dialog', { name: 'Command palette' })).not.toBeInTheDocument()
   })
 
   it('resets the query and focuses the input each time it reopens', () => {
-    render(<CommandPalette />)
+    renderPalette()
 
     fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
     const firstInput = screen.getByRole('textbox', { name: 'Command palette search' })
@@ -83,5 +138,68 @@ describe('CommandPalette', () => {
 
     expect(secondInput.value).toBe('')
     expect(secondInput).toHaveFocus()
+  })
+
+  describe('navigation actions', () => {
+    it('selecting "Go to Library" navigates to /library', () => {
+      renderPalette()
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+
+      fireEvent.click(screen.getByRole('button', { name: 'Go to Library' }))
+
+      expect(screen.getByTestId('location')).toHaveTextContent('/library')
+    })
+
+    it('selecting "Go to Settings" navigates to /settings', () => {
+      renderPalette()
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+
+      fireEvent.click(screen.getByRole('button', { name: 'Go to Settings' }))
+
+      expect(screen.getByTestId('location')).toHaveTextContent('/settings')
+    })
+
+    it('selecting "Go to Ask" navigates to /', () => {
+      renderPalette({ path: '/library' })
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+
+      fireEvent.click(screen.getByRole('button', { name: 'Go to Ask' }))
+
+      expect(screen.getByTestId('location').textContent).toBe('/')
+    })
+  })
+
+  describe('"New question" action', () => {
+    it("clears the Ask page's current conversation when invoked from there", async () => {
+      const user = userEvent.setup()
+      getRepos.mockResolvedValue({ repos: [{ repo: 'owner/repo-a', indexed_units: 12 }] })
+      postQuery.mockResolvedValue({ answer: 'We use OAuth2 for auth.', citations: [], retrieved_count: 0 })
+
+      render(
+        <MemoryRouter>
+          <NewQuestionProvider>
+            <AskPage />
+            <CommandPalette />
+          </NewQuestionProvider>
+        </MemoryRouter>,
+      )
+
+      await user.type(await screen.findByLabelText('Ask a question'), 'Why OAuth2?')
+      await user.click(screen.getByRole('button', { name: 'Ask' }))
+      expect(await screen.findByText('We use OAuth2 for auth.')).toBeInTheDocument()
+
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+      fireEvent.click(screen.getByRole('button', { name: 'New question' }))
+
+      expect(screen.queryByText('We use OAuth2 for auth.')).not.toBeInTheDocument()
+      expect(screen.getByText('Ask why something in your codebase is the way it is')).toBeInTheDocument()
+    })
+
+    it('is a no-op, not a crash, when no page has registered a handler', () => {
+      renderPalette({ path: '/library' })
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+
+      expect(() => fireEvent.click(screen.getByRole('button', { name: 'New question' }))).not.toThrow()
+    })
   })
 })
