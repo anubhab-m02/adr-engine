@@ -1,6 +1,14 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import AnswerPage from './AnswerPage.jsx'
+
+function stubMatchMedia(matches) {
+  window.matchMedia = vi.fn().mockReturnValue({
+    matches,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  })
+}
 
 const citation = {
   id: 'owner/repo:pr:42',
@@ -19,6 +27,10 @@ const repos = [
 ]
 
 describe('AnswerPage', () => {
+  afterEach(() => {
+    delete window.matchMedia
+  })
+
   it('renders the question as a heading', () => {
     render(
       <AnswerPage
@@ -169,6 +181,44 @@ describe('AnswerPage', () => {
       const fallback = container.querySelector('.min-\\[900px\\]\\:hidden')
       expect(fallback).toBeInTheDocument()
       expect(fallback.querySelector('a')).toHaveAttribute('href', citation.url)
+    })
+  })
+
+  describe('SourceCards group-entrance motion', () => {
+    it('applies the group-entrance animation to a paragraph\'s margin and inline card groups by default', () => {
+      stubMatchMedia(false)
+      const { container } = render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth [owner/repo:pr:42]."
+          citations={[citation]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      const marginGroup = container.querySelector('.min-\\[900px\\]\\:col-start-2')
+      const inlineGroup = container.querySelector('.min-\\[900px\\]\\:hidden')
+      expect(marginGroup).toHaveClass('animate-source-group-entrance')
+      expect(inlineGroup).toHaveClass('animate-source-group-entrance')
+    })
+
+    it('omits the group-entrance animation under reduced motion', () => {
+      stubMatchMedia(true)
+      const { container } = render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth [owner/repo:pr:42]."
+          citations={[citation]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      const marginGroup = container.querySelector('.min-\\[900px\\]\\:col-start-2')
+      const inlineGroup = container.querySelector('.min-\\[900px\\]\\:hidden')
+      expect(marginGroup).not.toHaveClass('animate-source-group-entrance')
+      expect(inlineGroup).not.toHaveClass('animate-source-group-entrance')
     })
   })
 
