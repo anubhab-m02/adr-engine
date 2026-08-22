@@ -77,6 +77,17 @@ body {
   }
 }
 
+@keyframes source-group-entrance {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .animate-answer-settle {
   animation: answer-settle var(--dur-surface) var(--ease-out) both;
 }
@@ -86,9 +97,22 @@ body {
   animation: citation-ink-in var(--dur-state) var(--ease-out) both;
 }
 
+/*
+ * Each paragraph's SourceCards arrive together as one group, not
+ * staggered per-card like CitationMarker — offset from the passage's own
+ * settle animation the same way CitationMarker computes its stagger:
+ * relative to --dur-surface.
+ */
+.animate-source-group-entrance {
+  opacity: 0;
+  animation: source-group-entrance var(--dur-surface) var(--ease-out) both;
+  animation-delay: calc(var(--dur-surface) + 90ms);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-answer-settle,
-  .animate-citation-ink-in {
+  .animate-citation-ink-in,
+  .animate-source-group-entrance {
     animation: none;
     opacity: 1;
     transform: none;
