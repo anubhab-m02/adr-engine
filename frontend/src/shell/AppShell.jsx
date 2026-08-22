@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom'
+import CommandPalette from '../components/CommandPalette.jsx'
 import TopNav from './TopNav.jsx'
 
 function AppShell() {
@@ -8,6 +9,7 @@ function AppShell() {
       <div className="flex-1 max-w-5xl mx-auto w-full">
         <Outlet />
       </div>
+      <CommandPalette />
     </div>
   )
 }
