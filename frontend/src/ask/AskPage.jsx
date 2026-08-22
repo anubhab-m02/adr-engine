@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getRepos, postQuery } from '../api.js'
 import ChatInput from '../components/ChatInput.jsx'
 import MessageList from '../components/MessageList.jsx'
 import RepoFilter from '../components/RepoFilter.jsx'
+import { useRegisterNewQuestionHandler } from '../lib/useNewQuestion.js'
 
 const EXAMPLE_QUESTIONS = [
   'Why is authentication done this way?',
@@ -95,6 +96,8 @@ function AskPage() {
     setPrefill(question)
     setChatKey((key) => key + 1)
   }
+
+  useRegisterNewQuestionHandler(useCallback(() => setMessages([]), []))
 
   return (
     <div className="min-h-full flex flex-col">

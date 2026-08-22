@@ -1,19 +1,30 @@
-// The empty shell for Track B's command palette: a global Cmd/Ctrl+K
-// overlay with a filtered, arrow-navigable action list. Mounted once in
-// AppShell (wraps every authenticated route) so the shortcut works from
-// anywhere. `ACTIONS` is a static array on purpose — a dynamic
-// registry is speculative generality until a real second consumer needs
-// to register actions of its own; the navigation actions land here in a
-// later issue.
-import { useEffect, useRef, useState } from 'react'
-
-const ACTIONS = []
+// Track B's command palette: a global Cmd/Ctrl+K overlay with a
+// filtered, arrow-navigable action list. Mounted once in AppShell (wraps
+// every authenticated route) so the shortcut works from anywhere. The
+// action list is a static array built from four baseline actions on
+// purpose — a dynamic registry is speculative generality until a real
+// second consumer needs to register actions of its own.
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useNewQuestion } from '../lib/useNewQuestion.js'
 
 function CommandPalette() {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [highlightedIndex, setHighlightedIndex] = useState(0)
   const inputRef = useRef(null)
+  const navigate = useNavigate()
+  const requestNewQuestion = useNewQuestion()
+
+  const actions = useMemo(
+    () => [
+      { id: 'go-ask', label: 'Go to Ask', run: () => navigate('/') },
+      { id: 'go-library', label: 'Go to Library', run: () => navigate('/library') },
+      { id: 'go-settings', label: 'Go to Settings', run: () => navigate('/settings') },
+      { id: 'new-question', label: 'New question', run: () => requestNewQuestion() },
+    ],
+    [navigate, requestNewQuestion],
+  )
 
   useEffect(() => {
     function handleKeyDown(event) {
@@ -39,7 +50,7 @@ function CommandPalette() {
 
   if (!open) return null
 
-  const filtered = ACTIONS.filter((action) => action.label.toLowerCase().includes(query.toLowerCase()))
+  const filtered = actions.filter((action) => action.label.toLowerCase().includes(query.toLowerCase()))
 
   function runAction(index) {
     const action = filtered[index]
