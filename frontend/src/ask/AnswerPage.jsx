@@ -62,14 +62,22 @@ function AnswerPage({ question, answer, citations, repos, selectedRepos }) {
                 className="min-[900px]:col-start-1"
               />
               {units.length > 0 && (
-                <div className="hidden min-[900px]:flex min-[900px]:flex-col min-[900px]:justify-center min-[900px]:gap-4 min-[900px]:col-start-2">
+                <div
+                  className={`hidden min-[900px]:flex min-[900px]:flex-col min-[900px]:justify-center min-[900px]:gap-4 min-[900px]:col-start-2 ${
+                    reducedMotion ? '' : 'animate-source-group-entrance'
+                  }`}
+                >
                   {units.map(({ unit, number }) => (
                     <SourceCard key={unit.id} unit={unit} number={number} widthClassName="w-full" />
                   ))}
                 </div>
               )}
               {units.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-4 min-[900px]:hidden">
+                <div
+                  className={`mt-4 flex flex-wrap gap-4 min-[900px]:hidden ${
+                    reducedMotion ? '' : 'animate-source-group-entrance'
+                  }`}
+                >
                   {units.map(({ unit, number }) => (
                     <SourceCard key={unit.id} unit={unit} number={number} />
                   ))}
