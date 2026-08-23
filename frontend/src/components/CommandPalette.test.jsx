@@ -169,6 +169,71 @@ describe('CommandPalette', () => {
     })
   })
 
+  describe('accessibility', () => {
+    it('has dialog semantics with aria-modal', () => {
+      renderPalette()
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+
+      expect(screen.getByRole('dialog', { name: 'Command palette' })).toHaveAttribute('aria-modal', 'true')
+    })
+
+    it('returns focus to the element that had focus before opening, after Escape closes it', () => {
+      render(
+        <MemoryRouter>
+          <NewQuestionProvider>
+            <button type="button">Trigger</button>
+            <CommandPalette />
+          </NewQuestionProvider>
+        </MemoryRouter>,
+      )
+
+      const trigger = screen.getByRole('button', { name: 'Trigger' })
+      trigger.focus()
+      expect(trigger).toHaveFocus()
+
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+      expect(screen.getByRole('textbox', { name: 'Command palette search' })).toHaveFocus()
+
+      fireEvent.keyDown(window, { key: 'Escape' })
+      expect(trigger).toHaveFocus()
+    })
+
+    it('wraps Shift+Tab focus from the input to the last focusable element', () => {
+      renderPalette()
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+
+      const input = screen.getByRole('textbox', { name: 'Command palette search' })
+      fireEvent.keyDown(input, { key: 'Tab', shiftKey: true })
+
+      expect(screen.getByRole('button', { name: 'New question' })).toHaveFocus()
+    })
+
+    it('wraps Tab focus from the last focusable element back to the input', () => {
+      renderPalette()
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+
+      const newQuestionButton = screen.getByRole('button', { name: 'New question' })
+      newQuestionButton.focus()
+      fireEvent.keyDown(newQuestionButton, { key: 'Tab' })
+
+      expect(screen.getByRole('textbox', { name: 'Command palette search' })).toHaveFocus()
+    })
+
+    it('announces the filtered result count via a status region as the query changes', () => {
+      renderPalette()
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+
+      expect(screen.getByText('4 matching commands')).toBeInTheDocument()
+
+      const input = screen.getByRole('textbox', { name: 'Command palette search' })
+      fireEvent.change(input, { target: { value: 'library' } })
+      expect(screen.getByText('1 matching command')).toBeInTheDocument()
+
+      fireEvent.change(input, { target: { value: 'nonexistent command' } })
+      expect(screen.getByText('0 matching commands')).toBeInTheDocument()
+    })
+  })
+
   describe('search past questions', () => {
     it('shows an empty state and makes no network or storage calls', () => {
       const getItemSpy = vi.spyOn(Storage.prototype, 'getItem')

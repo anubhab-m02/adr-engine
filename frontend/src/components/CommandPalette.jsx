@@ -8,11 +8,21 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useNewQuestion } from '../lib/useNewQuestion.js'
 
+function getFocusableElements(container) {
+  return Array.from(
+    container.querySelectorAll(
+      'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
+  )
+}
+
 function CommandPalette() {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [highlightedIndex, setHighlightedIndex] = useState(0)
   const inputRef = useRef(null)
+  const dialogRef = useRef(null)
+  const previouslyFocusedRef = useRef(null)
   const navigate = useNavigate()
   const requestNewQuestion = useNewQuestion()
 
@@ -43,9 +53,13 @@ function CommandPalette() {
 
   useEffect(() => {
     if (!open) return
+    previouslyFocusedRef.current = document.activeElement
     setQuery('')
     setHighlightedIndex(0)
     inputRef.current?.focus()
+    return () => {
+      previouslyFocusedRef.current?.focus?.()
+    }
   }, [open])
 
   if (!open) return null
@@ -77,14 +91,34 @@ function CommandPalette() {
     }
   }
 
+  function handleDialogKeyDown(event) {
+    if (event.key !== 'Tab') return
+    const focusable = getFocusableElements(dialogRef.current)
+    if (focusable.length === 0) return
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    if (event.shiftKey) {
+      if (document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      }
+    } else if (document.activeElement === last) {
+      event.preventDefault()
+      first.focus()
+    }
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-start justify-center bg-ink/40 pt-[15vh]"
       onClick={() => setOpen(false)}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-label="Command palette"
+        aria-modal="true"
+        onKeyDown={handleDialogKeyDown}
         className="w-full max-w-lg mx-4 rounded-xl bg-panel shadow-lg overflow-hidden"
         onClick={(event) => event.stopPropagation()}
       >
@@ -98,6 +132,9 @@ function CommandPalette() {
           aria-label="Command palette search"
           className="w-full font-ui text-base text-ink bg-transparent px-4 py-3 border-b border-surface focus:outline-none"
         />
+        <p role="status" aria-live="polite" className="sr-only">
+          {filtered.length} matching command{filtered.length === 1 ? '' : 's'}
+        </p>
         <ul role="listbox" aria-label="Commands" className="max-h-80 overflow-y-auto py-2">
           {filtered.length === 0 && <li className="px-4 py-2 text-sm text-ink-muted">No matching commands</li>}
           {filtered.map((action, index) => (
