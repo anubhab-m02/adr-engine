@@ -115,6 +115,10 @@ function CommandPalette() {
             </li>
           ))}
         </ul>
+        <div className="border-t border-surface px-4 py-3">
+          <h2 className="text-xs font-ui uppercase tracking-wide text-ink-muted">Past questions</h2>
+          <p className="mt-1 text-sm text-ink-muted">No question history yet</p>
+        </div>
       </div>
     </div>
   )

@@ -169,6 +169,24 @@ describe('CommandPalette', () => {
     })
   })
 
+  describe('search past questions', () => {
+    it('shows an empty state and makes no network or storage calls', () => {
+      const getItemSpy = vi.spyOn(Storage.prototype, 'getItem')
+      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem')
+
+      renderPalette()
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+
+      expect(screen.getByText('No question history yet')).toBeInTheDocument()
+      expect(getRepos).not.toHaveBeenCalled()
+      expect(getItemSpy).not.toHaveBeenCalled()
+      expect(setItemSpy).not.toHaveBeenCalled()
+
+      getItemSpy.mockRestore()
+      setItemSpy.mockRestore()
+    })
+  })
+
   describe('"New question" action', () => {
     it("clears the Ask page's current conversation when invoked from there", async () => {
       const user = userEvent.setup()
