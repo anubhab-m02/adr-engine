@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from chroma_client import get_chroma_client
 from routers.auth import router as auth_router
 from routers.config import router as config_router
+from routers.decisions import router as decisions_router
 from routers.github import router as github_router
 from routers.ingest import router as ingest_router
 from routers.query import router as query_router
@@ -30,6 +31,7 @@ app.add_middleware(
 app.include_router(ingest_router)
 app.include_router(retrieve_router)
 app.include_router(query_router)
+app.include_router(decisions_router)
 app.include_router(repos_router)
 app.include_router(github_router)
 app.include_router(config_router)

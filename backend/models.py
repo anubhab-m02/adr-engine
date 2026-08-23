@@ -86,6 +86,13 @@ class RetrieveResponse(BaseModel):
     results: list[RetrieveResult]
 
 
+class DecisionsResponse(BaseModel):
+    units: list[DecisionUnit]
+    total: int
+    page: int
+    limit: int
+
+
 class QueryRequest(BaseModel):
     question: str
     repos: list[str] | None = None
