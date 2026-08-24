@@ -94,3 +94,11 @@ export function postIngest({ repos } = {}) {
 export function retryIngest(repo) {
   return request(`/ingest/retry/${repo}`, { method: 'POST' })
 }
+
+export function getDecisions({ repo, since, until, page } = {}) {
+  const params = new URLSearchParams({ repo })
+  if (since) params.set('since', since)
+  if (until) params.set('until', until)
+  if (page) params.set('page', page)
+  return request(`/decisions?${params.toString()}`, { method: 'GET' })
+}
