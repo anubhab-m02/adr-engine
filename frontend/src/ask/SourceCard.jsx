@@ -1,33 +1,7 @@
 // The reading room's citation card — evolved from the Phase 1
 // CitationCard. Its `id` (`source-{unit.id}`) is the scroll target that
 // CitationMarker's `#source-{unitId}` href/click handler jumps to.
-function badgeText(unit) {
-  return unit.kind === 'pr' ? `PR #${unit.ref}` : `commit ${unit.ref.slice(0, 7)}`
-}
-
-function relativeDate(dateString) {
-  const date = new Date(dateString)
-  const seconds = Math.round((date.getTime() - Date.now()) / 1000)
-  const divisions = [
-    [60, 'second'],
-    [60, 'minute'],
-    [24, 'hour'],
-    [7, 'day'],
-    [4.34524, 'week'],
-    [12, 'month'],
-    [Number.POSITIVE_INFINITY, 'year'],
-  ]
-
-  const formatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
-  let duration = seconds
-  for (const [amount, unit] of divisions) {
-    if (Math.abs(duration) < amount) {
-      return formatter.format(Math.round(duration), unit)
-    }
-    duration /= amount
-  }
-  return formatter.format(Math.round(duration), 'year')
-}
+import { badgeText, relativeDate } from '../lib/sourceFormat.js'
 
 // `widthClassName` defaults to a fixed card width for the stacked-list
 // contexts (SourceCardList, SourcesView). AnswerPage's margin track passes
