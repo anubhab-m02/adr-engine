@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import DecisionTimeline from './DecisionTimeline.jsx'
 import { getDecisions } from '../api.js'
@@ -102,5 +103,32 @@ describe('DecisionTimeline', () => {
 
     rerender(<DecisionTimeline repo="owner/repo-b" />)
     expect(getDecisions).toHaveBeenCalledWith({ repo: 'owner/repo-b' })
+  })
+
+  it('re-fetches with since/until when a date range is set, then drops them on clear', async () => {
+    const user = userEvent.setup()
+    getDecisions.mockResolvedValue({ units: [], total: 0, page: 1, limit: 20 })
+    render(<DecisionTimeline repo="owner/repo" />)
+
+    await screen.findByText('No decisions indexed yet.')
+    expect(getDecisions).toHaveBeenCalledWith({ repo: 'owner/repo', since: undefined, until: undefined })
+
+    await user.type(screen.getByLabelText('From'), '2026-01-01')
+    expect(getDecisions).toHaveBeenLastCalledWith({
+      repo: 'owner/repo',
+      since: '2026-01-01',
+      until: undefined,
+    })
+
+    await user.type(screen.getByLabelText('To'), '2026-02-01')
+    expect(getDecisions).toHaveBeenLastCalledWith({
+      repo: 'owner/repo',
+      since: '2026-01-01',
+      until: '2026-02-01',
+    })
+
+    await user.clear(screen.getByLabelText('From'))
+    await user.clear(screen.getByLabelText('To'))
+    expect(getDecisions).toHaveBeenLastCalledWith({ repo: 'owner/repo', since: undefined, until: undefined })
   })
 })
