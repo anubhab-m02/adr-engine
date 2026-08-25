@@ -129,6 +129,19 @@ def count_units(repo: str) -> int:
     return len(get_collection().get(where={"repo": repo}, include=[])["ids"])
 
 
+def count_units_by_path(repo: str) -> dict[str, int]:
+    """Decision counts per file path for `repo`, from each unit's
+    `files_changed` — a file touched by 3 decisions counts 3, not 1."""
+    result = get_collection().get(where={"repo": repo}, include=["metadatas"])
+
+    counts: dict[str, int] = {}
+    for metadata in result["metadatas"]:
+        for path in json.loads(metadata.get("files_changed", "[]")):
+            counts[path] = counts.get(path, 0) + 1
+
+    return counts
+
+
 def _cursor_path() -> Path:
     return Path(get_settings().chroma_data_dir) / "cursors.json"
 

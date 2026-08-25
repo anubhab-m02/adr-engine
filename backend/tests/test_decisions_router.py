@@ -110,3 +110,46 @@ def test_decisions_paginates_without_duplicates_or_gaps(make_unit):
     assert len(all_ids) == len(set(all_ids)) == 5
     assert all(page["total"] == 5 for page in pages)
     assert [len(page["units"]) for page in pages] == [2, 2, 1]
+
+
+def test_decisions_by_path_counts_overlapping_files_changed(make_unit):
+    store.upsert_units(
+        [
+            make_unit(id="owner/repo:pr:1", files_changed=["backend/auth.py", "backend/models.py"]),
+            make_unit(id="owner/repo:pr:2", files_changed=["backend/auth.py"]),
+            make_unit(id="owner/repo:pr:3", files_changed=["backend/auth.py", "frontend/src/api.js"]),
+        ],
+        embeddings=[[1, 0], [1, 0], [1, 0]],
+    )
+
+    response = client.get("/decisions/by-path", params={"repo": "owner/repo"})
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "paths": {
+            "backend/auth.py": 3,
+            "backend/models.py": 1,
+            "frontend/src/api.js": 1,
+        }
+    }
+
+
+def test_decisions_by_path_only_counts_requested_repo(make_unit):
+    store.upsert_units(
+        [
+            make_unit(id="owner/a:pr:1", repo="owner/a", files_changed=["a.py"]),
+            make_unit(id="owner/b:pr:1", repo="owner/b", files_changed=["b.py"]),
+        ],
+        embeddings=[[1, 0], [1, 0]],
+    )
+
+    response = client.get("/decisions/by-path", params={"repo": "owner/a"})
+
+    assert response.json() == {"paths": {"a.py": 1}}
+
+
+def test_decisions_by_path_with_no_units_returns_empty_map():
+    response = client.get("/decisions/by-path", params={"repo": "owner/repo"})
+
+    assert response.status_code == 200
+    assert response.json() == {"paths": {}}

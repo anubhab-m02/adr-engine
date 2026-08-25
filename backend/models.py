@@ -93,6 +93,10 @@ class DecisionsResponse(BaseModel):
     limit: int
 
 
+class DecisionsByPathResponse(BaseModel):
+    paths: dict[str, int]
+
+
 class QueryRequest(BaseModel):
     question: str
     repos: list[str] | None = None

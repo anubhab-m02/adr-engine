@@ -6,8 +6,8 @@ service function, shape response. No business logic here.
 
 from fastapi import APIRouter
 
-from ingestion.store import list_units
-from models import DecisionsResponse
+from ingestion.store import count_units_by_path, list_units
+from models import DecisionsByPathResponse, DecisionsResponse
 
 router = APIRouter()
 
@@ -22,3 +22,8 @@ def decisions(
 ) -> DecisionsResponse:
     units, total = list_units(repo, since=since, until=until, limit=limit, offset=(page - 1) * limit)
     return DecisionsResponse(units=units, total=total, page=page, limit=limit)
+
+
+@router.get("/decisions/by-path", response_model=DecisionsByPathResponse)
+def decisions_by_path(repo: str) -> DecisionsByPathResponse:
+    return DecisionsByPathResponse(paths=count_units_by_path(repo))
