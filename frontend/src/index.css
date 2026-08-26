@@ -118,3 +118,12 @@ body {
     transform: none;
   }
 }
+
+/*
+ * FileTree's decision-density heatmap: a node sets `--heat-intensity` and
+ * this class, rather than an inline color-mix(), so the accent/highlight
+ * mixing formula lives in one place instead of being duplicated per node.
+ */
+.heat {
+  background-color: color-mix(in oklch, var(--color-accent) var(--heat-intensity, 0%), transparent);
+}
