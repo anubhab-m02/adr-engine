@@ -44,14 +44,14 @@ function AnswerPage({ question, answer, citations, repos, selectedRepos }) {
   const citationsById = new Map(citations.map((unit) => [unit.id, unit]))
 
   return (
-    <article className="max-w-3xl min-[900px]:max-w-none">
+    <article className="answer-page max-w-3xl min-[900px]:max-w-none">
       <h1 className="font-ui text-2xl text-ink">{question}</h1>
       <p className="font-ui text-sm text-ink-muted mt-1">
         searched {repoCount} repo{repoCount === 1 ? '' : 's'} · {decisions} decision
         {decisions === 1 ? '' : 's'}
       </p>
 
-      <div className="mt-6 min-[900px]:grid min-[900px]:grid-cols-[minmax(0,68ch)_180px] min-[900px]:gap-x-8 xl:grid-cols-[minmax(0,68ch)_260px] xl:gap-x-12">
+      <div className="answer-grid mt-6 min-[900px]:grid min-[900px]:grid-cols-[minmax(0,68ch)_180px] min-[900px]:gap-x-8 xl:grid-cols-[minmax(0,68ch)_260px] xl:gap-x-12">
         {paragraphs.map((paragraph) => {
           const units = paragraphUnits(paragraph, citationsById)
           return (
@@ -63,7 +63,7 @@ function AnswerPage({ question, answer, citations, repos, selectedRepos }) {
               />
               {units.length > 0 && (
                 <div
-                  className={`hidden min-[900px]:flex min-[900px]:flex-col min-[900px]:justify-center min-[900px]:gap-4 min-[900px]:col-start-2 ${
+                  className={`answer-grid-margin hidden min-[900px]:flex min-[900px]:flex-col min-[900px]:justify-center min-[900px]:gap-4 min-[900px]:col-start-2 ${
                     reducedMotion ? '' : 'animate-source-group-entrance'
                   }`}
                 >
@@ -74,7 +74,7 @@ function AnswerPage({ question, answer, citations, repos, selectedRepos }) {
               )}
               {units.length > 0 && (
                 <div
-                  className={`mt-4 flex flex-wrap gap-4 min-[900px]:hidden ${
+                  className={`answer-grid-inline mt-4 flex flex-wrap gap-4 min-[900px]:hidden ${
                     reducedMotion ? '' : 'animate-source-group-entrance'
                   }`}
                 >

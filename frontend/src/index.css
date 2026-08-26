@@ -127,3 +127,32 @@ body {
 .heat {
   background-color: color-mix(in oklch, var(--color-accent) var(--heat-intensity, 0%), transparent);
 }
+
+/*
+ * AnswerPage print stylesheet (Track B spec: "a print and PDF
+ * stylesheet"). TopNav hides via Tailwind's own `print:hidden` on its
+ * header. These three classes force AnswerPage back to its own
+ * <900px inline-citation-collapse layout for paper — reusing it rather
+ * than building a third citation layout — regardless of the actual
+ * viewport width the browser renders the print preview at: unlayered
+ * rules here already win the cascade over Tailwind's `min-[900px]:`
+ * utilities (which live inside Tailwind's `@layer utilities`), the same
+ * mechanism the `.heat`/`.animate-*` classes above rely on.
+ */
+@media print {
+  .answer-page {
+    max-width: none;
+  }
+
+  .answer-grid {
+    display: block;
+  }
+
+  .answer-grid-margin {
+    display: none;
+  }
+
+  .answer-grid-inline {
+    display: flex;
+  }
+}
