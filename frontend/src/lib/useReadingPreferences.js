@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 
 const STORAGE_KEY = 'readingPreferences'
 
-const DEFAULTS = { density: 'comfortable' }
+const DEFAULTS = { density: 'comfortable', measure: 'default' }
 
 function readStored() {
   try {
@@ -30,8 +30,9 @@ function useReadingPreferences() {
   }, [])
 
   const setDensity = useCallback((density) => update({ density }), [update])
+  const setMeasure = useCallback((measure) => update({ measure }), [update])
 
-  return { ...preferences, setDensity }
+  return { ...preferences, setDensity, setMeasure }
 }
 
 export default useReadingPreferences

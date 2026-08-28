@@ -42,4 +42,39 @@ describe('useReadingPreferences', () => {
 
     expect(result.current.density).toBe('comfortable')
   })
+
+  it('defaults measure to default', () => {
+    const { result } = renderHook(() => useReadingPreferences())
+
+    expect(result.current.measure).toBe('default')
+  })
+
+  it('updates measure independently of density and persists both', () => {
+    const { result } = renderHook(() => useReadingPreferences())
+
+    act(() => {
+      result.current.setDensity('compact')
+    })
+    act(() => {
+      result.current.setMeasure('wide')
+    })
+
+    expect(result.current.density).toBe('compact')
+    expect(result.current.measure).toBe('wide')
+    expect(JSON.parse(localStorage.getItem('readingPreferences'))).toMatchObject({
+      density: 'compact',
+      measure: 'wide',
+    })
+  })
+
+  it('reads a previously persisted measure across a simulated remount', () => {
+    const { result: first } = renderHook(() => useReadingPreferences())
+    act(() => {
+      first.current.setMeasure('narrow')
+    })
+
+    const { result: second } = renderHook(() => useReadingPreferences())
+
+    expect(second.current.measure).toBe('narrow')
+  })
 })
