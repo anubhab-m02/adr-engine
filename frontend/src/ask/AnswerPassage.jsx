@@ -6,13 +6,20 @@ import usePrefersReducedMotion from '../lib/usePrefersReducedMotion.js'
 import CitationMarker from './CitationMarker.jsx'
 import { parseAnswer } from './parseAnswer.js'
 
+// Line-height and inter-paragraph spacing for the density preference
+// (Track B). 'comfortable' matches the passage's original fixed values.
+const DENSITY_CLASSES = {
+  comfortable: 'leading-[1.7] mb-6',
+  compact: 'leading-[1.4] mb-3',
+}
+
 // Renders one already-parsed paragraph. Split out from AnswerPassage so
 // AnswerPage's margin-note layout can interleave paragraphs with their
 // citations' source cards without duplicating the marker-rendering rules.
-export function AnswerParagraph({ paragraph, reducedMotion, className = '' }) {
+export function AnswerParagraph({ paragraph, reducedMotion, density = 'comfortable', className = '' }) {
   return (
     <p
-      className={`font-reading text-ink text-[1.0625rem] leading-[1.7] max-w-[70ch] ${
+      className={`font-reading text-ink text-[1.0625rem] max-w-[70ch] ${DENSITY_CLASSES[density]} ${
         reducedMotion ? '' : 'animate-answer-settle'
       } ${className}`}
     >

@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import AnswerPassage from './AnswerPassage.jsx'
+import AnswerPassage, { AnswerParagraph } from './AnswerPassage.jsx'
+import { parseAnswer } from './parseAnswer.js'
 
 const citations = [
   { id: 'unit-a', url: 'https://github.com/owner/repo/pull/1' },
@@ -117,5 +118,24 @@ describe('AnswerPassage', () => {
     )
 
     expect(container.querySelectorAll('p')).toHaveLength(1)
+  })
+
+  describe('reading density', () => {
+    const [paragraph] = parseAnswer('Redis was chosen [unit-b].', citations)
+
+    it('defaults to comfortable spacing', () => {
+      render(<AnswerParagraph paragraph={paragraph} reducedMotion={false} />)
+
+      const p = screen.getByText(/Redis was chosen/).closest('p')
+      expect(p).toHaveClass('leading-[1.7]', 'mb-6')
+    })
+
+    it('renders tighter spacing classes for compact density', () => {
+      render(<AnswerParagraph paragraph={paragraph} reducedMotion={false} density="compact" />)
+
+      const p = screen.getByText(/Redis was chosen/).closest('p')
+      expect(p).toHaveClass('leading-[1.4]', 'mb-3')
+      expect(p).not.toHaveClass('leading-[1.7]', 'mb-6')
+    })
   })
 })

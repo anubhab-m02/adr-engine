@@ -11,9 +11,19 @@
 // directly after that paragraph, rather than batching every citation in
 // one list at the foot of the answer.
 import usePrefersReducedMotion from '../lib/usePrefersReducedMotion.js'
+import useReadingPreferences from '../lib/useReadingPreferences.js'
 import { AnswerParagraph } from './AnswerPassage.jsx'
 import { parseAnswer } from './parseAnswer.js'
 import SourceCard from './SourceCard.jsx'
+
+const DENSITY_OPTIONS = [
+  { value: 'comfortable', label: 'Comfortable' },
+  { value: 'compact', label: 'Compact' },
+]
+
+function densityToggleClassName(active) {
+  return `rounded-md px-2 py-1 text-xs font-ui ${active ? 'bg-highlight text-ink' : 'text-ink-muted hover:text-ink'}`
+}
 
 function decisionCount(repos, selectedRepos) {
   const selected = new Set(selectedRepos)
@@ -42,18 +52,34 @@ function AnswerPage({ question, answer, citations, repos, selectedRepos }) {
   const reducedMotion = usePrefersReducedMotion()
   const paragraphs = parseAnswer(answer, citations)
   const citationsById = new Map(citations.map((unit) => [unit.id, unit]))
+  const { density, setDensity } = useReadingPreferences()
 
   return (
     <article className="answer-page max-w-3xl min-[900px]:max-w-none">
       <div className="flex items-start justify-between gap-4">
         <h1 className="font-ui text-2xl text-ink">{question}</h1>
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="print:hidden shrink-0 rounded-lg border border-transparent px-3 py-1.5 text-xs font-ui text-ink-muted hover:border-accent hover:text-ink"
-        >
-          Print / Save as PDF
-        </button>
+        <div className="print:hidden shrink-0 flex items-center gap-3">
+          <div role="group" aria-label="Reading density" className="flex items-center gap-1 rounded-lg bg-surface p-1">
+            {DENSITY_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={density === option.value}
+                onClick={() => setDensity(option.value)}
+                className={densityToggleClassName(density === option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="rounded-lg border border-transparent px-3 py-1.5 text-xs font-ui text-ink-muted hover:border-accent hover:text-ink"
+          >
+            Print / Save as PDF
+          </button>
+        </div>
       </div>
       <p className="font-ui text-sm text-ink-muted mt-1">
         searched {repoCount} repo{repoCount === 1 ? '' : 's'} · {decisions} decision
@@ -68,6 +94,7 @@ function AnswerPage({ question, answer, citations, repos, selectedRepos }) {
               <AnswerParagraph
                 paragraph={paragraph}
                 reducedMotion={reducedMotion}
+                density={density}
                 className="min-[900px]:col-start-1"
               />
               {units.length > 0 && (

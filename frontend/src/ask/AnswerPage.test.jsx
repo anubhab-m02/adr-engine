@@ -31,6 +31,7 @@ describe('AnswerPage', () => {
   afterEach(() => {
     delete window.matchMedia
     delete window.print
+    localStorage.clear()
   })
 
   it('renders the question as a heading', () => {
@@ -202,6 +203,60 @@ describe('AnswerPage', () => {
       const fallback = container.querySelector('.min-\\[900px\\]\\:hidden')
       expect(fallback).toBeInTheDocument()
       expect(fallback.querySelector('a')).toHaveAttribute('href', citation.url)
+    })
+  })
+
+  describe('reading density toggle', () => {
+    it('defaults to comfortable and switches the paragraph to compact spacing on click', async () => {
+      const user = userEvent.setup()
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth."
+          citations={[]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      const comfortableButton = screen.getByRole('button', { name: 'Comfortable' })
+      const compactButton = screen.getByRole('button', { name: 'Compact' })
+      expect(comfortableButton).toHaveAttribute('aria-pressed', 'true')
+
+      const paragraph = screen.getByText(/We use OAuth2 for auth/).closest('p')
+      expect(paragraph).toHaveClass('leading-[1.7]')
+
+      await user.click(compactButton)
+
+      expect(compactButton).toHaveAttribute('aria-pressed', 'true')
+      expect(paragraph).toHaveClass('leading-[1.4]')
+    })
+
+    it('persists the density choice across a remount', async () => {
+      const user = userEvent.setup()
+      const { unmount } = render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth."
+          citations={[]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+      await user.click(screen.getByRole('button', { name: 'Compact' }))
+      unmount()
+
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth."
+          citations={[]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(screen.getByRole('button', { name: 'Compact' })).toHaveAttribute('aria-pressed', 'true')
     })
   })
 
