@@ -138,4 +138,24 @@ describe('AnswerPassage', () => {
       expect(p).not.toHaveClass('leading-[1.7]', 'mb-6')
     })
   })
+
+  describe('reading measure', () => {
+    const [paragraph] = parseAnswer('Redis was chosen [unit-b].', citations)
+
+    it('defaults to the 70ch column width', () => {
+      render(<AnswerParagraph paragraph={paragraph} reducedMotion={false} />)
+
+      expect(screen.getByText(/Redis was chosen/).closest('p')).toHaveClass('max-w-[70ch]')
+    })
+
+    it.each([
+      ['narrow', 'max-w-[54ch]'],
+      ['default', 'max-w-[70ch]'],
+      ['wide', 'max-w-[86ch]'],
+    ])('maps measure %s to %s', (measure, expectedClass) => {
+      render(<AnswerParagraph paragraph={paragraph} reducedMotion={false} measure={measure} />)
+
+      expect(screen.getByText(/Redis was chosen/).closest('p')).toHaveClass(expectedClass)
+    })
+  })
 })

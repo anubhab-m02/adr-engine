@@ -21,7 +21,13 @@ const DENSITY_OPTIONS = [
   { value: 'compact', label: 'Compact' },
 ]
 
-function densityToggleClassName(active) {
+const MEASURE_OPTIONS = [
+  { value: 'narrow', label: 'Narrow' },
+  { value: 'default', label: 'Default' },
+  { value: 'wide', label: 'Wide' },
+]
+
+function preferenceToggleClassName(active) {
   return `rounded-md px-2 py-1 text-xs font-ui ${active ? 'bg-highlight text-ink' : 'text-ink-muted hover:text-ink'}`
 }
 
@@ -52,7 +58,7 @@ function AnswerPage({ question, answer, citations, repos, selectedRepos }) {
   const reducedMotion = usePrefersReducedMotion()
   const paragraphs = parseAnswer(answer, citations)
   const citationsById = new Map(citations.map((unit) => [unit.id, unit]))
-  const { density, setDensity } = useReadingPreferences()
+  const { density, setDensity, measure, setMeasure } = useReadingPreferences()
 
   return (
     <article className="answer-page max-w-3xl min-[900px]:max-w-none">
@@ -66,7 +72,20 @@ function AnswerPage({ question, answer, citations, repos, selectedRepos }) {
                 type="button"
                 aria-pressed={density === option.value}
                 onClick={() => setDensity(option.value)}
-                className={densityToggleClassName(density === option.value)}
+                className={preferenceToggleClassName(density === option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <div role="group" aria-label="Reading width" className="flex items-center gap-1 rounded-lg bg-surface p-1">
+            {MEASURE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={measure === option.value}
+                onClick={() => setMeasure(option.value)}
+                className={preferenceToggleClassName(measure === option.value)}
               >
                 {option.label}
               </button>
@@ -95,6 +114,7 @@ function AnswerPage({ question, answer, citations, repos, selectedRepos }) {
                 paragraph={paragraph}
                 reducedMotion={reducedMotion}
                 density={density}
+                measure={measure}
                 className="min-[900px]:col-start-1"
               />
               {units.length > 0 && (

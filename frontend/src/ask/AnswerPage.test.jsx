@@ -260,6 +260,60 @@ describe('AnswerPage', () => {
     })
   })
 
+  describe('reading measure toggle', () => {
+    it('defaults to the default width and switches the paragraph column width on click', async () => {
+      const user = userEvent.setup()
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth."
+          citations={[]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      const defaultButton = screen.getByRole('button', { name: 'Default' })
+      const wideButton = screen.getByRole('button', { name: 'Wide' })
+      expect(defaultButton).toHaveAttribute('aria-pressed', 'true')
+
+      const paragraph = screen.getByText(/We use OAuth2 for auth/).closest('p')
+      expect(paragraph).toHaveClass('max-w-[70ch]')
+
+      await user.click(wideButton)
+
+      expect(wideButton).toHaveAttribute('aria-pressed', 'true')
+      expect(paragraph).toHaveClass('max-w-[86ch]')
+    })
+
+    it('persists the measure choice across a remount', async () => {
+      const user = userEvent.setup()
+      const { unmount } = render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth."
+          citations={[]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+      await user.click(screen.getByRole('button', { name: 'Narrow' }))
+      unmount()
+
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth."
+          citations={[]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(screen.getByRole('button', { name: 'Narrow' })).toHaveAttribute('aria-pressed', 'true')
+    })
+  })
+
   describe('SourceCards group-entrance motion', () => {
     it('applies the group-entrance animation to a paragraph\'s margin and inline card groups by default', () => {
       stubMatchMedia(false)
