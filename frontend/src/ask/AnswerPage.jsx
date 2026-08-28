@@ -45,7 +45,16 @@ function AnswerPage({ question, answer, citations, repos, selectedRepos }) {
 
   return (
     <article className="answer-page max-w-3xl min-[900px]:max-w-none">
-      <h1 className="font-ui text-2xl text-ink">{question}</h1>
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="font-ui text-2xl text-ink">{question}</h1>
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="print:hidden shrink-0 rounded-lg border border-transparent px-3 py-1.5 text-xs font-ui text-ink-muted hover:border-accent hover:text-ink"
+        >
+          Print / Save as PDF
+        </button>
+      </div>
       <p className="font-ui text-sm text-ink-muted mt-1">
         searched {repoCount} repo{repoCount === 1 ? '' : 's'} · {decisions} decision
         {decisions === 1 ? '' : 's'}

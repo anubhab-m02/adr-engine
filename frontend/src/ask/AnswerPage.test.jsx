@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import AnswerPage from './AnswerPage.jsx'
 
@@ -29,6 +30,7 @@ const repos = [
 describe('AnswerPage', () => {
   afterEach(() => {
     delete window.matchMedia
+    delete window.print
   })
 
   it('renders the question as a heading', () => {
@@ -43,6 +45,25 @@ describe('AnswerPage', () => {
     )
 
     expect(screen.getByRole('heading', { name: 'Why OAuth2?' })).toBeInTheDocument()
+  })
+
+  it('calls window.print when the print button is clicked', async () => {
+    const user = userEvent.setup()
+    window.print = vi.fn()
+
+    render(
+      <AnswerPage
+        question="Why OAuth2?"
+        answer="We use OAuth2 for auth."
+        citations={[]}
+        repos={repos}
+        selectedRepos={['owner/repo']}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Print / Save as PDF' }))
+
+    expect(window.print).toHaveBeenCalledTimes(1)
   })
 
   it('renders a provenance dek computed from selectedRepos and their indexed_units', () => {
