@@ -314,6 +314,69 @@ describe('AnswerPage', () => {
     })
   })
 
+  describe('coverage line', () => {
+    it('renders nothing when there are no citations', () => {
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth."
+          citations={[]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(screen.queryByText(/^From /)).not.toBeInTheDocument()
+    })
+
+    it('states a single year, not a nonsensical span, for one citation', () => {
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth [owner/repo:pr:42]."
+          citations={[citation]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(screen.getByText('From 1 decision (2024)')).toBeInTheDocument()
+    })
+
+    it('states the min/max year span across multiple citations', () => {
+      const older = { ...citation, id: 'owner/repo:commit:abc', date: '2019-06-15T00:00:00Z' }
+      const newer = { ...citation, id: 'owner/repo:pr:99', date: '2023-11-01T00:00:00Z' }
+
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer={'First [owner/repo:pr:42].\n\nSecond [owner/repo:commit:abc].\n\nThird [owner/repo:pr:99].'}
+          citations={[citation, older, newer]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(screen.getByText('From 3 decisions spanning 2019–2024')).toBeInTheDocument()
+    })
+
+    it('collapses to one year, not a same-year span, when every citation falls in the same year', () => {
+      const sameYear = { ...citation, id: 'owner/repo:commit:abc', date: '2024-06-15T00:00:00Z' }
+
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer={'First [owner/repo:pr:42].\n\nSecond [owner/repo:commit:abc].'}
+          citations={[citation, sameYear]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(screen.getByText('From 2 decisions (2024)')).toBeInTheDocument()
+    })
+  })
+
   describe('SourceCards group-entrance motion', () => {
     it('applies the group-entrance animation to a paragraph\'s margin and inline card groups by default', () => {
       stubMatchMedia(false)
