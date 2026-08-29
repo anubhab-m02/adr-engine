@@ -14,6 +14,7 @@ import usePrefersReducedMotion from '../lib/usePrefersReducedMotion.js'
 import useReadingPreferences from '../lib/useReadingPreferences.js'
 import { AnswerParagraph } from './AnswerPassage.jsx'
 import { parseAnswer } from './parseAnswer.js'
+import PrivacyPanel from './PrivacyPanel.jsx'
 import SourceCard from './SourceCard.jsx'
 
 const DENSITY_OPTIONS = [
@@ -78,7 +79,15 @@ function paragraphUnits(paragraph, citationsById) {
   return units
 }
 
-function AnswerPage({ question, answer, citations, repos, selectedRepos }) {
+function AnswerPage({
+  question,
+  answer,
+  citations,
+  repos,
+  selectedRepos,
+  sentToCloud = false,
+  cloudSynthesisFields = null,
+}) {
   const repoCount = selectedRepos.length
   const decisions = decisionCount(repos, selectedRepos)
   const reducedMotion = usePrefersReducedMotion()
@@ -140,6 +149,15 @@ function AnswerPage({ question, answer, citations, repos, selectedRepos }) {
           {isCoverageThin(coverage) ? '; coverage for this area is thin' : ''}
         </p>
       )}
+
+      <details className="mt-2 print:hidden">
+        <summary className="cursor-pointer font-ui text-xs text-ink-muted hover:text-ink">
+          What was sent
+        </summary>
+        <div className="mt-2">
+          <PrivacyPanel sentToCloud={sentToCloud} cloudSynthesisFields={cloudSynthesisFields} />
+        </div>
+      </details>
 
       <div className="answer-grid mt-6 min-[900px]:grid min-[900px]:grid-cols-[minmax(0,68ch)_180px] min-[900px]:gap-x-8 xl:grid-cols-[minmax(0,68ch)_260px] xl:gap-x-12">
         {paragraphs.map((paragraph) => {
