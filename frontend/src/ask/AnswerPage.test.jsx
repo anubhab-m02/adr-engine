@@ -340,10 +340,62 @@ describe('AnswerPage', () => {
         />,
       )
 
-      expect(screen.getByText('From 1 decision (2024)')).toBeInTheDocument()
+      expect(screen.getByText('From 1 decision (2024); coverage for this area is thin')).toBeInTheDocument()
     })
 
     it('states the min/max year span across multiple citations', () => {
+      const older = { ...citation, id: 'owner/repo:commit:abc', date: '2022-06-15T00:00:00Z' }
+      const newer = { ...citation, id: 'owner/repo:pr:99', date: '2023-11-01T00:00:00Z' }
+
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer={'First [owner/repo:pr:42].\n\nSecond [owner/repo:commit:abc].\n\nThird [owner/repo:pr:99].'}
+          citations={[citation, older, newer]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(screen.getByText('From 3 decisions spanning 2022–2024')).toBeInTheDocument()
+    })
+
+    it('collapses to one year, not a same-year span, when every citation falls in the same year', () => {
+      const sameYearA = { ...citation, id: 'owner/repo:commit:abc', date: '2024-06-15T00:00:00Z' }
+      const sameYearB = { ...citation, id: 'owner/repo:pr:99', date: '2024-02-01T00:00:00Z' }
+
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer={'First [owner/repo:pr:42].\n\nSecond [owner/repo:commit:abc].\n\nThird [owner/repo:pr:99].'}
+          citations={[citation, sameYearA, sameYearB]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(screen.getByText('From 3 decisions (2024)')).toBeInTheDocument()
+    })
+  })
+
+  describe('coverage thin heuristic', () => {
+    it('flags a citation set below the count threshold as thin', () => {
+      const second = { ...citation, id: 'owner/repo:commit:abc', date: '2024-06-15T00:00:00Z' }
+
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer={'First [owner/repo:pr:42].\n\nSecond [owner/repo:commit:abc].'}
+          citations={[citation, second]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(screen.getByText(/coverage for this area is thin/)).toBeInTheDocument()
+    })
+
+    it('flags a wide, sparse date span as thin even with enough citations', () => {
       const older = { ...citation, id: 'owner/repo:commit:abc', date: '2019-06-15T00:00:00Z' }
       const newer = { ...citation, id: 'owner/repo:pr:99', date: '2023-11-01T00:00:00Z' }
 
@@ -357,23 +409,25 @@ describe('AnswerPage', () => {
         />,
       )
 
-      expect(screen.getByText('From 3 decisions spanning 2019–2024')).toBeInTheDocument()
+      expect(screen.getByText('From 3 decisions spanning 2019–2024; coverage for this area is thin')).toBeInTheDocument()
     })
 
-    it('collapses to one year, not a same-year span, when every citation falls in the same year', () => {
-      const sameYear = { ...citation, id: 'owner/repo:commit:abc', date: '2024-06-15T00:00:00Z' }
+    it('does not flag a well-covered citation set', () => {
+      const second = { ...citation, id: 'owner/repo:commit:abc', date: '2023-06-15T00:00:00Z' }
+      const third = { ...citation, id: 'owner/repo:pr:99', date: '2024-02-01T00:00:00Z' }
 
       render(
         <AnswerPage
           question="Why OAuth2?"
-          answer={'First [owner/repo:pr:42].\n\nSecond [owner/repo:commit:abc].'}
-          citations={[citation, sameYear]}
+          answer={'First [owner/repo:pr:42].\n\nSecond [owner/repo:commit:abc].\n\nThird [owner/repo:pr:99].'}
+          citations={[citation, second, third]}
           repos={repos}
           selectedRepos={['owner/repo']}
         />,
       )
 
-      expect(screen.getByText('From 2 decisions (2024)')).toBeInTheDocument()
+      expect(screen.getByText('From 3 decisions spanning 2023–2024')).toBeInTheDocument()
+      expect(screen.queryByText(/coverage for this area is thin/)).not.toBeInTheDocument()
     })
   })
 
