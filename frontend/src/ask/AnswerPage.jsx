@@ -38,6 +38,16 @@ function decisionCount(repos, selectedRepos) {
     .reduce((total, repo) => total + repo.indexed_units, 0)
 }
 
+// Design principle 3 ("honest state"): state how much evidence backs an
+// answer instead of letting a confident-sounding paragraph imply more
+// than it has. Returns null for zero citations — there's nothing to
+// report a span over.
+function citationCoverage(citations) {
+  if (citations.length === 0) return null
+  const years = citations.map((citation) => new Date(citation.date).getFullYear())
+  return { count: citations.length, minYear: Math.min(...years), maxYear: Math.max(...years) }
+}
+
 // The units a paragraph cites, in first-appearance order and deduped (a
 // repeated marker within one paragraph gets one margin card, not two).
 function paragraphUnits(paragraph, citationsById) {
@@ -59,6 +69,7 @@ function AnswerPage({ question, answer, citations, repos, selectedRepos }) {
   const paragraphs = parseAnswer(answer, citations)
   const citationsById = new Map(citations.map((unit) => [unit.id, unit]))
   const { density, setDensity, measure, setMeasure } = useReadingPreferences()
+  const coverage = citationCoverage(citations)
 
   return (
     <article className="answer-page max-w-3xl min-[900px]:max-w-none">
@@ -104,6 +115,14 @@ function AnswerPage({ question, answer, citations, repos, selectedRepos }) {
         searched {repoCount} repo{repoCount === 1 ? '' : 's'} · {decisions} decision
         {decisions === 1 ? '' : 's'}
       </p>
+      {coverage && (
+        <p className="font-ui text-sm text-ink-muted">
+          From {coverage.count} decision{coverage.count === 1 ? '' : 's'}
+          {coverage.minYear === coverage.maxYear
+            ? ` (${coverage.minYear})`
+            : ` spanning ${coverage.minYear}–${coverage.maxYear}`}
+        </p>
+      )}
 
       <div className="answer-grid mt-6 min-[900px]:grid min-[900px]:grid-cols-[minmax(0,68ch)_180px] min-[900px]:gap-x-8 xl:grid-cols-[minmax(0,68ch)_260px] xl:gap-x-12">
         {paragraphs.map((paragraph) => {
