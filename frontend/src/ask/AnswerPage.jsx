@@ -48,6 +48,22 @@ function citationCoverage(citations) {
   return { count: citations.length, minYear: Math.min(...years), maxYear: Math.max(...years) }
 }
 
+// Thresholds below are a plain heuristic, not a confidence score — there's
+// no statistical backing behind "3" or "1 per year", they're just a rough
+// line between "a couple of citations" and "an actually covered area".
+// Don't read more rigor into this than exists; it exists only to avoid a
+// confident-sounding answer implying more evidence than it has.
+const THIN_CITATION_COUNT = 3
+const THIN_SPAN_YEARS = 3
+const THIN_CITATIONS_PER_YEAR = 1
+
+function isCoverageThin(coverage) {
+  if (!coverage) return false
+  if (coverage.count < THIN_CITATION_COUNT) return true
+  const spanYears = coverage.maxYear - coverage.minYear + 1
+  return spanYears > THIN_SPAN_YEARS && coverage.count / spanYears < THIN_CITATIONS_PER_YEAR
+}
+
 // The units a paragraph cites, in first-appearance order and deduped (a
 // repeated marker within one paragraph gets one margin card, not two).
 function paragraphUnits(paragraph, citationsById) {
@@ -121,6 +137,7 @@ function AnswerPage({ question, answer, citations, repos, selectedRepos }) {
           {coverage.minYear === coverage.maxYear
             ? ` (${coverage.minYear})`
             : ` spanning ${coverage.minYear}–${coverage.maxYear}`}
+          {isCoverageThin(coverage) ? '; coverage for this area is thin' : ''}
         </p>
       )}
 
