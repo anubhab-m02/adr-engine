@@ -65,7 +65,7 @@ function RepoRow({ repo, onRemove }) {
       </div>
       <div className="sm:order-2">
         {active ? (
-          <IndexProgress repo={repo.repo} />
+          <IndexProgress repo={repo.repo} indexedAt={repo.indexed_at} />
         ) : (
           <p className="text-sm text-ink-muted">
             {repo.indexed_units} {repo.indexed_units === 1 ? 'decision' : 'decisions'}
