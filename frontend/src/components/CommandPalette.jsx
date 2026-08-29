@@ -3,7 +3,9 @@
 // every authenticated route) so the shortcut works from anywhere. The
 // action list is a static array built from four baseline actions on
 // purpose — a dynamic registry is speculative generality until a real
-// second consumer needs to register actions of its own.
+// second consumer needs to register actions of its own. AppShell is the
+// one exception: it contributes the focus-mode toggle via props, since
+// the palette has no other way to reach AppShell's own render state.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useNewQuestion } from '../lib/useNewQuestion.js'
@@ -16,7 +18,7 @@ function getFocusableElements(container) {
   )
 }
 
-function CommandPalette() {
+function CommandPalette({ focusModeActive = false, onToggleFocusMode } = {}) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [highlightedIndex, setHighlightedIndex] = useState(0)
@@ -26,15 +28,23 @@ function CommandPalette() {
   const navigate = useNavigate()
   const requestNewQuestion = useNewQuestion()
 
-  const actions = useMemo(
-    () => [
+  const actions = useMemo(() => {
+    const baseline = [
       { id: 'go-ask', label: 'Go to Ask', run: () => navigate('/') },
       { id: 'go-library', label: 'Go to Library', run: () => navigate('/library') },
       { id: 'go-settings', label: 'Go to Settings', run: () => navigate('/settings') },
       { id: 'new-question', label: 'New question', run: () => requestNewQuestion() },
-    ],
-    [navigate, requestNewQuestion],
-  )
+    ]
+    if (!onToggleFocusMode) return baseline
+    return [
+      ...baseline,
+      {
+        id: 'toggle-focus-mode',
+        label: focusModeActive ? 'Exit focus mode' : 'Enter focus mode',
+        run: onToggleFocusMode,
+      },
+    ]
+  }, [navigate, requestNewQuestion, focusModeActive, onToggleFocusMode])
 
   useEffect(() => {
     function handleKeyDown(event) {
