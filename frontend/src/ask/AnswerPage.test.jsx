@@ -431,6 +431,63 @@ describe('AnswerPage', () => {
     })
   })
 
+  describe('privacy panel disclosure', () => {
+    it('is present but collapsed by default', () => {
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth."
+          citations={[]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+          sentToCloud={true}
+          cloudSynthesisFields={['id', 'title']}
+        />,
+      )
+
+      const disclosure = screen.getByText('What was sent').closest('details')
+      expect(disclosure).toBeInTheDocument()
+      expect(disclosure).not.toHaveAttribute('open')
+    })
+
+    it('reveals PrivacyPanel content when expanded', async () => {
+      const user = userEvent.setup()
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth."
+          citations={[]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+          sentToCloud={true}
+          cloudSynthesisFields={['id', 'title']}
+        />,
+      )
+
+      await user.click(screen.getByText('What was sent'))
+
+      expect(screen.getByText('id')).toBeInTheDocument()
+      expect(screen.getByText('title')).toBeInTheDocument()
+    })
+
+    it('shows the local-only state when nothing was sent to the cloud', async () => {
+      const user = userEvent.setup()
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth."
+          citations={[]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      await user.click(screen.getByText('What was sent'))
+
+      expect(screen.getByText('Nothing left this machine for this answer.')).toBeInTheDocument()
+    })
+  })
+
   describe('SourceCards group-entrance motion', () => {
     it('applies the group-entrance animation to a paragraph\'s margin and inline card groups by default', () => {
       stubMatchMedia(false)
