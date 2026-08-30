@@ -42,6 +42,26 @@ describe('RepoRow', () => {
     expect(screen.queryByText('42 decisions')).not.toBeInTheDocument()
   })
 
+  it('shows a zero-decision explanation instead of a bare "0 decisions" when idle', () => {
+    mockStatus(null)
+    render(<RepoRow repo={{ repo: 'owner/repo', indexed_units: 0 }} />)
+
+    expect(screen.getByText(/No decisions extracted yet/)).toBeInTheDocument()
+    expect(screen.queryByText('0 decisions')).not.toBeInTheDocument()
+  })
+
+  it('shows the live IndexProgress line, not the zero-decision explanation, while still indexing', () => {
+    mockStatus({
+      repo: 'owner/repo',
+      phase: 'fetching',
+      counts: { fetched: 5, extracted: 0, skipped: 0, stored: 0 },
+    })
+    render(<RepoRow repo={{ repo: 'owner/repo', indexed_units: 0 }} />)
+
+    expect(screen.getByText('Reading commits — 5 examined')).toBeInTheDocument()
+    expect(screen.queryByText(/No decisions extracted yet/)).not.toBeInTheDocument()
+  })
+
   it('falls back to the static count once the repo job is done', () => {
     mockStatus({
       repo: 'owner/repo',

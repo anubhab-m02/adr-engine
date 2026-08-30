@@ -28,7 +28,7 @@ describe('LibraryPage', () => {
     expect(await screen.findByText('owner/repo-a')).toBeInTheDocument()
     expect(screen.getByText('12 decisions')).toBeInTheDocument()
     expect(screen.getByText('owner/repo-b')).toBeInTheDocument()
-    expect(screen.getByText('0 decisions')).toBeInTheDocument()
+    expect(screen.getByText(/No decisions extracted yet/)).toBeInTheDocument()
   })
 
   it('shows the empty-library prompt when there are no repos', async () => {
@@ -62,7 +62,7 @@ describe('LibraryPage', () => {
     render(<LibraryPage />)
 
     expect(await screen.findByText('Embedding 12 decisions…')).toBeInTheDocument()
-    expect(screen.getByText('0 decisions')).toBeInTheDocument()
+    expect(screen.getByText(/No decisions extracted yet/)).toBeInTheDocument()
   })
 
   it('opens the AddReposPanel from the Add repos button', async () => {
