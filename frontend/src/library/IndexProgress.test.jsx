@@ -86,6 +86,20 @@ describe('IndexProgress', () => {
     expect(screen.getByText('Indexed 37 decisions')).toBeInTheDocument()
   })
 
+  it('appends a stale marker when indexed_at is more than 30 days ago', () => {
+    mockStatus({ repo: 'owner/repo', phase: 'done', counts: { fetched: 214, extracted: 37, skipped: 5, stored: 37 } })
+    const indexedAt = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString()
+    render(<IndexProgress repo="owner/repo" indexedAt={indexedAt} />)
+    expect(screen.getByText('Indexed 37 decisions · indexed last month · consider re-indexing')).toBeInTheDocument()
+  })
+
+  it('does not append a stale marker when indexed_at is under 30 days ago', () => {
+    mockStatus({ repo: 'owner/repo', phase: 'done', counts: { fetched: 214, extracted: 37, skipped: 5, stored: 37 } })
+    const indexedAt = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000).toISOString()
+    render(<IndexProgress repo="owner/repo" indexedAt={indexedAt} />)
+    expect(screen.getByText('Indexed 37 decisions · indexed 4 weeks ago')).toBeInTheDocument()
+  })
+
   it('renders the failed state with the server error message', () => {
     mockStatus({
       repo: 'owner/repo',

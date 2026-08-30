@@ -5,15 +5,22 @@ import { relativeDate } from '../lib/sourceFormat.js'
 import { useIngestStatus } from '../lib/useIngestStatus.js'
 import RetryButton from './RetryButton.jsx'
 
+const STALE_THRESHOLD_MS = 30 * 24 * 60 * 60 * 1000
+
+function isStale(indexedAt) {
+  return Date.now() - new Date(indexedAt).getTime() > STALE_THRESHOLD_MS
+}
+
 const PHASE_LABELS = {
   queued: () => 'Queued…',
   fetching: (counts) => `Reading commits — ${counts.fetched} examined`,
   extracting: (counts) => `Extracting decisions — ${counts.extracted} recorded of ${counts.fetched}`,
   embedding: (counts) => `Embedding ${counts.extracted} decisions…`,
-  done: (counts, indexedAt) =>
-    indexedAt
-      ? `Indexed ${counts.stored} decisions · indexed ${relativeDate(indexedAt)}`
-      : `Indexed ${counts.stored} decisions`,
+  done: (counts, indexedAt) => {
+    if (!indexedAt) return `Indexed ${counts.stored} decisions`
+    const label = `Indexed ${counts.stored} decisions · indexed ${relativeDate(indexedAt)}`
+    return isStale(indexedAt) ? `${label} · consider re-indexing` : label
+  },
 }
 
 function extractProgressPercent(counts) {
