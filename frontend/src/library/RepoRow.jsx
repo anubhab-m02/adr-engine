@@ -13,12 +13,14 @@ function hasActiveJob(status, repo) {
   return repoState != null && repoState.phase !== 'done' && repoState.phase !== 'failed'
 }
 
-function RepoRow({ repo, onRemove }) {
+function RepoRow({ repo, onRemove, onReindex }) {
   const { status } = useIngestStatus()
   const active = hasActiveJob(status, repo.repo)
   const [confirming, setConfirming] = useState(false)
   const [removing, setRemoving] = useState(false)
   const [error, setError] = useState(null)
+  const [reindexing, setReindexing] = useState(false)
+  const [reindexError, setReindexError] = useState(null)
 
   async function handleConfirmRemove() {
     setRemoving(true)
@@ -28,6 +30,18 @@ function RepoRow({ repo, onRemove }) {
     } catch {
       setError("Couldn't remove this repo.")
       setRemoving(false)
+    }
+  }
+
+  async function handleReindex() {
+    setReindexing(true)
+    setReindexError(null)
+    try {
+      await onReindex(repo.repo)
+    } catch {
+      setReindexError("Couldn't start re-indexing.")
+    } finally {
+      setReindexing(false)
     }
   }
 
@@ -55,13 +69,19 @@ function RepoRow({ repo, onRemove }) {
     <div className="bg-panel rounded-xl p-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
       <div className="flex items-center justify-between gap-4 sm:contents">
         <span className="font-mono text-sm text-ink truncate min-w-0">{repo.repo}</span>
-        <button
-          type="button"
-          onClick={() => setConfirming(true)}
-          className="text-sm text-ink-muted shrink-0 sm:order-3"
-        >
-          Remove
-        </button>
+        <div className="flex items-center gap-3 shrink-0 sm:order-3">
+          <button
+            type="button"
+            onClick={handleReindex}
+            disabled={reindexing}
+            className="text-sm text-ink-muted disabled:opacity-50"
+          >
+            {reindexing ? 'Re-indexing…' : 'Re-index'}
+          </button>
+          <button type="button" onClick={() => setConfirming(true)} className="text-sm text-ink-muted">
+            Remove
+          </button>
+        </div>
       </div>
       <div className="sm:order-2">
         {active ? (
@@ -69,6 +89,11 @@ function RepoRow({ repo, onRemove }) {
         ) : (
           <p className="text-sm text-ink-muted">
             {repo.indexed_units} {repo.indexed_units === 1 ? 'decision' : 'decisions'}
+          </p>
+        )}
+        {reindexError && (
+          <p role="alert" className="text-sm text-danger">
+            {reindexError}
           </p>
         )}
       </div>

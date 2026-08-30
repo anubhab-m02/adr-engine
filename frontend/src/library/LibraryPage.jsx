@@ -2,7 +2,7 @@
 // indexed-unit counts from GET /repos, plus Add repos (opens
 // AddReposPanel) and per-row Remove (#80).
 import { useEffect, useState } from 'react'
-import { getRepos, patchConfig } from '../api.js'
+import { getRepos, patchConfig, postIngest } from '../api.js'
 import AddReposPanel from './AddReposPanel.jsx'
 import RepoRow from './RepoRow.jsx'
 
@@ -34,6 +34,11 @@ function LibraryPage() {
     const remaining = repos.filter((repo) => repo.repo !== repoName)
     await patchConfig({ indexed_repos: remaining.map((repo) => repo.repo) })
     setRepos(remaining)
+  }
+
+  async function handleReindex(repoName) {
+    await postIngest({ repos: [repoName] })
+    refresh()
   }
 
   return (
@@ -69,7 +74,7 @@ function LibraryPage() {
       {Array.isArray(repos) && repos.length > 0 && (
         <div className="mt-4 flex flex-col gap-4">
           {repos.map((repo) => (
-            <RepoRow key={repo.repo} repo={repo} onRemove={handleRemove} />
+            <RepoRow key={repo.repo} repo={repo} onRemove={handleRemove} onReindex={handleReindex} />
           ))}
         </div>
       )}
