@@ -86,6 +86,11 @@ function RepoRow({ repo, onRemove, onReindex }) {
       <div className="sm:order-2">
         {active ? (
           <IndexProgress repo={repo.repo} indexedAt={repo.indexed_at} />
+        ) : repo.indexed_units === 0 ? (
+          <p className="text-sm text-ink-muted">
+            No decisions extracted yet — commits may be too terse for extraction to find a decision, or try Re-index
+            if this seems wrong
+          </p>
         ) : (
           <p className="text-sm text-ink-muted">
             {repo.indexed_units} {repo.indexed_units === 1 ? 'decision' : 'decisions'}
