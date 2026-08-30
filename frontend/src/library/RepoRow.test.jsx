@@ -111,4 +111,24 @@ describe('RepoRow', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't remove this repo.")
   })
+
+  it('calls onReindex with the repo name when Re-index is clicked', async () => {
+    mockStatus(null)
+    const onReindex = vi.fn().mockResolvedValue()
+    render(<RepoRow repo={repo} onReindex={onReindex} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Re-index' }))
+
+    expect(onReindex).toHaveBeenCalledWith('owner/repo')
+  })
+
+  it('shows an inline error when onReindex fails', async () => {
+    mockStatus(null)
+    const onReindex = vi.fn().mockRejectedValue(new Error('network error'))
+    render(<RepoRow repo={repo} onReindex={onReindex} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Re-index' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't start re-indexing.")
+  })
 })

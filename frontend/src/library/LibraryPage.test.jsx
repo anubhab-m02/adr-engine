@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { getRepos, patchConfig } from '../api.js'
+import { getRepos, patchConfig, postIngest } from '../api.js'
 import { useIngestStatus } from '../lib/useIngestStatus.js'
 import LibraryPage from './LibraryPage.jsx'
 
@@ -94,5 +94,20 @@ describe('LibraryPage', () => {
     expect(patchConfig).toHaveBeenCalledWith({ indexed_repos: ['owner/repo-b'] })
     expect(screen.queryByText('owner/repo-a')).not.toBeInTheDocument()
     expect(screen.getByText('owner/repo-b')).toBeInTheDocument()
+  })
+
+  it('re-indexing a repo calls POST /ingest with that repo and refreshes the list', async () => {
+    getRepos.mockResolvedValue(REPOS)
+    postIngest.mockResolvedValue({})
+    useIngestStatus.mockReturnValue({ status: { active: false, repos: [] }, refetch: vi.fn() })
+
+    render(<LibraryPage />)
+    await screen.findByText('owner/repo-a')
+
+    const [reindexA] = screen.getAllByRole('button', { name: 'Re-index' })
+    fireEvent.click(reindexA)
+
+    await vi.waitFor(() => expect(postIngest).toHaveBeenCalledWith({ repos: ['owner/repo-a'] }))
+    expect(getRepos).toHaveBeenCalledTimes(2)
   })
 })
