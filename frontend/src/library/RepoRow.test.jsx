@@ -1,9 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { patchRepo } from '../api.js'
 import { useIngestStatus } from '../lib/useIngestStatus.js'
 import RepoRow from './RepoRow.jsx'
 
 vi.mock('../lib/useIngestStatus.js', () => ({ useIngestStatus: vi.fn() }))
+vi.mock('../api.js', () => ({ patchRepo: vi.fn() }))
 
 const repo = { repo: 'owner/repo', indexed_units: 42 }
 
@@ -150,5 +152,41 @@ describe('RepoRow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Re-index' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't start re-indexing.")
+  })
+
+  it('reflects the initial cloud_synthesis_allowed value on render', () => {
+    mockStatus(null)
+    render(<RepoRow repo={{ ...repo, cloud_synthesis_allowed: false }} />)
+
+    expect(screen.getByRole('switch', { name: 'Cloud synthesis: off' })).toBeInTheDocument()
+  })
+
+  it('defaults the toggle to on when cloud_synthesis_allowed is absent', () => {
+    mockStatus(null)
+    render(<RepoRow repo={repo} />)
+
+    expect(screen.getByRole('switch', { name: 'Cloud synthesis: on' })).toBeInTheDocument()
+  })
+
+  it('toggling calls PATCH /repos/{repo} with the flipped value', async () => {
+    mockStatus(null)
+    patchRepo.mockResolvedValue({})
+    render(<RepoRow repo={{ ...repo, cloud_synthesis_allowed: true }} />)
+
+    fireEvent.click(screen.getByRole('switch', { name: 'Cloud synthesis: on' }))
+
+    expect(patchRepo).toHaveBeenCalledWith('owner/repo', { cloud_synthesis_allowed: false })
+    expect(await screen.findByRole('switch', { name: 'Cloud synthesis: off' })).toBeInTheDocument()
+  })
+
+  it('reverts the toggle and shows an inline error when the PATCH fails', async () => {
+    mockStatus(null)
+    patchRepo.mockRejectedValue(new Error('network error'))
+    render(<RepoRow repo={{ ...repo, cloud_synthesis_allowed: true }} />)
+
+    fireEvent.click(screen.getByRole('switch', { name: 'Cloud synthesis: on' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't update cloud synthesis setting.")
+    expect(screen.getByRole('switch', { name: 'Cloud synthesis: on' })).toBeInTheDocument()
   })
 })
