@@ -47,6 +47,41 @@ describe('ModelsSection', () => {
     expect(await screen.findByText('Saved')).toBeInTheDocument()
   })
 
+  it('shows the effective default as a placeholder, not a value, when models are unconfigured', async () => {
+    getConfig.mockResolvedValue({
+      ollama_host: 'http://localhost:11434',
+      ollama_extraction_model: null,
+      ollama_embedding_model: null,
+    })
+
+    render(<ModelsSection />)
+
+    expect(await screen.findByLabelText('Extraction model')).toHaveValue('')
+    expect(screen.getByLabelText('Extraction model')).toHaveAttribute('placeholder', 'phi4-mini (default)')
+    expect(screen.getByLabelText('Embedding model')).toHaveValue('')
+    expect(screen.getByLabelText('Embedding model')).toHaveAttribute('placeholder', 'nomic-embed-text (default)')
+  })
+
+  it('saving without typing anything does not submit the placeholder text', async () => {
+    getConfig.mockResolvedValue({
+      ollama_host: 'http://localhost:11434',
+      ollama_extraction_model: null,
+      ollama_embedding_model: null,
+    })
+    patchConfig.mockResolvedValue({})
+
+    render(<ModelsSection />)
+    await screen.findByLabelText('Extraction model')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(patchConfig).toHaveBeenCalledWith({
+      ollama_host: 'http://localhost:11434',
+      ollama_extraction_model: '',
+      ollama_embedding_model: '',
+    })
+  })
+
   it('shows an inline error when the save fails', async () => {
     getConfig.mockResolvedValue({
       ollama_host: 'http://localhost:11434',
