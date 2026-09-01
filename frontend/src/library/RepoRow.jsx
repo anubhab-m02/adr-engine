@@ -4,6 +4,7 @@
 // for inline confirmation (no modal, per UI-DESIGN.md) before calling the
 // onRemove callback LibraryPage supplies.
 import { useState } from 'react'
+import { patchRepo } from '../api.js'
 import InlineConfirm from '../components/InlineConfirm.jsx'
 import { useIngestStatus } from '../lib/useIngestStatus.js'
 import IndexProgress from './IndexProgress.jsx'
@@ -21,6 +22,24 @@ function RepoRow({ repo, onRemove, onReindex }) {
   const [error, setError] = useState(null)
   const [reindexing, setReindexing] = useState(false)
   const [reindexError, setReindexError] = useState(null)
+  const [cloudAllowed, setCloudAllowed] = useState(repo.cloud_synthesis_allowed ?? true)
+  const [toggling, setToggling] = useState(false)
+  const [toggleError, setToggleError] = useState(null)
+
+  async function handleToggleCloud() {
+    const next = !cloudAllowed
+    setToggling(true)
+    setToggleError(null)
+    setCloudAllowed(next)
+    try {
+      await patchRepo(repo.repo, { cloud_synthesis_allowed: next })
+    } catch {
+      setCloudAllowed(!next)
+      setToggleError("Couldn't update cloud synthesis setting.")
+    } finally {
+      setToggling(false)
+    }
+  }
 
   async function handleConfirmRemove() {
     setRemoving(true)
@@ -72,6 +91,16 @@ function RepoRow({ repo, onRemove, onReindex }) {
         <div className="flex items-center gap-3 shrink-0 sm:order-3">
           <button
             type="button"
+            role="switch"
+            aria-checked={cloudAllowed}
+            onClick={handleToggleCloud}
+            disabled={toggling}
+            className="text-sm text-ink-muted disabled:opacity-50"
+          >
+            {cloudAllowed ? 'Cloud synthesis: on' : 'Cloud synthesis: off'}
+          </button>
+          <button
+            type="button"
             onClick={handleReindex}
             disabled={reindexing}
             className="text-sm text-ink-muted disabled:opacity-50"
@@ -99,6 +128,11 @@ function RepoRow({ repo, onRemove, onReindex }) {
         {reindexError && (
           <p role="alert" className="text-sm text-danger">
             {reindexError}
+          </p>
+        )}
+        {toggleError && (
+          <p role="alert" className="text-sm text-danger">
+            {toggleError}
           </p>
         )}
       </div>

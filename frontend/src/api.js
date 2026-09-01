@@ -42,6 +42,14 @@ export function postQuery({ question, repos }) {
   })
 }
 
+export function patchRepo(repo, patch) {
+  return request(`/repos/${repo}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+  })
+}
+
 export function getIngestStatus() {
   return request('/ingest/status', { method: 'GET' })
 }
