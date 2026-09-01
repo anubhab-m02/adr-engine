@@ -107,6 +107,10 @@ export function validateOllama() {
   return request('/config/validate-ollama', { method: 'POST' })
 }
 
+export function validateGemini() {
+  return request('/config/validate-gemini', { method: 'POST' })
+}
+
 export function getDecisions({ repo, since, until, page } = {}) {
   const params = new URLSearchParams({ repo })
   if (since) params.set('since', since)
