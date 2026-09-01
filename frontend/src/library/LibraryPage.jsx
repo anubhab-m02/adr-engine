@@ -66,10 +66,24 @@ function LibraryPage() {
       )}
 
       {repos === 'error' && (
-        <p className="mt-4 text-sm text-danger">Couldn't load the library.</p>
+        <div className="mt-4 flex items-center gap-3">
+          <p className="text-sm text-danger">Couldn't load the library.</p>
+          <button type="button" onClick={refresh} className="text-sm text-ink-muted underline">
+            Retry
+          </button>
+        </div>
       )}
       {Array.isArray(repos) && repos.length === 0 && (
-        <p className="mt-4 font-reading text-ink">Nothing in the library yet.</p>
+        <div className="mt-4">
+          <p className="font-reading text-ink">Nothing in the library yet.</p>
+          <button
+            type="button"
+            onClick={() => setShowAddPanel(true)}
+            className="mt-2 text-sm text-ink-muted underline"
+          >
+            Add repos to get started.
+          </button>
+        </div>
       )}
       {Array.isArray(repos) && repos.length > 0 && (
         <div className="mt-4 flex flex-col gap-4">
