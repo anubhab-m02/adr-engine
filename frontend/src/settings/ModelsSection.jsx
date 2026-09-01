@@ -86,6 +86,7 @@ function ModelsSection() {
                 type="text"
                 value={extractionModel}
                 onChange={(event) => setExtractionModel(event.target.value)}
+                placeholder="phi4-mini (default)"
                 className="font-mono rounded-lg border border-transparent bg-surface px-3 py-2 text-sm text-ink"
               />
             </label>
@@ -95,6 +96,7 @@ function ModelsSection() {
                 type="text"
                 value={embeddingModel}
                 onChange={(event) => setEmbeddingModel(event.target.value)}
+                placeholder="nomic-embed-text (default)"
                 className="font-mono rounded-lg border border-transparent bg-surface px-3 py-2 text-sm text-ink"
               />
             </label>
