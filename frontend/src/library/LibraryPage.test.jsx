@@ -49,6 +49,33 @@ describe('LibraryPage', () => {
     expect(await screen.findByText("Couldn't load the library.")).toBeInTheDocument()
   })
 
+  it('retrying after an error re-fetches and renders the repos', async () => {
+    getRepos.mockRejectedValueOnce(new Error('network error'))
+    getRepos.mockResolvedValueOnce(REPOS)
+    useIngestStatus.mockReturnValue({ status: { active: false, repos: [] }, refetch: vi.fn() })
+
+    render(<LibraryPage />)
+    await screen.findByText("Couldn't load the library.")
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+
+    expect(await screen.findByText('owner/repo-a')).toBeInTheDocument()
+    expect(screen.queryByText("Couldn't load the library.")).not.toBeInTheDocument()
+    expect(getRepos).toHaveBeenCalledTimes(2)
+  })
+
+  it('the empty-library prompt links to the Add repos action', async () => {
+    getRepos.mockResolvedValue({ repos: [] })
+    useIngestStatus.mockReturnValue({ status: { active: false, repos: [] }, refetch: vi.fn() })
+
+    render(<LibraryPage />)
+    await screen.findByText('Nothing in the library yet.')
+
+    expect(screen.queryByRole('heading', { name: 'Add repos' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Add repos to get started.' }))
+    expect(screen.getByRole('heading', { name: 'Add repos' })).toBeInTheDocument()
+  })
+
   it('shows a row with live IndexProgress when that repo has an active job', async () => {
     getRepos.mockResolvedValue(REPOS)
     useIngestStatus.mockReturnValue({
