@@ -103,6 +103,10 @@ export function retryIngest(repo) {
   return request(`/ingest/retry/${repo}`, { method: 'POST' })
 }
 
+export function validateOllama() {
+  return request('/config/validate-ollama', { method: 'POST' })
+}
+
 export function getDecisions({ repo, since, until, page } = {}) {
   const params = new URLSearchParams({ repo })
   if (since) params.set('since', since)
