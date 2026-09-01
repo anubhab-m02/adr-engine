@@ -82,6 +82,46 @@ describe('ModelsSection', () => {
     })
   })
 
+  it('collapses the model inputs behind an Advanced disclosure by default, expandable on click', async () => {
+    getConfig.mockResolvedValue({
+      ollama_host: 'http://localhost:11434',
+      ollama_extraction_model: 'llama3',
+      ollama_embedding_model: 'nomic-embed-text',
+    })
+
+    render(<ModelsSection />)
+    await screen.findByLabelText('Ollama host')
+
+    const details = screen.getByText('Advanced').closest('details')
+    expect(details).not.toHaveAttribute('open')
+
+    fireEvent.click(screen.getByText('Advanced'))
+    expect(details).toHaveAttribute('open')
+  })
+
+  it('save submits current field values even while the Advanced disclosure is collapsed', async () => {
+    getConfig.mockResolvedValue({
+      ollama_host: 'http://localhost:11434',
+      ollama_extraction_model: 'llama3',
+      ollama_embedding_model: 'nomic-embed-text',
+    })
+    patchConfig.mockResolvedValue({})
+
+    render(<ModelsSection />)
+    await screen.findByLabelText('Ollama host')
+
+    expect(screen.getByText('Advanced').closest('details')).not.toHaveAttribute('open')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(patchConfig).toHaveBeenCalledWith({
+      ollama_host: 'http://localhost:11434',
+      ollama_extraction_model: 'llama3',
+      ollama_embedding_model: 'nomic-embed-text',
+    })
+    expect(await screen.findByText('Saved')).toBeInTheDocument()
+  })
+
   it('shows an inline error when the save fails', async () => {
     getConfig.mockResolvedValue({
       ollama_host: 'http://localhost:11434',

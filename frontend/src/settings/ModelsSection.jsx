@@ -70,37 +70,40 @@ function ModelsSection() {
 
       {loaded && (
         <>
-          <div className="mt-2 flex flex-col gap-3">
-            <label className="flex flex-col gap-1 text-sm text-ink-muted">
-              Ollama host
-              <input
-                type="text"
-                value={host}
-                onChange={(event) => setHost(event.target.value)}
-                className="font-mono rounded-lg border border-transparent bg-surface px-3 py-2 text-sm text-ink"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm text-ink-muted">
-              Extraction model
-              <input
-                type="text"
-                value={extractionModel}
-                onChange={(event) => setExtractionModel(event.target.value)}
-                placeholder="phi4-mini (default)"
-                className="font-mono rounded-lg border border-transparent bg-surface px-3 py-2 text-sm text-ink"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm text-ink-muted">
-              Embedding model
-              <input
-                type="text"
-                value={embeddingModel}
-                onChange={(event) => setEmbeddingModel(event.target.value)}
-                placeholder="nomic-embed-text (default)"
-                className="font-mono rounded-lg border border-transparent bg-surface px-3 py-2 text-sm text-ink"
-              />
-            </label>
-          </div>
+          <details className="mt-2">
+            <summary className="cursor-pointer font-ui text-sm text-ink-muted hover:text-ink">Advanced</summary>
+            <div className="mt-2 flex flex-col gap-3">
+              <label className="flex flex-col gap-1 text-sm text-ink-muted">
+                Ollama host
+                <input
+                  type="text"
+                  value={host}
+                  onChange={(event) => setHost(event.target.value)}
+                  className="font-mono rounded-lg border border-transparent bg-surface px-3 py-2 text-sm text-ink"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm text-ink-muted">
+                Extraction model
+                <input
+                  type="text"
+                  value={extractionModel}
+                  onChange={(event) => setExtractionModel(event.target.value)}
+                  placeholder="phi4-mini (default)"
+                  className="font-mono rounded-lg border border-transparent bg-surface px-3 py-2 text-sm text-ink"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm text-ink-muted">
+                Embedding model
+                <input
+                  type="text"
+                  value={embeddingModel}
+                  onChange={(event) => setEmbeddingModel(event.target.value)}
+                  placeholder="nomic-embed-text (default)"
+                  className="font-mono rounded-lg border border-transparent bg-surface px-3 py-2 text-sm text-ink"
+                />
+              </label>
+            </div>
+          </details>
 
           <div className="mt-3 flex items-center gap-4">
             <button
