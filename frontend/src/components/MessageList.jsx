@@ -1,11 +1,10 @@
 import { useEffect, useRef } from 'react'
-import AnswerPassage from '../ask/AnswerPassage.jsx'
-import SourceCardList from '../ask/SourceCardList.jsx'
+import AnswerPage from '../ask/AnswerPage.jsx'
 import SourcesView from '../ask/SourcesView.jsx'
 import ErrorCard from './ErrorCard.jsx'
 import LoadingCard from './LoadingCard.jsx'
 
-function AssistantMessage({ message, disabled }) {
+function AssistantMessage({ message, question, repos, selectedRepos, disabled }) {
   if (message.type === 'loading') return <LoadingCard />
   if (message.type === 'error') {
     return <ErrorCard message={message.message} onRetry={message.onRetry} disabled={disabled} />
@@ -19,10 +18,13 @@ function AssistantMessage({ message, disabled }) {
       return <SourcesView citations={citations} />
     }
     return (
-      <div className="max-w-3xl">
-        <AnswerPassage answer={message.answer} citations={citations} />
-        {citations.length > 0 && <SourceCardList citations={citations} className="mt-4 flex flex-wrap gap-4" />}
-      </div>
+      <AnswerPage
+        question={question}
+        answer={message.answer}
+        citations={citations}
+        repos={repos}
+        selectedRepos={selectedRepos}
+      />
     )
   }
   return (
@@ -34,7 +36,7 @@ function AssistantMessage({ message, disabled }) {
   )
 }
 
-function MessageList({ messages, disabled }) {
+function MessageList({ messages, repos = [], selectedRepos = [], disabled }) {
   const bottomRef = useRef(null)
 
   useEffect(() => {
@@ -52,7 +54,13 @@ function MessageList({ messages, disabled }) {
           </div>
         ) : (
           <div key={index} className="flex justify-start">
-            <AssistantMessage message={message} disabled={disabled} />
+            <AssistantMessage
+              message={message}
+              question={messages[index - 1]?.role === 'user' ? messages[index - 1].content : ''}
+              repos={repos}
+              selectedRepos={selectedRepos}
+              disabled={disabled}
+            />
           </div>
         ),
       )}

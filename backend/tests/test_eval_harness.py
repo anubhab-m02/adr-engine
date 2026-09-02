@@ -8,19 +8,18 @@ import pytest
 from eval import harness
 
 
-def test_recall_is_one_when_expected_unit_ranks_first(monkeypatch, make_unit):
+def test_recall_is_one_when_expected_unit_ranks_first(make_unit):
     hit_unit = make_unit(id="owner/repo:commit:aaa")
     other_unit = make_unit(id="owner/repo:commit:bbb")
     units = [hit_unit, other_unit]
     embeddings = [[1.0, 0.0], [0.0, 1.0]]
     golden_questions = [{"question": "why aaa", "expected_unit_id": "owner/repo:commit:aaa"}]
+    query_embeddings = {"why aaa": [1.0, 0.0]}
 
-    monkeypatch.setattr(harness, "embed_query", lambda question: [1.0, 0.0])
-
-    assert harness.compute_recall_at_5(golden_questions, units, embeddings) == 1.0
+    assert harness.compute_recall_at_5(golden_questions, units, embeddings, query_embeddings) == 1.0
 
 
-def test_recall_is_zero_when_expected_unit_is_never_in_top_5(monkeypatch, make_unit):
+def test_recall_is_zero_when_expected_unit_is_never_in_top_5(make_unit):
     distractors = [
         make_unit(id=f"owner/repo:commit:d{i}") for i in range(5)
     ]
@@ -28,13 +27,12 @@ def test_recall_is_zero_when_expected_unit_is_never_in_top_5(monkeypatch, make_u
     units = distractors + [miss_unit]
     embeddings = [[1.0, 0.1 * (i + 1)] for i in range(5)] + [[-1.0, 0.0]]
     golden_questions = [{"question": "why zzz", "expected_unit_id": "owner/repo:commit:zzz"}]
+    query_embeddings = {"why zzz": [1.0, 0.0]}
 
-    monkeypatch.setattr(harness, "embed_query", lambda question: [1.0, 0.0])
-
-    assert harness.compute_recall_at_5(golden_questions, units, embeddings) == 0.0
+    assert harness.compute_recall_at_5(golden_questions, units, embeddings, query_embeddings) == 0.0
 
 
-def test_recall_averages_correctly_across_multiple_questions(monkeypatch, make_unit):
+def test_recall_averages_correctly_across_multiple_questions(make_unit):
     hit_unit = make_unit(id="owner/repo:commit:hit")
     distractors = [
         make_unit(id=f"owner/repo:commit:d{i}") for i in range(4)
@@ -46,17 +44,16 @@ def test_recall_averages_correctly_across_multiple_questions(monkeypatch, make_u
         {"question": "hit question", "expected_unit_id": "owner/repo:commit:hit"},
         {"question": "miss question", "expected_unit_id": "owner/repo:commit:miss"},
     ]
+    query_embeddings = {"hit question": [1.0, 0.0], "miss question": [1.0, 0.0]}
 
-    monkeypatch.setattr(harness, "embed_query", lambda question: [1.0, 0.0])
-
-    assert harness.compute_recall_at_5(golden_questions, units, embeddings) == 0.5
+    assert harness.compute_recall_at_5(golden_questions, units, embeddings, query_embeddings) == 0.5
 
 
 def test_recall_is_zero_for_empty_golden_questions(make_unit):
     units = [make_unit(id="owner/repo:commit:aaa")]
     embeddings = [[1.0, 0.0]]
 
-    assert harness.compute_recall_at_5([], units, embeddings) == 0.0
+    assert harness.compute_recall_at_5([], units, embeddings, {}) == 0.0
 
 
 @pytest.fixture
@@ -67,7 +64,16 @@ def _isolated_best_score(tmp_path, monkeypatch):
 def _stub_gate_inputs(monkeypatch, golden_questions, units, embeddings):
     monkeypatch.setattr(harness, "_load_golden_questions", lambda: golden_questions)
     monkeypatch.setattr(harness, "_load_fixture", lambda: (units, embeddings))
-    monkeypatch.setattr(harness, "embed_query", lambda question: [1.0, 0.0])
+    monkeypatch.setattr(
+        harness,
+        "_load_query_embeddings",
+        lambda: {golden["question"]: [1.0, 0.0] for golden in golden_questions},
+    )
+
+    def _unreachable_embed_query(question):
+        raise AssertionError("main() must not embed queries live — it should read fixture data")
+
+    monkeypatch.setattr(harness, "embed_query", _unreachable_embed_query)
 
 
 def _six_unit_fixture(make_unit):

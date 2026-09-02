@@ -1,14 +1,28 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getRepos, postQuery } from '../api.js'
 import ChatInput from '../components/ChatInput.jsx'
 import MessageList from '../components/MessageList.jsx'
 import RepoFilter from '../components/RepoFilter.jsx'
+import { useRegisterNewQuestionHandler } from '../lib/useNewQuestion.js'
 
 const EXAMPLE_QUESTIONS = [
   'Why is authentication done this way?',
   'What alternatives did we consider for the database?',
   'Who made the decision to use Redis, and when?',
 ]
+
+// Repos aren't loaded yet, failed to load, or none are indexed — the
+// static fallback list, not an empty chip row. There's no per-repo
+// "topic" signal yet (that's later decision-browser work), so the
+// generated question stays generic rather than naming a topic the repo
+// may not actually have decisions about.
+function exampleQuestions(repos) {
+  if (!Array.isArray(repos) || repos.length === 0) return EXAMPLE_QUESTIONS
+  return repos.slice(0, 3).map(({ repo }) => {
+    const shortName = repo.includes('/') ? repo.split('/')[1] : repo
+    return `Why is ${shortName} built this way?`
+  })
+}
 
 function AskPage() {
   const [repos, setRepos] = useState(undefined)
@@ -83,20 +97,22 @@ function AskPage() {
     setChatKey((key) => key + 1)
   }
 
+  useRegisterNewQuestionHandler(useCallback(() => setMessages([]), []))
+
   return (
-    <div className="h-full flex flex-col">
+    <div className="min-h-full flex flex-col">
       <header className="h-14 shrink-0 bg-panel flex items-center justify-between px-4 lg:px-6">
         <RepoFilter repos={repos} selected={selectedRepos} onChange={setSelectedRepos} />
       </header>
 
-      <main className="flex-1 overflow-y-auto px-4 lg:px-6 py-4">
+      <main className="flex-1 px-4 lg:px-6 py-4">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center gap-4 text-center">
             <p className="text-base text-ink-muted">
               Ask why something in your codebase is the way it is
             </p>
             <div className="flex flex-wrap justify-center gap-4">
-              {EXAMPLE_QUESTIONS.map((question) => (
+              {exampleQuestions(repos).map((question) => (
                 <button
                   key={question}
                   type="button"
@@ -110,12 +126,17 @@ function AskPage() {
           </div>
         ) : (
           <div className="max-w-3xl mx-auto">
-            <MessageList messages={messages} disabled={loading} />
+            <MessageList
+              messages={messages}
+              repos={Array.isArray(repos) ? repos : []}
+              selectedRepos={selectedRepos}
+              disabled={loading}
+            />
           </div>
         )}
       </main>
 
-      <div className="sticky bottom-0 shrink-0 bg-panel px-4 lg:px-6 py-4">
+      <div className="shrink-0 bg-panel px-4 lg:px-6 py-4">
         <div className="max-w-3xl mx-auto">
           <ChatInput key={chatKey} initialValue={prefill} onSubmit={handleAsk} disabled={loading} />
         </div>

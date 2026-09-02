@@ -4,51 +4,40 @@
 // text itself (per UI-DESIGN.md), not citations' array order.
 import usePrefersReducedMotion from '../lib/usePrefersReducedMotion.js'
 import CitationMarker from './CitationMarker.jsx'
+import { parseAnswer } from './parseAnswer.js'
 
-const CITATION_PATTERN = /\[([^[\]]+)\]/g
-
-function parseAnswer(answer, citations) {
-  const knownIds = new Set(citations.map((unit) => unit.id))
-  const numberById = new Map()
-  const parts = []
-  let lastIndex = 0
-  let match
-
-  CITATION_PATTERN.lastIndex = 0
-  while ((match = CITATION_PATTERN.exec(answer)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push({ type: 'text', key: parts.length, value: answer.slice(lastIndex, match.index) })
-    }
-
-    const unitId = match[1]
-    if (!knownIds.has(unitId)) {
-      parts.push({ type: 'text', key: parts.length, value: match[0] })
-    } else {
-      if (!numberById.has(unitId)) numberById.set(unitId, numberById.size + 1)
-      parts.push({ type: 'marker', key: parts.length, number: numberById.get(unitId), unitId })
-    }
-
-    lastIndex = CITATION_PATTERN.lastIndex
-  }
-
-  if (lastIndex < answer.length) {
-    parts.push({ type: 'text', key: parts.length, value: answer.slice(lastIndex) })
-  }
-
-  return parts
+// Line-height and inter-paragraph spacing for the density preference
+// (Track B). 'comfortable' matches the passage's original fixed values.
+const DENSITY_CLASSES = {
+  comfortable: 'leading-[1.7] mb-6',
+  compact: 'leading-[1.4] mb-3',
 }
 
-function AnswerPassage({ answer, citations }) {
-  const parts = parseAnswer(answer, citations)
-  const reducedMotion = usePrefersReducedMotion()
+// Reading-column width for the measure preference (Track B). 'default'
+// matches the passage's original fixed max-w-[70ch].
+const MEASURE_CLASSES = {
+  narrow: 'max-w-[54ch]',
+  default: 'max-w-[70ch]',
+  wide: 'max-w-[86ch]',
+}
 
+// Renders one already-parsed paragraph. Split out from AnswerPassage so
+// AnswerPage's margin-note layout can interleave paragraphs with their
+// citations' source cards without duplicating the marker-rendering rules.
+export function AnswerParagraph({
+  paragraph,
+  reducedMotion,
+  density = 'comfortable',
+  measure = 'default',
+  className = '',
+}) {
   return (
     <p
-      className={`font-reading text-ink text-[1.0625rem] leading-[1.7] max-w-[70ch] ${
+      className={`font-reading text-ink text-[1.0625rem] ${MEASURE_CLASSES[measure]} ${DENSITY_CLASSES[density]} ${
         reducedMotion ? '' : 'animate-answer-settle'
-      }`}
+      } ${className}`}
     >
-      {parts.map((part) =>
+      {paragraph.parts.map((part) =>
         part.type === 'marker' ? (
           <CitationMarker key={part.key} number={part.number} unitId={part.unitId} />
         ) : (
@@ -56,6 +45,19 @@ function AnswerPassage({ answer, citations }) {
         ),
       )}
     </p>
+  )
+}
+
+function AnswerPassage({ answer, citations }) {
+  const paragraphs = parseAnswer(answer, citations)
+  const reducedMotion = usePrefersReducedMotion()
+
+  return (
+    <>
+      {paragraphs.map((paragraph) => (
+        <AnswerParagraph key={paragraph.key} paragraph={paragraph} reducedMotion={reducedMotion} />
+      ))}
+    </>
   )
 }
 

@@ -1,0 +1,204 @@
+// The annotated page for one question, replacing the chat-bubble
+// rendering of an assistant turn. Per docs/superpowers/specs/2026-08-04-v2-design.md
+// Track B: the question is set as a heading carrying a provenance dek
+// ("searched N repos · M decisions") stated before the answer is read,
+// and from 900px up each paragraph's citations sit in a right margin
+// track beside it, rather than collected in a list at the foot of the
+// answer. The track narrows from 900-1280px (Tailwind's `min-[900px]:`,
+// since the default breakpoints skip straight from 768px to 1024px) and
+// widens to its full size at >=1280px (`xl:`). Below 900px there's no
+// margin track at all: each paragraph's source cards collapse inline,
+// directly after that paragraph, rather than batching every citation in
+// one list at the foot of the answer.
+import usePrefersReducedMotion from '../lib/usePrefersReducedMotion.js'
+import useReadingPreferences from '../lib/useReadingPreferences.js'
+import { AnswerParagraph } from './AnswerPassage.jsx'
+import { parseAnswer } from './parseAnswer.js'
+import PrivacyPanel from './PrivacyPanel.jsx'
+import SourceCard from './SourceCard.jsx'
+
+const DENSITY_OPTIONS = [
+  { value: 'comfortable', label: 'Comfortable' },
+  { value: 'compact', label: 'Compact' },
+]
+
+const MEASURE_OPTIONS = [
+  { value: 'narrow', label: 'Narrow' },
+  { value: 'default', label: 'Default' },
+  { value: 'wide', label: 'Wide' },
+]
+
+function preferenceToggleClassName(active) {
+  return `rounded-md px-2 py-1 text-xs font-ui ${active ? 'bg-highlight text-ink' : 'text-ink-muted hover:text-ink'}`
+}
+
+function decisionCount(repos, selectedRepos) {
+  const selected = new Set(selectedRepos)
+  return repos
+    .filter((repo) => selected.has(repo.repo))
+    .reduce((total, repo) => total + repo.indexed_units, 0)
+}
+
+// Design principle 3 ("honest state"): state how much evidence backs an
+// answer instead of letting a confident-sounding paragraph imply more
+// than it has. Returns null for zero citations — there's nothing to
+// report a span over.
+function citationCoverage(citations) {
+  if (citations.length === 0) return null
+  const years = citations.map((citation) => new Date(citation.date).getFullYear())
+  return { count: citations.length, minYear: Math.min(...years), maxYear: Math.max(...years) }
+}
+
+// Thresholds below are a plain heuristic, not a confidence score — there's
+// no statistical backing behind "3" or "1 per year", they're just a rough
+// line between "a couple of citations" and "an actually covered area".
+// Don't read more rigor into this than exists; it exists only to avoid a
+// confident-sounding answer implying more evidence than it has.
+const THIN_CITATION_COUNT = 3
+const THIN_SPAN_YEARS = 3
+const THIN_CITATIONS_PER_YEAR = 1
+
+function isCoverageThin(coverage) {
+  if (!coverage) return false
+  if (coverage.count < THIN_CITATION_COUNT) return true
+  const spanYears = coverage.maxYear - coverage.minYear + 1
+  return spanYears > THIN_SPAN_YEARS && coverage.count / spanYears < THIN_CITATIONS_PER_YEAR
+}
+
+// The units a paragraph cites, in first-appearance order and deduped (a
+// repeated marker within one paragraph gets one margin card, not two).
+function paragraphUnits(paragraph, citationsById) {
+  const seen = new Set()
+  const units = []
+  for (const part of paragraph.parts) {
+    if (part.type !== 'marker' || seen.has(part.unitId)) continue
+    seen.add(part.unitId)
+    const unit = citationsById.get(part.unitId)
+    if (unit) units.push({ unit, number: part.number })
+  }
+  return units
+}
+
+function AnswerPage({
+  question,
+  answer,
+  citations,
+  repos,
+  selectedRepos,
+  sentToCloud = false,
+  cloudSynthesisFields = null,
+}) {
+  const repoCount = selectedRepos.length
+  const decisions = decisionCount(repos, selectedRepos)
+  const reducedMotion = usePrefersReducedMotion()
+  const paragraphs = parseAnswer(answer, citations)
+  const citationsById = new Map(citations.map((unit) => [unit.id, unit]))
+  const { density, setDensity, measure, setMeasure } = useReadingPreferences()
+  const coverage = citationCoverage(citations)
+
+  return (
+    <article className="answer-page max-w-3xl min-[900px]:max-w-none">
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="font-ui text-2xl text-ink">{question}</h1>
+        <div className="print:hidden shrink-0 flex items-center gap-3">
+          <div role="group" aria-label="Reading density" className="flex items-center gap-1 rounded-lg bg-surface p-1">
+            {DENSITY_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={density === option.value}
+                onClick={() => setDensity(option.value)}
+                className={preferenceToggleClassName(density === option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <div role="group" aria-label="Reading width" className="flex items-center gap-1 rounded-lg bg-surface p-1">
+            {MEASURE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={measure === option.value}
+                onClick={() => setMeasure(option.value)}
+                className={preferenceToggleClassName(measure === option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="rounded-lg border border-transparent px-3 py-1.5 text-xs font-ui text-ink-muted hover:border-accent hover:text-ink"
+          >
+            Print / Save as PDF
+          </button>
+        </div>
+      </div>
+      <p className="font-ui text-sm text-ink-muted mt-1">
+        searched {repoCount} repo{repoCount === 1 ? '' : 's'} · {decisions} decision
+        {decisions === 1 ? '' : 's'}
+      </p>
+      {coverage && (
+        <p className="font-ui text-sm text-ink-muted">
+          From {coverage.count} decision{coverage.count === 1 ? '' : 's'}
+          {coverage.minYear === coverage.maxYear
+            ? ` (${coverage.minYear})`
+            : ` spanning ${coverage.minYear}–${coverage.maxYear}`}
+          {isCoverageThin(coverage) ? '; coverage for this area is thin' : ''}
+        </p>
+      )}
+
+      <details className="mt-2 print:hidden">
+        <summary className="cursor-pointer font-ui text-xs text-ink-muted hover:text-ink">
+          What was sent
+        </summary>
+        <div className="mt-2">
+          <PrivacyPanel sentToCloud={sentToCloud} cloudSynthesisFields={cloudSynthesisFields} />
+        </div>
+      </details>
+
+      <div className="answer-grid mt-6 min-[900px]:grid min-[900px]:grid-cols-[minmax(0,68ch)_180px] min-[900px]:gap-x-8 xl:grid-cols-[minmax(0,68ch)_260px] xl:gap-x-12">
+        {paragraphs.map((paragraph) => {
+          const units = paragraphUnits(paragraph, citationsById)
+          return (
+            <div key={paragraph.key} className="min-[900px]:contents">
+              <AnswerParagraph
+                paragraph={paragraph}
+                reducedMotion={reducedMotion}
+                density={density}
+                measure={measure}
+                className="min-[900px]:col-start-1"
+              />
+              {units.length > 0 && (
+                <div
+                  className={`answer-grid-margin hidden min-[900px]:flex min-[900px]:flex-col min-[900px]:justify-center min-[900px]:gap-4 min-[900px]:col-start-2 ${
+                    reducedMotion ? '' : 'animate-source-group-entrance'
+                  }`}
+                >
+                  {units.map(({ unit, number }) => (
+                    <SourceCard key={unit.id} unit={unit} number={number} widthClassName="w-full" />
+                  ))}
+                </div>
+              )}
+              {units.length > 0 && (
+                <div
+                  className={`answer-grid-inline mt-4 flex flex-wrap gap-4 min-[900px]:hidden ${
+                    reducedMotion ? '' : 'animate-source-group-entrance'
+                  }`}
+                >
+                  {units.map(({ unit, number }) => (
+                    <SourceCard key={unit.id} unit={unit} number={number} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </article>
+  )
+}
+
+export default AnswerPage

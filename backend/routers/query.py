@@ -13,7 +13,12 @@ from fastapi import APIRouter, HTTPException
 from ingestion.embed import EmbeddingError
 from models import QueryRequest, QueryResponse
 from retrieval.search import search
-from synthesis.answer import SynthesisError, synthesis_available, synthesize
+from synthesis.answer import (
+    SENT_TO_GEMINI_FIELDS,
+    SynthesisError,
+    synthesis_available,
+    synthesize,
+)
 
 router = APIRouter()
 
@@ -31,6 +36,7 @@ def query(request: QueryRequest) -> QueryResponse:
             citations=[r.unit for r in results],
             retrieved_count=len(results),
             mode="sources_only",
+            sent_to_cloud=False,
         )
 
     try:
@@ -39,5 +45,10 @@ def query(request: QueryRequest) -> QueryResponse:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     return QueryResponse(
-        answer=answer, citations=citations, retrieved_count=len(results), mode="synthesized"
+        answer=answer,
+        citations=citations,
+        retrieved_count=len(results),
+        mode="synthesized",
+        sent_to_cloud=True,
+        cloud_synthesis_fields=SENT_TO_GEMINI_FIELDS,
     )

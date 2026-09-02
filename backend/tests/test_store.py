@@ -103,6 +103,75 @@ def test_query_units_reconstructs_full_decision_unit(store_module, make_unit):
     assert score == pytest.approx(1.0)
 
 
+def test_list_units_filters_by_repo(store_module, make_unit):
+    store_module.upsert_units(
+        [
+            make_unit(id="owner/a:pr:1", repo="owner/a"),
+            make_unit(id="owner/b:pr:1", repo="owner/b"),
+        ],
+        embeddings=[[1, 0], [1, 0]],
+    )
+
+    units, total = store_module.list_units("owner/a")
+
+    assert [unit.id for unit in units] == ["owner/a:pr:1"]
+    assert total == 1
+
+
+def test_list_units_orders_newest_first(store_module, make_unit):
+    store_module.upsert_units(
+        [
+            make_unit(id="owner/repo:pr:1", date="2026-01-01T00:00:00Z"),
+            make_unit(id="owner/repo:pr:2", date="2026-03-01T00:00:00Z"),
+            make_unit(id="owner/repo:pr:3", date="2026-02-01T00:00:00Z"),
+        ],
+        embeddings=[[1, 0], [1, 0], [1, 0]],
+    )
+
+    units, _total = store_module.list_units("owner/repo", limit=10)
+
+    assert [unit.id for unit in units] == ["owner/repo:pr:2", "owner/repo:pr:3", "owner/repo:pr:1"]
+
+
+def test_list_units_filters_by_since_and_until(store_module, make_unit):
+    store_module.upsert_units(
+        [
+            make_unit(id="owner/repo:pr:1", date="2026-01-01T00:00:00Z"),
+            make_unit(id="owner/repo:pr:2", date="2026-02-01T00:00:00Z"),
+            make_unit(id="owner/repo:pr:3", date="2026-03-01T00:00:00Z"),
+        ],
+        embeddings=[[1, 0], [1, 0], [1, 0]],
+    )
+
+    units, total = store_module.list_units(
+        "owner/repo", since="2026-01-15T00:00:00Z", until="2026-02-15T00:00:00Z"
+    )
+
+    assert [unit.id for unit in units] == ["owner/repo:pr:2"]
+    assert total == 1
+
+
+def test_list_units_paginates_without_duplicates_or_gaps(store_module, make_unit):
+    units = [make_unit(id=f"owner/repo:pr:{i}", date=f"2026-01-{i:02d}T00:00:00Z") for i in range(1, 6)]
+    store_module.upsert_units(units, embeddings=[[1, 0]] * 5)
+
+    page_one, total_one = store_module.list_units("owner/repo", limit=2, offset=0)
+    page_two, total_two = store_module.list_units("owner/repo", limit=2, offset=2)
+    page_three, total_three = store_module.list_units("owner/repo", limit=2, offset=4)
+
+    all_ids = [unit.id for page in (page_one, page_two, page_three) for unit in page]
+    assert len(all_ids) == len(set(all_ids)) == 5
+    assert total_one == total_two == total_three == 5
+    assert [len(page_one), len(page_two), len(page_three)] == [2, 2, 1]
+
+
+def test_list_units_with_no_matches_returns_empty(store_module):
+    units, total = store_module.list_units("owner/repo")
+
+    assert units == []
+    assert total == 0
+
+
 def test_count_units_counts_only_matching_repo(store_module, make_unit):
     store_module.upsert_units(
         [

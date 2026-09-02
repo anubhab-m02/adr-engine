@@ -1,0 +1,607 @@
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import AnswerPage from './AnswerPage.jsx'
+
+function stubMatchMedia(matches) {
+  window.matchMedia = vi.fn().mockReturnValue({
+    matches,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  })
+}
+
+const citation = {
+  id: 'owner/repo:pr:42',
+  kind: 'pr',
+  ref: '42',
+  url: 'https://github.com/owner/repo/pull/42',
+  title: 'Switch auth to OAuth2 for third-party integrations',
+  author: 'octocat',
+  date: '2024-01-01T00:00:00Z',
+  repo: 'owner/repo',
+}
+
+const repos = [
+  { repo: 'owner/repo', indexed_units: 30 },
+  { repo: 'owner/other', indexed_units: 8 },
+]
+
+describe('AnswerPage', () => {
+  afterEach(() => {
+    delete window.matchMedia
+    delete window.print
+    localStorage.clear()
+  })
+
+  it('renders the question as a heading', () => {
+    render(
+      <AnswerPage
+        question="Why OAuth2?"
+        answer="We use OAuth2 for auth."
+        citations={[]}
+        repos={repos}
+        selectedRepos={['owner/repo']}
+      />,
+    )
+
+    expect(screen.getByRole('heading', { name: 'Why OAuth2?' })).toBeInTheDocument()
+  })
+
+  it('calls window.print when the print button is clicked', async () => {
+    const user = userEvent.setup()
+    window.print = vi.fn()
+
+    render(
+      <AnswerPage
+        question="Why OAuth2?"
+        answer="We use OAuth2 for auth."
+        citations={[]}
+        repos={repos}
+        selectedRepos={['owner/repo']}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Print / Save as PDF' }))
+
+    expect(window.print).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders a provenance dek computed from selectedRepos and their indexed_units', () => {
+    render(
+      <AnswerPage
+        question="Why OAuth2?"
+        answer="We use OAuth2 for auth."
+        citations={[]}
+        repos={repos}
+        selectedRepos={['owner/repo', 'owner/other']}
+      />,
+    )
+
+    expect(screen.getByText('searched 2 repos · 38 decisions')).toBeInTheDocument()
+  })
+
+  it('singularizes the dek for one repo and one decision', () => {
+    render(
+      <AnswerPage
+        question="Why OAuth2?"
+        answer="We use OAuth2 for auth."
+        citations={[]}
+        repos={[{ repo: 'owner/repo', indexed_units: 1 }]}
+        selectedRepos={['owner/repo']}
+      />,
+    )
+
+    expect(screen.getByText('searched 1 repo · 1 decision')).toBeInTheDocument()
+  })
+
+  it('only counts indexed_units for selected repos', () => {
+    render(
+      <AnswerPage
+        question="Why OAuth2?"
+        answer="We use OAuth2 for auth."
+        citations={[]}
+        repos={repos}
+        selectedRepos={['owner/repo']}
+      />,
+    )
+
+    expect(screen.getByText('searched 1 repo · 30 decisions')).toBeInTheDocument()
+  })
+
+  it('renders the answer body with its citation and sources', () => {
+    render(
+      <AnswerPage
+        question="Why OAuth2?"
+        answer="We use OAuth2 for auth [owner/repo:pr:42]."
+        citations={[citation]}
+        repos={repos}
+        selectedRepos={['owner/repo']}
+      />,
+    )
+
+    expect(screen.getByText(/We use OAuth2 for auth/)).toBeInTheDocument()
+    for (const link of screen.getAllByRole('link', { name: /Citation:/ })) {
+      expect(link).toHaveAttribute('href', citation.url)
+    }
+  })
+
+  describe('>=900px margin grid', () => {
+    it('places a cited paragraph in the reading column and its source card in the margin column, same grid row', () => {
+      const { container } = render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth [owner/repo:pr:42]."
+          citations={[citation]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      const grid = container.querySelector('.min-\\[900px\\]\\:grid')
+      expect(grid).toBeInTheDocument()
+
+      const paragraph = screen.getByText(/We use OAuth2 for auth/).closest('p')
+      expect(paragraph).toHaveClass('min-[900px]:col-start-1')
+
+      const marginGroup = grid.querySelector('.min-\\[900px\\]\\:col-start-2')
+      expect(marginGroup).toBeInTheDocument()
+      expect(marginGroup).toHaveClass('hidden', 'min-[900px]:flex')
+      const marginLink = marginGroup.querySelector('a')
+      expect(marginLink).toHaveAttribute('href', citation.url)
+      // The card fills its grid column instead of a fixed width, so it
+      // doesn't overflow the narrower 900-1280px track.
+      expect(marginLink).toHaveClass('w-full')
+      expect(marginLink).not.toHaveClass('sm:w-64')
+
+      // paragraph and its margin group are siblings under the same
+      // min-[900px]:contents wrapper, i.e. the same implicit grid row.
+      expect(paragraph.parentElement).toBe(marginGroup.parentElement)
+    })
+
+    it('renders no margin-column element for a paragraph that cites nothing', () => {
+      const { container } = render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="No citation in this one."
+          citations={[citation]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(container.querySelector('.min-\\[900px\\]\\:col-start-2')).not.toBeInTheDocument()
+    })
+
+    it('gives each margin source card its marker number', () => {
+      const other = { ...citation, id: 'owner/repo:commit:abc', url: 'https://github.com/owner/repo/commit/abc' }
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer={'First [owner/repo:pr:42].\n\nSecond [owner/repo:commit:abc].'}
+          citations={[citation, other]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(screen.getAllByText('1')).not.toHaveLength(0)
+      expect(screen.getAllByText('2')).not.toHaveLength(0)
+    })
+
+    it('falls back to a stacked source list, hidden only once the grid takes over at 900px', () => {
+      const { container } = render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth [owner/repo:pr:42]."
+          citations={[citation]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      const fallback = container.querySelector('.min-\\[900px\\]\\:hidden')
+      expect(fallback).toBeInTheDocument()
+      expect(fallback.querySelector('a')).toHaveAttribute('href', citation.url)
+    })
+  })
+
+  describe('reading density toggle', () => {
+    it('defaults to comfortable and switches the paragraph to compact spacing on click', async () => {
+      const user = userEvent.setup()
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth."
+          citations={[]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      const comfortableButton = screen.getByRole('button', { name: 'Comfortable' })
+      const compactButton = screen.getByRole('button', { name: 'Compact' })
+      expect(comfortableButton).toHaveAttribute('aria-pressed', 'true')
+
+      const paragraph = screen.getByText(/We use OAuth2 for auth/).closest('p')
+      expect(paragraph).toHaveClass('leading-[1.7]')
+
+      await user.click(compactButton)
+
+      expect(compactButton).toHaveAttribute('aria-pressed', 'true')
+      expect(paragraph).toHaveClass('leading-[1.4]')
+    })
+
+    it('persists the density choice across a remount', async () => {
+      const user = userEvent.setup()
+      const { unmount } = render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth."
+          citations={[]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+      await user.click(screen.getByRole('button', { name: 'Compact' }))
+      unmount()
+
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth."
+          citations={[]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(screen.getByRole('button', { name: 'Compact' })).toHaveAttribute('aria-pressed', 'true')
+    })
+  })
+
+  describe('reading measure toggle', () => {
+    it('defaults to the default width and switches the paragraph column width on click', async () => {
+      const user = userEvent.setup()
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth."
+          citations={[]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      const defaultButton = screen.getByRole('button', { name: 'Default' })
+      const wideButton = screen.getByRole('button', { name: 'Wide' })
+      expect(defaultButton).toHaveAttribute('aria-pressed', 'true')
+
+      const paragraph = screen.getByText(/We use OAuth2 for auth/).closest('p')
+      expect(paragraph).toHaveClass('max-w-[70ch]')
+
+      await user.click(wideButton)
+
+      expect(wideButton).toHaveAttribute('aria-pressed', 'true')
+      expect(paragraph).toHaveClass('max-w-[86ch]')
+    })
+
+    it('persists the measure choice across a remount', async () => {
+      const user = userEvent.setup()
+      const { unmount } = render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth."
+          citations={[]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+      await user.click(screen.getByRole('button', { name: 'Narrow' }))
+      unmount()
+
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth."
+          citations={[]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(screen.getByRole('button', { name: 'Narrow' })).toHaveAttribute('aria-pressed', 'true')
+    })
+  })
+
+  describe('coverage line', () => {
+    it('renders nothing when there are no citations', () => {
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth."
+          citations={[]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(screen.queryByText(/^From /)).not.toBeInTheDocument()
+    })
+
+    it('states a single year, not a nonsensical span, for one citation', () => {
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth [owner/repo:pr:42]."
+          citations={[citation]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(screen.getByText('From 1 decision (2024); coverage for this area is thin')).toBeInTheDocument()
+    })
+
+    it('states the min/max year span across multiple citations', () => {
+      const older = { ...citation, id: 'owner/repo:commit:abc', date: '2022-06-15T00:00:00Z' }
+      const newer = { ...citation, id: 'owner/repo:pr:99', date: '2023-11-01T00:00:00Z' }
+
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer={'First [owner/repo:pr:42].\n\nSecond [owner/repo:commit:abc].\n\nThird [owner/repo:pr:99].'}
+          citations={[citation, older, newer]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(screen.getByText('From 3 decisions spanning 2022–2024')).toBeInTheDocument()
+    })
+
+    it('collapses to one year, not a same-year span, when every citation falls in the same year', () => {
+      const sameYearA = { ...citation, id: 'owner/repo:commit:abc', date: '2024-06-15T00:00:00Z' }
+      const sameYearB = { ...citation, id: 'owner/repo:pr:99', date: '2024-02-01T00:00:00Z' }
+
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer={'First [owner/repo:pr:42].\n\nSecond [owner/repo:commit:abc].\n\nThird [owner/repo:pr:99].'}
+          citations={[citation, sameYearA, sameYearB]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(screen.getByText('From 3 decisions (2024)')).toBeInTheDocument()
+    })
+  })
+
+  describe('coverage thin heuristic', () => {
+    it('flags a citation set below the count threshold as thin', () => {
+      const second = { ...citation, id: 'owner/repo:commit:abc', date: '2024-06-15T00:00:00Z' }
+
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer={'First [owner/repo:pr:42].\n\nSecond [owner/repo:commit:abc].'}
+          citations={[citation, second]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(screen.getByText(/coverage for this area is thin/)).toBeInTheDocument()
+    })
+
+    it('flags a wide, sparse date span as thin even with enough citations', () => {
+      const older = { ...citation, id: 'owner/repo:commit:abc', date: '2019-06-15T00:00:00Z' }
+      const newer = { ...citation, id: 'owner/repo:pr:99', date: '2023-11-01T00:00:00Z' }
+
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer={'First [owner/repo:pr:42].\n\nSecond [owner/repo:commit:abc].\n\nThird [owner/repo:pr:99].'}
+          citations={[citation, older, newer]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(screen.getByText('From 3 decisions spanning 2019–2024; coverage for this area is thin')).toBeInTheDocument()
+    })
+
+    it('does not flag a well-covered citation set', () => {
+      const second = { ...citation, id: 'owner/repo:commit:abc', date: '2023-06-15T00:00:00Z' }
+      const third = { ...citation, id: 'owner/repo:pr:99', date: '2024-02-01T00:00:00Z' }
+
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer={'First [owner/repo:pr:42].\n\nSecond [owner/repo:commit:abc].\n\nThird [owner/repo:pr:99].'}
+          citations={[citation, second, third]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      expect(screen.getByText('From 3 decisions spanning 2023–2024')).toBeInTheDocument()
+      expect(screen.queryByText(/coverage for this area is thin/)).not.toBeInTheDocument()
+    })
+  })
+
+  describe('privacy panel disclosure', () => {
+    it('is present but collapsed by default', () => {
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth."
+          citations={[]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+          sentToCloud={true}
+          cloudSynthesisFields={['id', 'title']}
+        />,
+      )
+
+      const disclosure = screen.getByText('What was sent').closest('details')
+      expect(disclosure).toBeInTheDocument()
+      expect(disclosure).not.toHaveAttribute('open')
+    })
+
+    it('reveals PrivacyPanel content when expanded', async () => {
+      const user = userEvent.setup()
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth."
+          citations={[]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+          sentToCloud={true}
+          cloudSynthesisFields={['id', 'title']}
+        />,
+      )
+
+      await user.click(screen.getByText('What was sent'))
+
+      expect(screen.getByText('id')).toBeInTheDocument()
+      expect(screen.getByText('title')).toBeInTheDocument()
+    })
+
+    it('shows the local-only state when nothing was sent to the cloud', async () => {
+      const user = userEvent.setup()
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth."
+          citations={[]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      await user.click(screen.getByText('What was sent'))
+
+      expect(screen.getByText('Nothing left this machine for this answer.')).toBeInTheDocument()
+    })
+  })
+
+  describe('SourceCards group-entrance motion', () => {
+    it('applies the group-entrance animation to a paragraph\'s margin and inline card groups by default', () => {
+      stubMatchMedia(false)
+      const { container } = render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth [owner/repo:pr:42]."
+          citations={[citation]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      const marginGroup = container.querySelector('.min-\\[900px\\]\\:col-start-2')
+      const inlineGroup = container.querySelector('.min-\\[900px\\]\\:hidden')
+      expect(marginGroup).toHaveClass('animate-source-group-entrance')
+      expect(inlineGroup).toHaveClass('animate-source-group-entrance')
+    })
+
+    it('omits the group-entrance animation under reduced motion', () => {
+      stubMatchMedia(true)
+      const { container } = render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth [owner/repo:pr:42]."
+          citations={[citation]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      const marginGroup = container.querySelector('.min-\\[900px\\]\\:col-start-2')
+      const inlineGroup = container.querySelector('.min-\\[900px\\]\\:hidden')
+      expect(marginGroup).not.toHaveClass('animate-source-group-entrance')
+      expect(inlineGroup).not.toHaveClass('animate-source-group-entrance')
+    })
+  })
+
+  describe('900-1280px narrow margin track', () => {
+    it('defines a narrower margin column than the >=1280px track, widening at xl', () => {
+      const { container } = render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer="We use OAuth2 for auth [owner/repo:pr:42]."
+          citations={[citation]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      const grid = container.querySelector('.min-\\[900px\\]\\:grid')
+      expect(grid).toHaveClass('min-[900px]:grid-cols-[minmax(0,68ch)_180px]')
+      expect(grid).toHaveClass('xl:grid-cols-[minmax(0,68ch)_260px]')
+    })
+  })
+
+  describe('<900px inline citation collapse', () => {
+    const other = { ...citation, id: 'owner/repo:commit:abc', url: 'https://github.com/owner/repo/commit/abc' }
+
+    it('places each note as the next sibling after its own paragraph, not grouped at the end', () => {
+      const { container } = render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer={'First [owner/repo:pr:42].\n\nSecond [owner/repo:commit:abc].'}
+          citations={[citation, other]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      const wrappers = container.querySelectorAll('.min-\\[900px\\]\\:contents')
+      expect(wrappers).toHaveLength(2)
+      const [firstWrapper, secondWrapper] = wrappers
+
+      // each paragraph's inline note is a child of the same wrapper as the
+      // paragraph itself, positioned after it — a real sibling relationship,
+      // not membership in one shared list at the foot of the answer.
+      const firstParagraph = firstWrapper.querySelector('p')
+      const firstInline = firstWrapper.querySelector('.min-\\[900px\\]\\:hidden')
+      expect(firstInline).toBeInTheDocument()
+      expect(firstInline.querySelector('a')).toHaveAttribute('href', citation.url)
+      const firstChildren = Array.from(firstWrapper.children)
+      expect(firstChildren.indexOf(firstInline)).toBeGreaterThan(firstChildren.indexOf(firstParagraph))
+
+      const secondParagraph = secondWrapper.querySelector('p')
+      const secondInline = secondWrapper.querySelector('.min-\\[900px\\]\\:hidden')
+      expect(secondInline).toBeInTheDocument()
+      expect(secondInline.querySelector('a')).toHaveAttribute('href', other.url)
+
+      // real document order: the first paragraph's note precedes the second
+      // paragraph entirely, instead of both notes being batched after it.
+      const position = firstInline.compareDocumentPosition(secondParagraph)
+      expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+
+      // exactly one inline note group per cited paragraph — no additional
+      // grouped list collecting every citation at the foot of the answer.
+      expect(container.querySelectorAll('.min-\\[900px\\]\\:hidden')).toHaveLength(2)
+    })
+
+    it('renders no inline note for a paragraph that cites nothing', () => {
+      const { container } = render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer={'No citation here.\n\nSecond [owner/repo:pr:42].'}
+          citations={[citation]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+
+      const wrappers = container.querySelectorAll('.min-\\[900px\\]\\:contents')
+      expect(wrappers).toHaveLength(2)
+      expect(wrappers[0].querySelector('.min-\\[900px\\]\\:hidden')).not.toBeInTheDocument()
+      expect(wrappers[1].querySelector('.min-\\[900px\\]\\:hidden')).toBeInTheDocument()
+    })
+  })
+})
