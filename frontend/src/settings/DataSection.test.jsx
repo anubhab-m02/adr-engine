@@ -45,7 +45,7 @@ describe('DataSection', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear index' }))
     expect(clearIndex).not.toHaveBeenCalled()
-    expect(screen.getByText(/Clear the index\?/)).toBeInTheDocument()
+    expect(screen.getByText('Clear 42 indexed decisions? This cannot be undone.')).toBeInTheDocument()
   })
 
   it('confirming calls DELETE /repos and shows a cleared message', async () => {
@@ -72,7 +72,9 @@ describe('DataSection', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
 
     expect(clearIndex).not.toHaveBeenCalled()
-    expect(screen.queryByText(/Clear the index\?/)).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Clear 42 indexed decisions? This cannot be undone.'),
+    ).not.toBeInTheDocument()
   })
 
   it('shows an inline error when clearing fails', async () => {

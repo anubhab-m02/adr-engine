@@ -83,7 +83,7 @@ function DataSection() {
           {confirming && (
             <div className="mt-2 flex items-center justify-between gap-4">
               <InlineConfirm
-                message="Clear the index? This cannot be undone."
+                message={`Clear ${decisionCount ?? 0} indexed decisions? This cannot be undone.`}
                 confirmLabel="Clear index"
                 onConfirm={handleClear}
                 onCancel={() => setConfirming(false)}
