@@ -1,14 +1,13 @@
-// Settings' Data section (UI-DESIGN.md): read-only index location and
-// a full-wipe "Clear index" action (destructive, inline confirm — same
-// pattern as GitHubSection/GeminiSection/RepoRow). Decision count (also
-// named in UI-DESIGN.md's Data row) is deliberately not shown — no such
-// field exists in ConfigResponse yet; tracked as a follow-up in #95.
+// Settings' Data section (UI-DESIGN.md): read-only index location, the
+// total decision count, and a full-wipe "Clear index" action (destructive,
+// inline confirm — same pattern as GitHubSection/GeminiSection/RepoRow).
 import { useEffect, useState } from 'react'
 import InlineConfirm from '../components/InlineConfirm.jsx'
 import { clearIndex, getConfig } from '../api.js'
 
 function DataSection() {
   const [dataDir, setDataDir] = useState(undefined)
+  const [decisionCount, setDecisionCount] = useState(undefined)
   const [confirming, setConfirming] = useState(false)
   const [clearing, setClearing] = useState(false)
   const [cleared, setCleared] = useState(false)
@@ -19,10 +18,16 @@ function DataSection() {
 
     getConfig()
       .then((result) => {
-        if (!cancelled) setDataDir(result.chroma_data_dir)
+        if (!cancelled) {
+          setDataDir(result.chroma_data_dir)
+          setDecisionCount(result.decision_count)
+        }
       })
       .catch(() => {
-        if (!cancelled) setDataDir(null)
+        if (!cancelled) {
+          setDataDir(null)
+          setDecisionCount(null)
+        }
       })
 
     return () => {
@@ -58,6 +63,12 @@ function DataSection() {
         <>
           {dataDir && <p className="mt-1 font-mono text-sm text-ink-muted">{dataDir}</p>}
 
+          {decisionCount != null && (
+            <p className="mt-1 text-sm text-ink-muted">
+              {decisionCount} indexed decision{decisionCount === 1 ? '' : 's'}
+            </p>
+          )}
+
           {!confirming && (
             <button
               type="button"
@@ -72,7 +83,7 @@ function DataSection() {
           {confirming && (
             <div className="mt-2 flex items-center justify-between gap-4">
               <InlineConfirm
-                message="Clear the index? This cannot be undone."
+                message={`Clear ${decisionCount ?? 0} indexed decisions? This cannot be undone.`}
                 confirmLabel="Clear index"
                 onConfirm={handleClear}
                 onCancel={() => setConfirming(false)}

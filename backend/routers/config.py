@@ -11,22 +11,33 @@ from fastapi import APIRouter, HTTPException
 
 import config_store
 from config import get_settings
+from ingestion.store import count_units
 from models import ConfigPatchRequest, ConfigResponse
 
 router = APIRouter()
 
 
+def _decision_count(stored: dict) -> int:
+    return sum(count_units(repo) for repo in stored["indexed_repos"])
+
+
 @router.get("/config", response_model=ConfigResponse)
 def get_config() -> ConfigResponse:
-    return ConfigResponse(**config_store.mask(config_store.load()), chroma_data_dir=config_store.chroma_data_dir())
+    stored = config_store.load()
+    return ConfigResponse(
+        **config_store.mask(stored),
+        chroma_data_dir=config_store.chroma_data_dir(),
+        decision_count=_decision_count(stored),
+    )
 
 
 @router.patch("/config", response_model=ConfigResponse)
 def patch_config(patch: ConfigPatchRequest) -> ConfigResponse:
-    # chroma_data_dir is env-derived (matches chroma_client.py), never
-    # actually persisted through the store, so it's dropped before saving.
+    # chroma_data_dir and decision_count are derived, never actually
+    # persisted through the store, so they're dropped before saving.
     payload = patch.model_dump(exclude_unset=True)
     payload.pop("chroma_data_dir", None)
+    payload.pop("decision_count", None)
 
     try:
         updated = config_store.save(payload)
@@ -39,4 +50,8 @@ def patch_config(patch: ConfigPatchRequest) -> ConfigResponse:
     # DELETE /repos's same cache_clear() after its own config_store write.
     get_settings.cache_clear()
 
-    return ConfigResponse(**config_store.mask(updated), chroma_data_dir=config_store.chroma_data_dir())
+    return ConfigResponse(
+        **config_store.mask(updated),
+        chroma_data_dir=config_store.chroma_data_dir(),
+        decision_count=_decision_count(updated),
+    )

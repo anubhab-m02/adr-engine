@@ -5,7 +5,11 @@ Replays golden questions from `docs/eval-questions.md` against a frozen
 fixture and reports the fraction whose expected source unit lands in the
 top-5 retrieved results, ranked by cosine similarity. Deterministic: no
 LLM judge, no network call, no Ollama instance — satisfies
-ARCHITECTURE.md's CI testing constraints.
+ARCHITECTURE.md's CI testing constraints. Golden-question embeddings are
+themselves frozen fixture data (`golden_question_embeddings.json`,
+generated alongside the corpus fixture by `eval.build_fixture`), not
+computed live — `embed_query` stays available for non-CI callers (e.g. a
+manual retrieval-tuning sweep) that need a fresh embedding.
 
 Gate: 70% absolute floor, below 50% is "broken", and CI fails any run
 that drops more than 5 points below the best score on record.
@@ -41,17 +45,23 @@ def _cosine_similarity(a: list[float], b: list[float]) -> float:
 
 
 def compute_recall_at_5(
-    golden_questions: list[dict], units: list[DecisionUnit], embeddings: list[list[float]]
+    golden_questions: list[dict],
+    units: list[DecisionUnit],
+    embeddings: list[list[float]],
+    query_embeddings: dict[str, list[float]],
 ) -> float:
     """Fraction of `golden_questions` whose `expected_unit_id` appears in
-    the top-5 `units` ranked by cosine similarity to the embedded
-    question. `units` and `embeddings` are parallel lists."""
+    the top-5 `units` ranked by cosine similarity to the question's
+    embedding. `units` and `embeddings` are parallel lists.
+    `query_embeddings` maps each golden question's text to its
+    precomputed embedding — this function performs no embedding itself,
+    so it never calls out to Ollama."""
     if not golden_questions:
         return 0.0
 
     hits = 0
     for golden in golden_questions:
-        query_vector = embed_query(golden["question"])
+        query_vector = query_embeddings[golden["question"]]
         ranked = sorted(
             zip(units, embeddings),
             key=lambda pair: _cosine_similarity(query_vector, pair[1]),
@@ -76,6 +86,10 @@ def _load_fixture() -> tuple[list[DecisionUnit], list[list[float]]]:
     return [DecisionUnit(**unit) for unit in units_raw], embeddings
 
 
+def _load_query_embeddings() -> dict[str, list[float]]:
+    return json.loads((FIXTURES_DIR / "golden_question_embeddings.json").read_text())
+
+
 def _load_best_score() -> float | None:
     if not BEST_SCORE_PATH.exists():
         return None
@@ -89,8 +103,9 @@ def _record_best_score(score: float) -> None:
 def main() -> int:
     golden_questions = _load_golden_questions()
     units, embeddings = _load_fixture()
+    query_embeddings = _load_query_embeddings()
 
-    score = compute_recall_at_5(golden_questions, units, embeddings)
+    score = compute_recall_at_5(golden_questions, units, embeddings, query_embeddings)
     best = _load_best_score()
 
     print(f"recall@5: {score:.1%} ({len(golden_questions)} questions)")

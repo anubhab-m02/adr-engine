@@ -2,19 +2,12 @@
 // existing key, an input to set/update it, and a remove action (inline
 // confirm — same pattern as GitHubSection/RepoRow).
 //
-// UI-DESIGN.md's Settings table calls for a live "1-token ping" to
-// Gemini on save ("Key rejected by Gemini" / "✓ Synthesized answers
-// on"). Issue #82's own scope explicitly rules this out ("Live Gemini
-// API key verification (out of scope everywhere per SYSTEM-DESIGN.md —
-// PATCH validates format only, not by calling Gemini)") — the two docs
-// disagree. Following the issue's explicit scope (and SYSTEM-DESIGN.md's
-// broader "no live verification" policy) rather than silently making a
-// real external API call during every key save; only cheap PATCH-side
-// format validation happens here. Flagging for a docs reconciliation
-// rather than resolving it unilaterally in either direction.
+// Live "1-token ping" validation on save reinstated per
+// docs/superpowers/specs/2026-08-04-v2-design.md decision 9, resolving
+// the docs/#82 disagreement in UI-DESIGN.md's favor.
 import { useEffect, useState } from 'react'
 import InlineConfirm from '../components/InlineConfirm.jsx'
-import { getConfig, patchConfig } from '../api.js'
+import { getConfig, patchConfig, validateGemini } from '../api.js'
 
 function GeminiSection() {
   const [existingMasked, setExistingMasked] = useState(undefined)
@@ -22,6 +15,7 @@ function GeminiSection() {
   const [saving, setSaving] = useState(false)
   const [removing, setRemoving] = useState(false)
   const [confirmingRemove, setConfirmingRemove] = useState(false)
+  const [validation, setValidation] = useState(null)
   const [error, setError] = useState(null)
 
   useEffect(() => {
@@ -42,11 +36,18 @@ function GeminiSection() {
 
   async function handleSave() {
     setSaving(true)
+    setValidation(null)
     setError(null)
     try {
       const result = await patchConfig({ gemini_api_key: key })
       setExistingMasked(result.gemini_api_key)
       setKey('')
+      try {
+        const outcome = await validateGemini()
+        setValidation(outcome.ok ? { ok: true } : { ok: false, message: 'Key rejected by Gemini' })
+      } catch {
+        setValidation({ ok: false, message: 'Could not reach the backend to validate the key.' })
+      }
     } catch {
       setError('Could not save the key. Check it and try again.')
     } finally {
@@ -56,6 +57,7 @@ function GeminiSection() {
 
   async function handleRemove() {
     setRemoving(true)
+    setValidation(null)
     setError(null)
     try {
       await patchConfig({ gemini_api_key: null })
@@ -120,6 +122,18 @@ function GeminiSection() {
                 Save
               </button>
             </div>
+          )}
+
+          {validation?.ok && (
+            <p role="status" className="mt-2 text-sm text-ink-muted">
+              ✓ Synthesized answers on
+            </p>
+          )}
+
+          {validation && !validation.ok && (
+            <p role="alert" className="mt-2 text-sm text-danger">
+              {validation.message}
+            </p>
           )}
 
           {error && (

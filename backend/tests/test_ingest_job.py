@@ -2,12 +2,20 @@ from unittest.mock import patch
 
 import pytest
 
+import config_store
 from ingestion.extract import ExtractionResult
 from ingestion.github_client import CommitRef, GitHubError
 from jobs.ingest_job import get_latest_job, retry_job, run_job, start_job
 from models import IngestCounts
 
 DECISION = ExtractionResult(is_decision=True, decision="Use Redis", rationale="Shared state", alternatives=[])
+
+
+@pytest.fixture(autouse=True)
+def _isolated_config_store(tmp_path, monkeypatch):
+    """`_run_repo` now records `indexed_at` via config_store on success —
+    isolate every test in this file from the real `./chroma_data`."""
+    monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
 
 
 def _commit(sha="abc123", date="2026-01-01T00:00:00Z"):
@@ -145,6 +153,46 @@ def test_run_job_only_writes_the_cursor_for_the_successful_repo(mocks):
     run_job(job_id)
 
     mocks["set_cursor"].assert_called_once_with("owner/good", {"last_commit_date": "2026-01-01T00:00:00Z"})
+
+
+def test_run_job_records_indexed_at_when_a_repo_completes(mocks):
+    mocks["list_commits"].return_value = [_commit()]
+    mocks["extract_decision"].return_value = DECISION
+
+    assert config_store.get_indexed_at("owner/repo") is None
+
+    job_id = start_job(["owner/repo"])
+    run_job(job_id)
+
+    assert config_store.get_indexed_at("owner/repo") is not None
+
+
+def test_run_job_does_not_record_indexed_at_for_a_failed_repo(mocks):
+    mocks["list_commits"].side_effect = GitHubError(403, "rate limited")
+
+    job_id = start_job(["owner/repo"])
+    run_job(job_id)
+
+    assert get_latest_job().repos["owner/repo"].phase == "failed"
+    assert config_store.get_indexed_at("owner/repo") is None
+
+
+def test_reindex_updates_indexed_at_to_the_new_run(monkeypatch, mocks):
+    mocks["list_commits"].return_value = [_commit()]
+    mocks["extract_decision"].return_value = DECISION
+
+    timestamps = iter(["2026-01-01T00:00:00+00:00", "2026-01-02T00:00:00+00:00"])
+    monkeypatch.setattr("jobs.ingest_job._current_timestamp", lambda: next(timestamps))
+
+    job_id = start_job(["owner/repo"])
+    run_job(job_id)
+    first = config_store.get_indexed_at("owner/repo")
+
+    retry_job(job_id, "owner/repo")
+    second = config_store.get_indexed_at("owner/repo")
+
+    assert first == "2026-01-01T00:00:00+00:00"
+    assert second == "2026-01-02T00:00:00+00:00"
 
 
 def test_run_job_marks_the_job_inactive_once_every_repo_finishes(mocks):

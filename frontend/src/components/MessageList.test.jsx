@@ -48,25 +48,30 @@ describe('MessageList', () => {
     expect(screen.getByRole('button', { name: 'Retry' })).toBeDisabled()
   })
 
-  it('renders AnswerPassage with its sources for a synthesized answer message', () => {
+  it('renders an AnswerPage with its sources for a synthesized answer message', () => {
     render(
       <MessageList
         messages={[
+          { role: 'user', content: 'Why OAuth2?' },
           {
             role: 'assistant',
             type: 'answer',
             mode: 'synthesized',
-            answer: 'We use OAuth2 for auth.',
+            answer: 'We use OAuth2 for auth [owner/repo:pr:42].',
             citations: [citation],
           },
         ]}
+        repos={[{ repo: 'owner/repo', indexed_units: 5 }]}
+        selectedRepos={['owner/repo']}
       />,
     )
-    expect(screen.getByText('We use OAuth2 for auth.')).toBeInTheDocument()
-    expect(screen.getByRole('link')).toHaveAttribute('href', citation.url)
+    expect(screen.getByRole('heading', { name: 'Why OAuth2?' })).toBeInTheDocument()
+    expect(screen.getByText('searched 1 repo · 5 decisions')).toBeInTheDocument()
+    expect(screen.getByText(/We use OAuth2 for auth/)).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: /Citation:/ })[0]).toHaveAttribute('href', citation.url)
   })
 
-  it('renders AnswerPassage for an assistant message with an omitted type (defaults to answer)', () => {
+  it('renders an AnswerPage for an assistant message with an omitted type (defaults to answer)', () => {
     render(
       <MessageList
         messages={[{ role: 'assistant', answer: 'We use OAuth2 for auth.', citations: [] }]}
@@ -89,9 +94,7 @@ describe('MessageList', () => {
         ]}
       />,
     )
-    expect(
-      screen.getByText('No Gemini key configured — showing retrieved sources directly.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('1 decision found —')).toBeInTheDocument()
     expect(screen.getByRole('link')).toHaveAttribute('href', citation.url)
   })
 

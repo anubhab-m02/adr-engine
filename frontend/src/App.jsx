@@ -4,6 +4,7 @@ import AskPage from './ask/AskPage.jsx'
 import LibraryPage from './library/LibraryPage.jsx'
 import { getSetupState } from './api.js'
 import { IngestStatusProvider } from './lib/useIngestStatus.js'
+import { NewQuestionProvider } from './lib/useNewQuestion.js'
 import OnboardingPage from './onboarding/OnboardingPage.jsx'
 import AppShell from './shell/AppShell.jsx'
 import SettingsPage from './settings/SettingsPage.jsx'
@@ -37,21 +38,23 @@ function App() {
 
   return (
     <IngestStatusProvider>
-      <Routes>
-        {setupComplete ? (
-          <Route element={<AppShell />}>
-            <Route path="/" element={<AskPage />} />
-            <Route path="/library" element={<LibraryPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Route>
-        ) : (
-          <>
-            <Route path="/onboarding" element={<OnboardingPage />} />
-            <Route path="*" element={<Navigate to="/onboarding" replace />} />
-          </>
-        )}
-      </Routes>
+      <NewQuestionProvider>
+        <Routes>
+          {setupComplete ? (
+            <Route element={<AppShell />}>
+              <Route path="/" element={<AskPage />} />
+              <Route path="/library" element={<LibraryPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Route>
+          ) : (
+            <>
+              <Route path="/onboarding" element={<OnboardingPage />} />
+              <Route path="*" element={<Navigate to="/onboarding" replace />} />
+            </>
+          )}
+        </Routes>
+      </NewQuestionProvider>
     </IngestStatusProvider>
   )
 }

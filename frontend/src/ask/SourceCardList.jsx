@@ -4,11 +4,11 @@ import SourceCard from './SourceCard.jsx'
 // synthesized answer (MessageList, wrapped) and in SourcesView's
 // degraded mode (stacked). Layout differs by className; the list logic
 // doesn't.
-function SourceCardList({ citations, className = 'flex flex-wrap gap-4' }) {
+function SourceCardList({ citations, className = 'flex flex-wrap gap-4', expanded = false }) {
   return (
     <div className={className}>
       {citations.map((unit) => (
-        <SourceCard key={unit.url} unit={unit} />
+        <SourceCard key={unit.url} unit={unit} expanded={expanded} />
       ))}
     </div>
   )

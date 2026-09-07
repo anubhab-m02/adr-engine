@@ -41,8 +41,8 @@ def test_repos_returns_counts_per_repo(make_unit):
     assert response.status_code == 200
     assert response.json() == {
         "repos": [
-            {"repo": "owner/a", "indexed_units": 2, "cloud_synthesis_allowed": True},
-            {"repo": "owner/b", "indexed_units": 1, "cloud_synthesis_allowed": True},
+            {"repo": "owner/a", "indexed_units": 2, "cloud_synthesis_allowed": True, "indexed_at": None},
+            {"repo": "owner/b", "indexed_units": 1, "cloud_synthesis_allowed": True, "indexed_at": None},
         ]
     }
 
@@ -58,10 +58,25 @@ def test_repos_with_zero_indexed_units_still_appears(make_unit):
     assert response.status_code == 200
     assert response.json() == {
         "repos": [
-            {"repo": "owner/a", "indexed_units": 1, "cloud_synthesis_allowed": True},
-            {"repo": "owner/b", "indexed_units": 0, "cloud_synthesis_allowed": True},
+            {"repo": "owner/a", "indexed_units": 1, "cloud_synthesis_allowed": True, "indexed_at": None},
+            {"repo": "owner/b", "indexed_units": 0, "cloud_synthesis_allowed": True, "indexed_at": None},
         ]
     }
+
+
+def test_repos_reflects_indexed_at_once_set(make_unit):
+    config_store.set_indexed_at("owner/a", "2026-01-01T00:00:00+00:00")
+    store.upsert_units(
+        [make_unit(id="owner/a:pr:1", repo="owner/a", url="https://github.com/owner/a/pull/1")],
+        embeddings=[[1, 0]],
+    )
+
+    response = client.get("/repos")
+
+    repo_a = next(r for r in response.json()["repos"] if r["repo"] == "owner/a")
+    repo_b = next(r for r in response.json()["repos"] if r["repo"] == "owner/b")
+    assert repo_a["indexed_at"] == "2026-01-01T00:00:00+00:00"
+    assert repo_b["indexed_at"] is None
 
 
 def test_delete_repos_clears_units_cursors_and_indexed_repos(make_unit, monkeypatch):
@@ -112,7 +127,12 @@ def test_patch_repo_overrides_cloud_synthesis_allowed(make_unit):
     response = client.patch("/repos/owner/a", json={"cloud_synthesis_allowed": True})
 
     assert response.status_code == 200
-    assert response.json() == {"repo": "owner/a", "indexed_units": 1, "cloud_synthesis_allowed": True}
+    assert response.json() == {
+        "repo": "owner/a",
+        "indexed_units": 1,
+        "cloud_synthesis_allowed": True,
+        "indexed_at": None,
+    }
 
     follow_up = client.get("/repos")
     repo_a = next(r for r in follow_up.json()["repos"] if r["repo"] == "owner/a")

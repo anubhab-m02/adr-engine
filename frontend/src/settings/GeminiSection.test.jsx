@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { getConfig, patchConfig } from '../api.js'
+import { getConfig, patchConfig, validateGemini } from '../api.js'
 import GeminiSection from './GeminiSection.jsx'
 
-vi.mock('../api.js', () => ({ getConfig: vi.fn(), patchConfig: vi.fn() }))
+vi.mock('../api.js', () => ({ getConfig: vi.fn(), patchConfig: vi.fn(), validateGemini: vi.fn() }))
 
 afterEach(() => {
   vi.resetAllMocks()
@@ -31,6 +31,7 @@ describe('GeminiSection', () => {
   it('save calls PATCH /config with the new key', async () => {
     getConfig.mockResolvedValue({ gemini_api_key: null })
     patchConfig.mockResolvedValue({ gemini_api_key: 'gk_1…cdef' })
+    validateGemini.mockResolvedValue({ ok: true, detail: null })
 
     render(<GeminiSection />)
     await screen.findByLabelText('Gemini API key')
@@ -40,6 +41,35 @@ describe('GeminiSection', () => {
 
     expect(patchConfig).toHaveBeenCalledWith({ gemini_api_key: 'sk-test-123' })
     expect(await screen.findByText('gk_1…cdef')).toBeInTheDocument()
+  })
+
+  it('save pings Gemini and shows the synthesized-answers state on a valid key', async () => {
+    getConfig.mockResolvedValue({ gemini_api_key: null })
+    patchConfig.mockResolvedValue({ gemini_api_key: 'gk_1…cdef' })
+    validateGemini.mockResolvedValue({ ok: true, detail: null })
+
+    render(<GeminiSection />)
+    await screen.findByLabelText('Gemini API key')
+
+    fireEvent.change(screen.getByLabelText('Gemini API key'), { target: { value: 'sk-test-123' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(await screen.findByText('✓ Synthesized answers on')).toBeInTheDocument()
+    expect(validateGemini).toHaveBeenCalled()
+  })
+
+  it('save pings Gemini and shows the rejected-key state from the endpoint response', async () => {
+    getConfig.mockResolvedValue({ gemini_api_key: null })
+    patchConfig.mockResolvedValue({ gemini_api_key: 'gk_1…cdef' })
+    validateGemini.mockResolvedValue({ ok: false, detail: 'Gemini returned 401' })
+
+    render(<GeminiSection />)
+    await screen.findByLabelText('Gemini API key')
+
+    fireEvent.change(screen.getByLabelText('Gemini API key'), { target: { value: 'sk-bad-key' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Key rejected by Gemini')
   })
 
   it('shows an inline error when the save fails', async () => {

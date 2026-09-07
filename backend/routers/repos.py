@@ -26,6 +26,7 @@ def repos() -> ReposResponse:
                 repo=repo,
                 indexed_units=count_units(repo),
                 cloud_synthesis_allowed=config_store.get_cloud_synthesis_allowed(repo),
+                indexed_at=config_store.get_indexed_at(repo),
             )
             for repo in get_settings().indexed_repos
         ]
@@ -39,6 +40,7 @@ def patch_repo(repo: str, request: RepoPrivacyPatchRequest) -> RepoInfo:
         repo=repo,
         indexed_units=count_units(repo),
         cloud_synthesis_allowed=request.cloud_synthesis_allowed,
+        indexed_at=config_store.get_indexed_at(repo),
     )
 
 

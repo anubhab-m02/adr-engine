@@ -1,15 +1,9 @@
 // Settings' Models section (UI-DESIGN.md): Ollama host and model name
-// inputs, saved together via a single PATCH /config.
-//
-// UI-DESIGN.md calls for save to ping Ollama's `/api/tags` to validate
-// host/model reachability. Issue #83 explicitly rules this out ("Skip
-// adding a new Ollama-health backend endpoint... flag as a follow-up if
-// a live check turns out to be genuinely needed") — same doc/issue
-// disagreement as GeminiSection's live-verification note, resolved the
-// same way: follow the issue's explicit scope, PATCH-only, no live
-// Ollama check.
+// inputs, saved together via a single PATCH /config, followed by a live
+// validation ping (POST /config/validate-ollama) per
+// docs/superpowers/specs/2026-08-04-v2-design.md decision 9.
 import { useEffect, useState } from 'react'
-import { getConfig, patchConfig } from '../api.js'
+import { getConfig, patchConfig, validateOllama } from '../api.js'
 
 function ModelsSection() {
   const [loaded, setLoaded] = useState(false)
@@ -18,6 +12,7 @@ function ModelsSection() {
   const [embeddingModel, setEmbeddingModel] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [validation, setValidation] = useState(null)
   const [error, setError] = useState(null)
 
   useEffect(() => {
@@ -43,6 +38,7 @@ function ModelsSection() {
   async function handleSave() {
     setSaving(true)
     setSaved(false)
+    setValidation(null)
     setError(null)
     try {
       await patchConfig({
@@ -51,6 +47,11 @@ function ModelsSection() {
         ollama_embedding_model: embeddingModel,
       })
       setSaved(true)
+      try {
+        setValidation(await validateOllama())
+      } catch {
+        setValidation({ ok: false, detail: 'Could not reach the backend to validate Ollama.' })
+      }
     } catch {
       setError('Could not save model settings. Check them and try again.')
     } finally {
@@ -70,35 +71,40 @@ function ModelsSection() {
 
       {loaded && (
         <>
-          <div className="mt-2 flex flex-col gap-3">
-            <label className="flex flex-col gap-1 text-sm text-ink-muted">
-              Ollama host
-              <input
-                type="text"
-                value={host}
-                onChange={(event) => setHost(event.target.value)}
-                className="font-mono rounded-lg border border-transparent bg-surface px-3 py-2 text-sm text-ink"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm text-ink-muted">
-              Extraction model
-              <input
-                type="text"
-                value={extractionModel}
-                onChange={(event) => setExtractionModel(event.target.value)}
-                className="font-mono rounded-lg border border-transparent bg-surface px-3 py-2 text-sm text-ink"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm text-ink-muted">
-              Embedding model
-              <input
-                type="text"
-                value={embeddingModel}
-                onChange={(event) => setEmbeddingModel(event.target.value)}
-                className="font-mono rounded-lg border border-transparent bg-surface px-3 py-2 text-sm text-ink"
-              />
-            </label>
-          </div>
+          <details className="mt-2">
+            <summary className="cursor-pointer font-ui text-sm text-ink-muted hover:text-ink">Advanced</summary>
+            <div className="mt-2 flex flex-col gap-3">
+              <label className="flex flex-col gap-1 text-sm text-ink-muted">
+                Ollama host
+                <input
+                  type="text"
+                  value={host}
+                  onChange={(event) => setHost(event.target.value)}
+                  className="font-mono rounded-lg border border-transparent bg-surface px-3 py-2 text-sm text-ink"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm text-ink-muted">
+                Extraction model
+                <input
+                  type="text"
+                  value={extractionModel}
+                  onChange={(event) => setExtractionModel(event.target.value)}
+                  placeholder="phi4-mini (default)"
+                  className="font-mono rounded-lg border border-transparent bg-surface px-3 py-2 text-sm text-ink"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm text-ink-muted">
+                Embedding model
+                <input
+                  type="text"
+                  value={embeddingModel}
+                  onChange={(event) => setEmbeddingModel(event.target.value)}
+                  placeholder="nomic-embed-text (default)"
+                  className="font-mono rounded-lg border border-transparent bg-surface px-3 py-2 text-sm text-ink"
+                />
+              </label>
+            </div>
+          </details>
 
           <div className="mt-3 flex items-center gap-4">
             <button
@@ -115,6 +121,18 @@ function ModelsSection() {
               </span>
             )}
           </div>
+
+          {validation?.ok && (
+            <p role="status" className="mt-2 text-sm text-ink-muted">
+              ✓ Reachable
+            </p>
+          )}
+
+          {validation && !validation.ok && (
+            <p role="alert" className="mt-2 text-sm text-danger">
+              {validation.detail}
+            </p>
+          )}
 
           {error && (
             <p role="alert" className="mt-2 text-sm text-danger">

@@ -84,7 +84,12 @@ def test_retrieve_models_round_trip():
 def test_query_models_round_trip():
     unit = make_decision_unit()
     response = QueryResponse(
-        answer="Because of revocation.", citations=[unit], retrieved_count=1, mode="synthesized"
+        answer="Because of revocation.",
+        citations=[unit],
+        retrieved_count=1,
+        mode="synthesized",
+        sent_to_cloud=True,
+        cloud_synthesis_fields=["id", "title", "decision", "rationale", "url"],
     )
 
     restored = QueryResponse.model_validate_json(response.model_dump_json())

@@ -93,8 +93,53 @@ def query_units(
     ]
 
 
+def list_units(
+    repo: str,
+    since: str | None = None,
+    until: str | None = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> tuple[list[DecisionUnit], int]:
+    """All units for `repo`, optionally bounded by `since`/`until` (both
+    inclusive, compared lexicographically against `DecisionUnit.date` —
+    which sorts correctly since dates are ISO 8601 strings), newest
+    first. Chroma's `where` only does exact-match filtering reliably for
+    string metadata, so the date bounds and pagination are applied here
+    rather than pushed into the query; sorting by `(date, id)` before
+    slicing keeps pages stable (no duplicates/gaps) across calls for a
+    fixed dataset.
+
+    Returns `(page, total)` where `total` is the count before slicing,
+    for the caller to compute page count.
+    """
+    result = get_collection().get(where={"repo": repo}, include=["metadatas"])
+    units = [_unit_from_metadata(id, metadata) for id, metadata in zip(result["ids"], result["metadatas"])]
+
+    if since is not None:
+        units = [unit for unit in units if unit.date >= since]
+    if until is not None:
+        units = [unit for unit in units if unit.date <= until]
+
+    units.sort(key=lambda unit: (unit.date, unit.id), reverse=True)
+
+    return units[offset : offset + limit], len(units)
+
+
 def count_units(repo: str) -> int:
     return len(get_collection().get(where={"repo": repo}, include=[])["ids"])
+
+
+def count_units_by_path(repo: str) -> dict[str, int]:
+    """Decision counts per file path for `repo`, from each unit's
+    `files_changed` — a file touched by 3 decisions counts 3, not 1."""
+    result = get_collection().get(where={"repo": repo}, include=["metadatas"])
+
+    counts: dict[str, int] = {}
+    for metadata in result["metadatas"]:
+        for path in json.loads(metadata.get("files_changed", "[]")):
+            counts[path] = counts.get(path, 0) + 1
+
+    return counts
 
 
 def _cursor_path() -> Path:

@@ -6,8 +6,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import pytest
 from fastapi.testclient import TestClient
 
+import chroma_client
 import config_store
 from config import get_settings
+from ingestion import store
 from main import app
 
 client = TestClient(app)
@@ -16,6 +18,11 @@ client = TestClient(app)
 @pytest.fixture(autouse=True)
 def _isolated_store(tmp_path, monkeypatch):
     monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
+    chroma_client.get_chroma_client.cache_clear()
+
+    yield
+
+    chroma_client.get_chroma_client.cache_clear()
 
 
 def test_get_config_on_empty_store_returns_defaults(tmp_path):
@@ -31,6 +38,7 @@ def test_get_config_on_empty_store_returns_defaults(tmp_path):
         "ollama_embedding_model": None,
         "gemini_model": "gemini-2.5-flash",
         "chroma_data_dir": str(tmp_path),
+        "decision_count": 0,
     }
 
 
@@ -103,3 +111,27 @@ def test_patch_can_clear_indexed_repos_without_touching_other_fields():
     assert response.status_code == 200
     assert response.json()["gemini_api_key"] == "gk_1…cdef"
     assert response.json()["indexed_repos"] == []
+
+
+def test_get_config_decision_count_sums_units_across_all_indexed_repos(make_unit):
+    client.patch("/config", json={"indexed_repos": ["owner/a", "owner/b"]})
+    store.upsert_units(
+        [
+            make_unit(id="owner/a:pr:1", repo="owner/a", url="https://github.com/owner/a/pull/1"),
+            make_unit(id="owner/a:pr:2", repo="owner/a", url="https://github.com/owner/a/pull/2"),
+            make_unit(id="owner/b:pr:1", repo="owner/b", url="https://github.com/owner/b/pull/1"),
+        ],
+        embeddings=[[1, 0], [1, 0], [1, 0]],
+    )
+
+    response = client.get("/config")
+
+    assert response.json()["decision_count"] == 3
+
+
+def test_patch_ignores_a_client_supplied_decision_count():
+    response = client.patch("/config", json={"decision_count": 999})
+
+    assert response.status_code == 200
+    assert response.json()["decision_count"] == 0
+    assert "decision_count" not in config_store.load()

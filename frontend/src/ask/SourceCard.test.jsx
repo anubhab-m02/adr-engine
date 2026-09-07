@@ -8,6 +8,8 @@ const prUnit = {
   ref: '42',
   url: 'https://github.com/owner/repo/pull/42',
   title: 'Switch auth to OAuth2 for third-party integrations',
+  decision: 'Switched auth to OAuth2 device flow.',
+  rationale: 'Avoids storing long-lived tokens for third-party integrations.',
   author: 'octocat',
   date: '2024-01-01T00:00:00Z',
   repo: 'owner/repo',
@@ -69,5 +71,44 @@ describe('SourceCard', () => {
   it('omits the marker number when not provided', () => {
     render(<SourceCard unit={prUnit} />)
     expect(screen.queryByText('1')).not.toBeInTheDocument()
+  })
+
+  it('defaults to a fixed card width', () => {
+    render(<SourceCard unit={prUnit} />)
+    expect(screen.getByRole('link')).toHaveClass('w-full', 'sm:w-64')
+  })
+
+  it('accepts a widthClassName override, e.g. to fill a margin grid column', () => {
+    render(<SourceCard unit={prUnit} widthClassName="w-full" />)
+    const link = screen.getByRole('link')
+    expect(link).toHaveClass('w-full')
+    expect(link).not.toHaveClass('sm:w-64')
+  })
+
+  it('defaults to the panel background, not highlighted', () => {
+    render(<SourceCard unit={prUnit} />)
+    const link = screen.getByRole('link')
+    expect(link).toHaveClass('bg-panel')
+    expect(link).not.toHaveClass('bg-highlight')
+  })
+
+  it('washes with the highlight background when highlighted', () => {
+    render(<SourceCard unit={prUnit} highlighted />)
+    const link = screen.getByRole('link')
+    expect(link).toHaveClass('bg-highlight')
+    expect(link).not.toHaveClass('bg-panel')
+  })
+
+  it('renders decision and rationale text instead of the title when expanded', () => {
+    render(<SourceCard unit={prUnit} expanded />)
+    expect(screen.getByText(prUnit.decision)).toBeInTheDocument()
+    expect(screen.getByText(prUnit.rationale)).toBeInTheDocument()
+    expect(screen.queryByText(prUnit.title)).not.toBeInTheDocument()
+  })
+
+  it('renders the title instead of decision/rationale by default', () => {
+    render(<SourceCard unit={prUnit} />)
+    expect(screen.getByText(prUnit.title)).toBeInTheDocument()
+    expect(screen.queryByText(prUnit.decision)).not.toBeInTheDocument()
   })
 })
