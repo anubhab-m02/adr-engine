@@ -15,35 +15,56 @@ Design docs: [PRODUCT.md](PRODUCT.md) ·
 
 ## Delivery model (how work lands here)
 
-Work is delivered by an unattended daily agent picking issues off the
-backlog. The model is designed so the agent can make progress for days
-without a human merging anything:
+Work is delivered by four unattended automations, each modeled on a role
+a small engineering org already has. Full design:
+[docs/superpowers/specs/2026-08-19-automation-org-design.md](docs/superpowers/specs/2026-08-19-automation-org-design.md).
 
-- **Rolling branch:** the agent works on a single long-lived branch
-  (`agent/rolling`), created from `main` when absent. Day N+1 builds on
-  day N's unmerged work because it's the same branch. One PR from
-  `agent/rolling` → `main` accumulates the work; its body maintains a
-  checklist of `Closes #N` lines per completed issue.
+- **Coder** (dev): picks up `daily-task` issues, one independent branch
+  and PR per issue — not a shared rolling branch. Runs nightly
+  (12am-3am IST) for new issues, and again right after the Reviewer
+  (triggered, not scheduled) to resolve review feedback on its own open
+  PRs.
+- **Reviewer** (QA): reviews every currently open PR in a hard-isolated
+  fresh context per PR — no shared memory with the Coder run that
+  produced it. Submits a real GitHub review (`Approve`/`Request
+  changes`) and writes a dated report to
+  `docs/superpowers/reports/`. Runs 6am-9am IST.
+- **Brainstormer** (PM): reads the latest report, open `steering`-labeled
+  issues (checked first, treated as binding), open `needs-input` issues,
+  and the repo's security alerts; updates this file directly — no
+  approval gate on its own edits. Sends the one daily notification.
+  Runs 12pm-3pm IST.
+- **Issue Generator** (scrum master): reads this file and the latest
+  report; files new, dedup-checked issues; closes/updates existing ones
+  per the report; sets `priority` from the report's stated severity.
+  Runs 6pm-9pm IST.
+
+**Merge gate** (all three required — an AND, enforced by real GitHub
+branch protection, not just workflow instructions):
+1. Required status checks pass (`pytest`, `npm test`/build/lint, and the
+   recall@5 gate once available).
+2. No touched file matches the sensitive-path denylist:
+   `backend/auth/`, `backend/config_store.py`, `.github/workflows/*`,
+   anything migration-shaped, `backend/retrieval/search.py`.
+3. The Reviewer's isolated review approves.
+
 - **Issue state machine:** `daily-task` (eligible) → agent completes it
-  and adds the `in-pr` label (now invisible to the picker) → merging the
-  rolling PR auto-closes it. `needs-input` marks issues blocked on a
-  human; `needs-triage` marks agent-proposed issues awaiting promotion.
-- **Issue sizing rules (binding):**
+  and opens its own PR → the merge gate above decides automatically →
+  merging closes the issue via `Closes #N`. `needs-input` marks issues
+  blocked on a human (never notifies directly — the Brainstormer folds
+  it into the daily digest). `needs-triage` marks agent-proposed
+  follow-ups awaiting promotion. `steering` is how a human redirects the
+  Brainstormer, at any time, no schedule required.
+- **Issue sizing rules (binding, unchanged):**
   - One module or one component per issue; target diff ≤ ~150 lines
     excluding fixtures.
   - Every issue names exact files to create/modify and acceptance
     criteria checkable by `pytest`/`npm test` in CI (no network, no
     Ollama — see ARCHITECTURE.md testing conventions).
-  - Issues are numbered in dependency order; the picker takes the
-    lowest-numbered eligible issue, so an issue may assume all
-    lower-numbered issues exist on the rolling branch (merged or not).
-- **Per run:** the agent completes 1–3 issues (as budget allows),
-  committing each in 1–3 natural commits, then updates the single
-  rolling PR. Daily output therefore varies naturally between ~1 and ~9
-  commits.
-- **Human loop:** review the rolling PR whenever available; merging it
-  closes the completed issues and resets the cycle. Groom `needs-triage`
-  into `daily-task` (or close) during ideation sessions.
+  - Issues are numbered in dependency order.
+- **Human's role:** steer via `steering` issues, whenever; resolve
+  whatever the daily email actually flags; nothing else is required to
+  keep the organization moving.
 
 ## Phase 1 — MVP: GitHub only (complete, pending final polish)
 
@@ -85,26 +106,14 @@ Batches (dependency order, each = several one-PR-sized issues):
 - **L. Hardening pass** — responsive/mobile fixes, a11y verification
   (contrast, keyboard, reduced motion), state-coverage sweep.
 
-## Phase 3 — The living archive
+## Phase 3 and 4 — superseded
 
-What makes the product returned-to, not just usable:
-
-- **Question history + follow-ups** — persisted threads; follow-up
-  questions carry prior citations into retrieval.
-- **Decision browser** — a browsable, filterable timeline of every
-  extracted decision per repo; adds file-path metadata at ingestion,
-  enabling path-scoped questions ("why is `backend/auth.py` like this?").
-- **Markdown export** — copy any answer with citations, ready for PR
-  descriptions and docs.
-- **Scheduled re-indexing** — interval-based auto-refresh keeping the
-  index alive; reuses the Phase 2 job/status machinery.
-
-## Phase 4 — The decision inbox
-
-The differentiator: after each index run, newly extracted decisions land
-in a review queue — confirm / edit / discard, with confirmed units
-boosted in retrieval. The system writes the ADRs; you approve them.
-Scoped when Phase 3 ships.
+Superseded by the wave/track structure in
+[docs/superpowers/specs/2026-08-04-v2-design.md](docs/superpowers/specs/2026-08-04-v2-design.md)
+(merged via #97). That document is the current source of truth for
+everything after Phase 2 — 23 tracks across 7 waves, gated behind a
+recall@5 quality bar after Wave 0. This section is kept only so a reader
+following Phase 2 forward knows where the plan actually continues.
 
 ## Later / parking lot
 
