@@ -482,6 +482,14 @@ implementation, not assumed to already work.
 **New directory conventions.** `docs/superpowers/reports/`, for Reviewer
 output — does not exist yet.
 
+**Credential model, resolved during implementation** (see
+`docs/superpowers/plans/2026-08-19-automation-org-implementation.md`,
+Task 3): the admin-scoped `GH_PAT` is used only by the Brainstormer and
+Reviewer, both of which touch only documentation paths. The Coder's
+merge step uses the workflow-scoped default `GITHUB_TOKEN` instead,
+specifically so branch protection is not silently bypassed by an
+admin-owned credential doing the actual merging.
+
 ## What this design deliberately does not do
 
 - No automatic escalation cutoff after N failed review cycles — noted
