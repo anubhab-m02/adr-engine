@@ -115,6 +115,118 @@ everything after Phase 2 — 23 tracks across 7 waves, gated behind a
 recall@5 quality bar after Wave 0. This section is kept only so a reader
 following Phase 2 forward knows where the plan actually continues.
 
+## Product decisions (resolved this cycle, 2026-09-22)
+
+These were filed `needs-input` pending a PM-level call, not a missing
+implementation. Decisions below; Issue Generator should move the named
+issues back to `daily-task`.
+
+- **#138 Decision graph view — no new dependency.** Ship a static
+  layout (grouped by repo/date, no physics) instead of adding
+  `d3-force`. This is a single view in a frontend that has deliberately
+  stayed dependency-light (no charting library today); a real
+  force-directed layout is a nice-to-have here, not worth a new
+  dependency for one component. Unblocks #138, and in turn its
+  dependents #139 (timeline/graph routing) and #140 (graph node click
+  navigation).
+- **#129 LoadingCard — client-side two-state, no backend change.**
+  `POST /query` stays a single synchronous call; `LoadingCard` shows one
+  honest "Searching decision history…" state while the request is in
+  flight, instead of fake-cycling through invented stages. A polled
+  two-phase backend is real added infrastructure for a cosmetic loading
+  state — not justified unless synthesis latency becomes an actual UX
+  problem. Unblocks #129.
+- **#145 File-tree click-to-scope — two calls:**
+  1. Directory rows split their click target: a small disclosure caret
+     toggles expand/collapse, the row's name text is separately
+     clickable and navigates to Ask (the VS Code-style pattern most
+     users already know; avoids a hover-only affordance that breaks on
+     touch/keyboard).
+  2. Ship path-scoping as a frontend-only pre-fill first — no `POST
+     /query` path filter yet. Scope the backend filter (how it composes
+     with top-k ANN search and `RELEVANCE_FLOOR`) as its own follow-up
+     issue once that retrieval-behavior design is actually done, rather
+     than guessing it inside #145.
+  Unblocks #145's frontend half now; a new backend path-filter issue
+  should be filed once retrieval design work reaches it.
+
+## Ready to promote (fully scoped, no decision blocking them)
+
+- **#172** — privacy transparency panel never receives real query data.
+  `AskPage.jsx`/`MessageList.jsx` never forward `sent_to_cloud` /
+  `cloud_synthesis_fields` to `AnswerPage`, so the panel always shows
+  "nothing sent to the cloud" even for a real Gemini-synthesized answer.
+  Scope is fully specified in the issue; this is a plain bug fix, not a
+  decision. Should move to `daily-task`.
+- **#173** — `docs/UI-DESIGN.md`'s Ask section still describes the
+  pre-#167 design (superscript markers + horizontal SourceCard row).
+  Reconcile forward: document the shipped margin-citation grid (three
+  responsive tiers, plus density/measure/focus-mode) as the current
+  binding spec, and cross-reference
+  `docs/superpowers/specs/2026-08-04-v2-design.md` from both directions.
+  Nothing here is provisional — PR #167 shipped it deliberately — so
+  there's no "mark as provisional" branch to take. Should move to
+  `daily-task`.
+
+## Process note
+
+Dependabot alerts were re-checked on 2026-09-22 (later the same day this
+file was first updated) and are now enabled for this repository — a
+human must have flipped the repo setting. The very first re-check
+returned `200 []` (indexing lag right after enabling); a follow-up
+seconds later returned 18 real open alerts, confirmed by GitHub's own
+push-time warning ("18 vulnerabilities: 2 critical, 6 high, 10
+moderate"). Treat a `[]` response right after alerts get enabled as
+possibly stale, not as ground truth — re-check before reporting zero.
+
+## Security — open dependency alerts (found 2026-09-22)
+
+18 open Dependabot alerts, first real read since alerts were enabled.
+Grouped by urgency; each should become its own `daily-task` issue
+(small, mechanical version bumps) except the chromadb item, which is
+`needs-input`.
+
+- **chromadb — 1 critical + 2 high, no patch yet (`needs-input`).**
+  `backend/requirements.txt` pins `chromadb==0.6.3`; the vulnerable
+  range is `>=0.4.17, <=1.5.9` (i.e. everything up to current), so
+  there's no version bump that fixes this today:
+  - Critical (CVE-2026-45833): code injection via a malicious model
+    repo when `trust_remote_code=true` is passed to a collection
+    update, for a caller with `UPDATE_COLLECTION` permission. Codebase
+    already never sets `trust_remote_code` (checked, zero hits) — low
+    exploitability here as-is; the real ask is a test/lint guard so it
+    stays that way.
+  - 2 high (CVE-2026-45831, CVE-2026-45830): Chroma's RBAC provider
+    doesn't scope permissions to tenant/database/collection, so any
+    authenticated user can read/write any other tenant's data. adr-engine
+    runs Chroma embedded/local-file per this file's Stack section, not
+    as the multi-tenant HTTP server these CVEs target — so exposure is
+    low *as currently architected*, but this becomes load-bearing the
+    moment anything exposes Chroma's server mode. Worth an explicit
+    non-goal note near the Chroma setup code, and tracking upstream for
+    a real fix.
+  Filing as `needs-input` because the call here (accept the risk given
+  local/embedded-only usage vs. pin an older version vs. something
+  else) is a judgment call, not a mechanical bump.
+- **react-router — 1 high, runtime, fix available (`daily-task`).**
+  `frontend/package-lock.json`, fixed in `7.18.2`. Runtime-scoped, so
+  bump the resolved version, not just a dev override; relevant since
+  Batch I (app shell) is standardizing on react-router now.
+- **undici — 1 high + 3 medium, dev-scoped, fix available
+  (`daily-task`).** Transitive dev dependency in
+  `frontend/package-lock.json`; bump to `>=7.29.0` (covers the high,
+  CVE-2026-13697) — the remaining mediums resolve at `>=6.28.0`, already
+  satisfied by that bump.
+- **python-dotenv — 1 medium, runtime, fix available (`daily-task`).**
+  CVE-2026-28684, in both `backend/requirements.txt` and
+  `backend/requirements-dev.txt`. Fixed in `1.2.2`. Worth doing
+  alongside Batch G's config-store work since that batch already
+  touches `.env` handling.
+- **postcss, vitest/@vitest/mocker, pytest — medium, dev-only, fix
+  available (`daily-task`, can be one issue).** postcss →`8.5.23`,
+  vitest/@vitest/mocker → `4.1.11` (CVE-2026-84373), pytest → `9.0.3`.
+  Pure dev-tooling bumps, no runtime exposure.
+
 ## Later / parking lot
 
 - **Editor & CLI integration** (`adr why "..."`, VS Code) — meet the
@@ -125,10 +237,33 @@ following Phase 2 forward knows where the plan actually continues.
 
 ## Evaluation
 
-No automated eval harness yet (see SYSTEM-DESIGN.md). Quality is checked
-manually against [docs/eval-questions.md](docs/eval-questions.md) — run
-each question through `/query` after a retrieval or extraction change
-and watch for drift.
+Harness code (`backend/eval/harness.py`), golden questions
+(`docs/eval-questions.md`), and the recall@5 gate design (70% floor, 50%
+broken, 5-point ratchet — #109) are all in place, but the harness can't
+run end to end yet: the frozen fixture it reads
+(`backend/eval/fixtures/decision_units.json`, `embeddings.json`,
+`golden_question_embeddings.json`) is never checked in, and the script
+that's supposed to generate it, `backend/eval/build_fixture.py`, doesn't
+exist either (#108, expanded by #171). Generating it requires a human
+running real ingestion against a live local Ollama instance — not
+something any of the four unattended automations can do — so #108 stays
+`needs-input` and is the **single highest-priority human action item**
+in this roadmap right now: it blocks CI enforcement of the quality gate
+(#111) and retrieval tuning (#112), and until it's done the harness
+itself can't be exercised for real. #171's scope (also emit
+`golden_question_embeddings.json`) resolves #111's second blocker too —
+precomputed query embeddings mean `eval/harness.py` no longer needs a
+live Ollama call at run time. Fold #171 into #108's scope rather than
+tracking them as two separate blockers.
+
+Worth naming plainly: until #108 lands, Track B UI work keeps shipping
+without the recall@5 quality bar the delivery model itself calls for
+("gated behind a recall@5 quality bar after Wave 0"). That gate has
+never actually been enforced since Wave 0 began.
+
+Manual verification against docs/eval-questions.md remains the fallback
+until the harness is runnable — run each question through `/query`
+after a retrieval or extraction change and watch for drift.
 
 ## Non-goals (still)
 
