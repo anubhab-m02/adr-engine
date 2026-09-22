@@ -170,11 +170,13 @@ issues back to `daily-task`.
 
 ## Process note
 
-`gh api repos/.../dependabot/alerts` returns 403 "Dependabot alerts are
-disabled" for this repository — that's a repo setting, not a missing
-token scope, so nobody currently gets automatic notice of vulnerable
-dependencies. Worth a human turning it on in repo settings; nothing in
-the daily automation can do this itself.
+Dependabot alerts were re-checked on 2026-09-22 (later the same day this
+file was first updated) and are now enabled for this repository — a
+human must have flipped the repo setting; `gh api
+repos/.../dependabot/alerts` returns `200 []` (zero open alerts), not
+the earlier `403 "Dependabot alerts are disabled"`. No action item
+remains here; future daily runs will surface any real alerts that
+appear going forward.
 
 ## Later / parking lot
 
