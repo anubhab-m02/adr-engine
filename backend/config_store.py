@@ -142,3 +142,5 @@ def set_indexed_at(repo: str, timestamp: str) -> dict:
     metadata = dict(load()["repo_metadata"])
     metadata[repo] = {"indexed_at": timestamp}
     return save({"repo_metadata": metadata})
+
+# dry-run test: no-op comment to verify the sensitive-path denylist is enforced
