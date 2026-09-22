@@ -1,34 +1,11 @@
 // Track B's decision timeline: a chronological, grouped-by-date list of a
 // repo's decisions, fed by GET /decisions. Reuses SourceCard.jsx's
-// badge/date formatting (via the shared lib/sourceFormat.js module, now
-// that this is a second consumer) instead of reimplementing it.
+// badge/date formatting, plus the date-grouping helpers (via the shared
+// lib/sourceFormat.js module, now that DecisionGraph is a second
+// consumer of both) instead of reimplementing them.
 import { useEffect, useState } from 'react'
 import { getDecisions } from '../api.js'
-import { badgeText, relativeDate } from '../lib/sourceFormat.js'
-
-function dateGroupLabel(dateString) {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
-}
-
-// `units` already arrives newest-first from GET /decisions — grouping by
-// day preserves that order both across and within groups.
-function groupByDate(units) {
-  const groups = []
-  let current = null
-  for (const unit of units) {
-    const label = dateGroupLabel(unit.date)
-    if (current == null || current.label !== label) {
-      current = { label, units: [] }
-      groups.push(current)
-    }
-    current.units.push(unit)
-  }
-  return groups
-}
+import { badgeText, groupByDate, relativeDate } from '../lib/sourceFormat.js'
 
 function DecisionTimeline({ repo }) {
   const [units, setUnits] = useState(undefined)
