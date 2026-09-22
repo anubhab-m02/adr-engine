@@ -484,18 +484,37 @@ output — does not exist yet.
 
 **Credential model, resolved during implementation** (see
 `docs/superpowers/plans/2026-08-19-automation-org-implementation.md`,
-Task 3): the admin-scoped `GH_PAT` is used by the Brainstormer, the
-Reviewer, and the Coder's comment-resolution job — not only the first
-two, since that job pushes fix commits with it too. The property that
-actually matters is narrower than "which paths": `GH_PAT` never writes
-to the protected branch itself, only to feature branches and already-
-open PRs, which branch protection doesn't govern at all. The one write
-to `main` — the merge — always uses the workflow-scoped default
-`GITHUB_TOKEN` instead, specifically so branch protection is not
-silently bypassed by an admin-owned credential doing the actual
-merging. Found and corrected during a re-review of PRs #170/automation-
-kit#1, 2026-09-23 — the original wording overstated the invariant as
-"only documentation paths."
+Task 3): the admin-scoped `GH_PAT` is used by the Brainstormer (writes
+`ROADMAP.md`), the Reviewer's report-writing step (writes
+`docs/superpowers/reports/*`), the Coder's PR-authoring (so Coder PRs
+show as the repository owner, not a bot identity), and the Coder's
+comment-resolution job (pushes fix commits, same identity reasoning).
+The property that actually matters is narrower than "which paths":
+`GH_PAT` never writes to the protected branch itself, only to feature
+branches and already-open PRs, which branch protection doesn't govern
+at all. The one write to `main` — the merge — always uses the
+workflow-scoped default `GITHUB_TOKEN` instead, specifically so branch
+protection is not silently bypassed by an admin-owned credential doing
+the actual merging.
+
+**A second, more fundamental reason surfaced during Task 14's live dry
+run, 2026-09-23**: the Reviewer's own review submission (`gh pr review
+--approve`/`--request-changes`) cannot use `GH_PAT` either, for a
+reason beyond branch protection entirely — GitHub's API refuses to let
+one identity submit a review on its own pull request
+("Can not request changes on your own pull request"). Since `GH_PAT`
+is the same owner identity that authors every Coder PR, a Reviewer
+step using `GH_PAT` to review a Coder PR would always fail. The fix
+(same commit) has the Reviewer submit its review via `github.token`
+instead — which, beyond just working, is a better fit for the design's
+own hard-isolation principle than the original cosmetic goal of every
+action showing as the repository owner: the review now genuinely comes
+from a distinct identity than whatever opened the PR, not merely a
+distinct context window within the same identity. Found and corrected
+during a re-review of PRs #170/automation-kit#1, 2026-09-23 — the
+original wording overstated the invariant as "only documentation
+paths," and this second finding was not caught by that review at all,
+only by actually running the workflows.
 
 ## What this design deliberately does not do
 
