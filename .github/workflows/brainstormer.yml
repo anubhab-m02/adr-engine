@@ -1,0 +1,13 @@
+name: Brainstormer
+
+on:
+  schedule:
+    - cron: "30 6 * * *"  # 12:00 IST, sleeps up to 180min -> lands 12pm-3pm IST
+  workflow_dispatch: {}
+
+jobs:
+  run:
+    uses: anubhab-m02/automation-kit/.github/workflows/brainstormer.yml@main
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      GH_PAT: ${{ secrets.GH_PAT }}

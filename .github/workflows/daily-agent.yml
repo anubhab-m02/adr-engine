@@ -6,13 +6,26 @@ on:
     # workflow sleeps a random 0-180min from here, so actual work lands
     # uniformly between 12am-3am IST. No-ops if the backlog is empty.
     - cron: "30 18 * * *"
+  repository_dispatch:
+    types: [resolve-review-comments]
   workflow_dispatch: {}    # manual test trigger (skips the random sleep)
 
 jobs:
-  run:
+  new-issues:
+    if: github.event_name != 'repository_dispatch'
     uses: anubhab-m02/automation-kit/.github/workflows/daily-agent.yml@main
     with:
       random_window_minutes: 180
+      mode: new-issues
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+
+  resolve-comments:
+    if: github.event_name == 'repository_dispatch'
+    uses: anubhab-m02/automation-kit/.github/workflows/daily-agent.yml@main
+    with:
+      mode: resolve-comments
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
       GH_PAT: ${{ secrets.GH_PAT }}

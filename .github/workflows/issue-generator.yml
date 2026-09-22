@@ -1,0 +1,13 @@
+name: Issue Generator
+
+on:
+  schedule:
+    - cron: "30 12 * * *"  # 18:00 IST, sleeps up to 180min -> lands 6pm-9pm IST
+  workflow_dispatch: {}
+
+jobs:
+  run:
+    uses: anubhab-m02/automation-kit/.github/workflows/issue-generator.yml@main
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
