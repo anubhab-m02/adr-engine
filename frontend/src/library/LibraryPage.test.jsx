@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getRepos, patchConfig, postIngest } from '../api.js'
 import { useIngestStatus } from '../lib/useIngestStatus.js'
@@ -6,6 +7,14 @@ import LibraryPage from './LibraryPage.jsx'
 
 vi.mock('../api.js', () => ({ getRepos: vi.fn(), patchConfig: vi.fn(), getGithubRepos: vi.fn(), postIngest: vi.fn() }))
 vi.mock('../lib/useIngestStatus.js', () => ({ useIngestStatus: vi.fn() }))
+
+function renderLibraryPage() {
+  return render(
+    <MemoryRouter>
+      <LibraryPage />
+    </MemoryRouter>,
+  )
+}
 
 const REPOS = {
   repos: [
@@ -23,7 +32,7 @@ describe('LibraryPage', () => {
     getRepos.mockResolvedValue(REPOS)
     useIngestStatus.mockReturnValue({ status: { active: false, repos: [] }, refetch: vi.fn() })
 
-    render(<LibraryPage />)
+    renderLibraryPage()
 
     expect(await screen.findByText('owner/repo-a')).toBeInTheDocument()
     expect(screen.getByText('12 decisions')).toBeInTheDocument()
@@ -35,7 +44,7 @@ describe('LibraryPage', () => {
     getRepos.mockResolvedValue({ repos: [] })
     useIngestStatus.mockReturnValue({ status: { active: false, repos: [] }, refetch: vi.fn() })
 
-    render(<LibraryPage />)
+    renderLibraryPage()
 
     expect(await screen.findByText('Nothing in the library yet.')).toBeInTheDocument()
   })
@@ -44,7 +53,7 @@ describe('LibraryPage', () => {
     getRepos.mockRejectedValue(new Error('network error'))
     useIngestStatus.mockReturnValue({ status: { active: false, repos: [] }, refetch: vi.fn() })
 
-    render(<LibraryPage />)
+    renderLibraryPage()
 
     expect(await screen.findByText("Couldn't load the library.")).toBeInTheDocument()
   })
@@ -54,7 +63,7 @@ describe('LibraryPage', () => {
     getRepos.mockResolvedValueOnce(REPOS)
     useIngestStatus.mockReturnValue({ status: { active: false, repos: [] }, refetch: vi.fn() })
 
-    render(<LibraryPage />)
+    renderLibraryPage()
     await screen.findByText("Couldn't load the library.")
 
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
@@ -68,7 +77,7 @@ describe('LibraryPage', () => {
     getRepos.mockResolvedValue({ repos: [] })
     useIngestStatus.mockReturnValue({ status: { active: false, repos: [] }, refetch: vi.fn() })
 
-    render(<LibraryPage />)
+    renderLibraryPage()
     await screen.findByText('Nothing in the library yet.')
 
     expect(screen.queryByRole('heading', { name: 'Add repos' })).not.toBeInTheDocument()
@@ -86,7 +95,7 @@ describe('LibraryPage', () => {
       refetch: vi.fn(),
     })
 
-    render(<LibraryPage />)
+    renderLibraryPage()
 
     expect(await screen.findByText('Embedding 12 decisions…')).toBeInTheDocument()
     expect(screen.getByText(/No decisions extracted yet/)).toBeInTheDocument()
@@ -96,7 +105,7 @@ describe('LibraryPage', () => {
     getRepos.mockResolvedValue(REPOS)
     useIngestStatus.mockReturnValue({ status: { active: false, repos: [] }, refetch: vi.fn() })
 
-    render(<LibraryPage />)
+    renderLibraryPage()
     await screen.findByText('owner/repo-a')
 
     expect(screen.queryByRole('heading', { name: 'Add repos' })).not.toBeInTheDocument()
@@ -109,7 +118,7 @@ describe('LibraryPage', () => {
     patchConfig.mockResolvedValue({})
     useIngestStatus.mockReturnValue({ status: { active: false, repos: [] }, refetch: vi.fn() })
 
-    render(<LibraryPage />)
+    renderLibraryPage()
     await screen.findByText('owner/repo-a')
 
     const [removeA] = screen.getAllByRole('button', { name: 'Remove' })
@@ -128,7 +137,7 @@ describe('LibraryPage', () => {
     postIngest.mockResolvedValue({})
     useIngestStatus.mockReturnValue({ status: { active: false, repos: [] }, refetch: vi.fn() })
 
-    render(<LibraryPage />)
+    renderLibraryPage()
     await screen.findByText('owner/repo-a')
 
     const [reindexA] = screen.getAllByRole('button', { name: 'Re-index' })
