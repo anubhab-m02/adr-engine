@@ -115,58 +115,46 @@ everything after Phase 2 — 23 tracks across 7 waves, gated behind a
 recall@5 quality bar after Wave 0. This section is kept only so a reader
 following Phase 2 forward knows where the plan actually continues.
 
-## Product decisions (resolved this cycle, 2026-09-22)
+## Product decisions (resolved 2026-09-22, status as of 2026-09-23)
 
 These were filed `needs-input` pending a PM-level call, not a missing
-implementation. Decisions below; Issue Generator should move the named
-issues back to `daily-task`.
+implementation. All three were promoted to `daily-task`; status below.
 
-- **#138 Decision graph view — no new dependency.** Ship a static
-  layout (grouped by repo/date, no physics) instead of adding
-  `d3-force`. This is a single view in a frontend that has deliberately
-  stayed dependency-light (no charting library today); a real
-  force-directed layout is a nice-to-have here, not worth a new
-  dependency for one component. Unblocks #138, and in turn its
-  dependents #139 (timeline/graph routing) and #140 (graph node click
-  navigation).
+- **#138 Decision graph view — no new dependency.** Shipped: PR #188
+  merged 2026-09-23 (static grid/date layout, no `d3-force`). Issue
+  itself is still showing `OPEN` — see the bot-merge gap noted below —
+  but the work is done and unblocks #139/#140.
 - **#129 LoadingCard — client-side two-state, no backend change.**
-  `POST /query` stays a single synchronous call; `LoadingCard` shows one
-  honest "Searching decision history…" state while the request is in
-  flight, instead of fake-cycling through invented stages. A polled
-  two-phase backend is real added infrastructure for a cosmetic loading
-  state — not justified unless synthesis latency becomes an actual UX
-  problem. Unblocks #129.
-- **#145 File-tree click-to-scope — two calls:**
-  1. Directory rows split their click target: a small disclosure caret
-     toggles expand/collapse, the row's name text is separately
-     clickable and navigates to Ask (the VS Code-style pattern most
-     users already know; avoids a hover-only affordance that breaks on
-     touch/keyboard).
-  2. Ship path-scoping as a frontend-only pre-fill first — no `POST
-     /query` path filter yet. Scope the backend filter (how it composes
-     with top-k ANN search and `RELEVANCE_FLOOR`) as its own follow-up
-     issue once that retrieval-behavior design is actually done, rather
-     than guessing it inside #145.
-  Unblocks #145's frontend half now; a new backend path-filter issue
-  should be filed once retrieval design work reaches it.
+  Shipped: PR #189 merged 2026-09-23 (single honest in-flight message,
+  no polled backend). Issue is also still showing `OPEN`, same gap.
+- **#145 File-tree click-to-scope — two calls (caret vs. name-text
+  click target; frontend-only pre-fill, backend path filter deferred
+  to its own issue).** Still open, no PR yet — ready for the Coder,
+  decision itself isn't blocking anything further.
 
-## Ready to promote (fully scoped, no decision blocking them)
+## Known gap — bot-merged PRs aren't auto-closing linked issues (found 2026-09-23)
 
-- **#172** — privacy transparency panel never receives real query data.
-  `AskPage.jsx`/`MessageList.jsx` never forward `sent_to_cloud` /
-  `cloud_synthesis_fields` to `AnswerPage`, so the panel always shows
-  "nothing sent to the cloud" even for a real Gemini-synthesized answer.
-  Scope is fully specified in the issue; this is a plain bug fix, not a
-  decision. Should move to `daily-task`.
-- **#173** — `docs/UI-DESIGN.md`'s Ask section still describes the
-  pre-#167 design (superscript markers + horizontal SourceCard row).
-  Reconcile forward: document the shipped margin-citation grid (three
-  responsive tiers, plus density/measure/focus-mode) as the current
-  binding spec, and cross-reference
-  `docs/superpowers/specs/2026-08-04-v2-design.md` from both directions.
-  Nothing here is provisional — PR #167 shipped it deliberately — so
-  there's no "mark as provisional" branch to take. Should move to
-  `daily-task`.
+`Closes #N` in a PR body has auto-closed the issue on merge for every
+PR in this repo's history merged by a human (`anubhab-m02`) — but the
+two most recent daily-task PRs, both merged by the `github-actions[bot]`
+actor, did not: #188 ("Closes #138", merged 2026-09-23T07:37:53Z) and
+#189 ("Closes #129", merged 2026-09-23T07:29:21Z) both left their linked
+issue open despite the work being complete and merged. No workflow in
+`.github/workflows/` currently calls `gh issue close` as a fallback —
+the design relies entirely on GitHub's implicit keyword-closing, which
+this data point shows isn't reliable for bot-actuated merges here.
+
+This is load-bearing for the delivery model's own issue state machine
+("merging closes the issue via `Closes #N`") — left alone, completed
+daily-task issues will keep silently piling up as falsely `OPEN`,
+eventually reading as backlog that's actually already done. Filing as
+`needs-input` rather than `daily-task`: the fix almost certainly means
+adding an explicit `gh issue close` step to the merge automation, which
+lives under `.github/workflows/*` — a sensitive path the merge gate
+itself excludes from normal daily-task auto-merge, so this can't just be
+picked up and shipped like an ordinary issue; a human needs to land it.
+In the meantime, #138 and #129 need manual closure — both are done, just
+mislabeled `OPEN`.
 
 ## Process note
 
@@ -179,53 +167,21 @@ push-time warning ("18 vulnerabilities: 2 critical, 6 high, 10
 moderate"). Treat a `[]` response right after alerts get enabled as
 possibly stale, not as ground truth — re-check before reporting zero.
 
-## Security — open dependency alerts (found 2026-09-22)
+## Security — open dependency alerts (found 2026-09-22, re-checked 2026-09-23)
 
-18 open Dependabot alerts, first real read since alerts were enabled.
-Grouped by urgency; each should become its own `daily-task` issue
-(small, mechanical version bumps) except the chromadb item, which is
-`needs-input`.
+Of the original 18, 11 are now `fixed` via merged Dependabot/daily-task
+PRs: react-router (#181), undici (#180), python-dotenv (#177, closed
+issue #185), postcss + nanoid (#178). 7 remain open, falling into two
+groups, both already tracked — nothing new to file here today:
 
-- **chromadb — 1 critical + 2 high, no patch yet (`needs-input`).**
-  `backend/requirements.txt` pins `chromadb==0.6.3`; the vulnerable
-  range is `>=0.4.17, <=1.5.9` (i.e. everything up to current), so
-  there's no version bump that fixes this today:
-  - Critical (CVE-2026-45833): code injection via a malicious model
-    repo when `trust_remote_code=true` is passed to a collection
-    update, for a caller with `UPDATE_COLLECTION` permission. Codebase
-    already never sets `trust_remote_code` (checked, zero hits) — low
-    exploitability here as-is; the real ask is a test/lint guard so it
-    stays that way.
-  - 2 high (CVE-2026-45831, CVE-2026-45830): Chroma's RBAC provider
-    doesn't scope permissions to tenant/database/collection, so any
-    authenticated user can read/write any other tenant's data. adr-engine
-    runs Chroma embedded/local-file per this file's Stack section, not
-    as the multi-tenant HTTP server these CVEs target — so exposure is
-    low *as currently architected*, but this becomes load-bearing the
-    moment anything exposes Chroma's server mode. Worth an explicit
-    non-goal note near the Chroma setup code, and tracking upstream for
-    a real fix.
-  Filing as `needs-input` because the call here (accept the risk given
-  local/embedded-only usage vs. pin an older version vs. something
-  else) is a judgment call, not a mechanical bump.
-- **react-router — 1 high, runtime, fix available (`daily-task`).**
-  `frontend/package-lock.json`, fixed in `7.18.2`. Runtime-scoped, so
-  bump the resolved version, not just a dev override; relevant since
-  Batch I (app shell) is standardizing on react-router now.
-- **undici — 1 high + 3 medium, dev-scoped, fix available
-  (`daily-task`).** Transitive dev dependency in
-  `frontend/package-lock.json`; bump to `>=7.29.0` (covers the high,
-  CVE-2026-13697) — the remaining mediums resolve at `>=6.28.0`, already
-  satisfied by that bump.
-- **python-dotenv — 1 medium, runtime, fix available (`daily-task`).**
-  CVE-2026-28684, in both `backend/requirements.txt` and
-  `backend/requirements-dev.txt`. Fixed in `1.2.2`. Worth doing
-  alongside Batch G's config-store work since that batch already
-  touches `.env` handling.
-- **postcss, vitest/@vitest/mocker, pytest — medium, dev-only, fix
-  available (`daily-task`, can be one issue).** postcss →`8.5.23`,
-  vitest/@vitest/mocker → `4.1.11` (CVE-2026-84373), pytest → `9.0.3`.
-  Pure dev-tooling bumps, no runtime exposure.
+- **chromadb — 1 critical + 2 high, no patch yet.** Same CVEs as
+  before (CVE-2026-45833/45831/45830), duplicated across
+  `backend/requirements.txt` and `backend/requirements-dev.txt` (6
+  alerts, 3 unique). Tracked as `needs-input` issue #187, pending a
+  risk-acceptance call — still no version bump that fixes this.
+- **pytest — 1 medium, dev-only, fix available.** `backend/requirements-dev.txt`,
+  bundled with the postcss/vitest bump into `daily-task` issue #186
+  (already filed and open).
 
 ## Later / parking lot
 
