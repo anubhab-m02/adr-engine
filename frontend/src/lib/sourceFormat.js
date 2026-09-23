@@ -4,6 +4,30 @@ export function badgeText(unit) {
   return unit.kind === 'pr' ? `PR #${unit.ref}` : `commit ${unit.ref.slice(0, 7)}`
 }
 
+export function dateGroupLabel(dateString) {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+}
+
+// `units` is expected newest-first (as returned by GET /decisions) —
+// grouping by day preserves that order both across and within groups.
+export function groupByDate(units) {
+  const groups = []
+  let current = null
+  for (const unit of units) {
+    const label = dateGroupLabel(unit.date)
+    if (current == null || current.label !== label) {
+      current = { label, units: [] }
+      groups.push(current)
+    }
+    current.units.push(unit)
+  }
+  return groups
+}
+
 export function relativeDate(dateString) {
   const date = new Date(dateString)
   const seconds = Math.round((date.getTime() - Date.now()) / 1000)
