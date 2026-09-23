@@ -1,22 +1,12 @@
-import { useEffect, useState } from 'react'
 import { MESSAGE_CARD_BASE } from './messageCardBase.js'
 
-const STATUSES = [
-  'Searching decision history…',
-  'Reading citations…',
-  'Synthesizing an answer…',
-]
+// Per ROADMAP.md's Product decisions (resolved 2026-09-22): `/query`
+// stays a single synchronous call, so this is one honest status for the
+// whole in-flight request rather than fake-cycling through invented
+// stages a client can't actually observe.
+const STATUS = 'Searching decision history…'
 
 function LoadingCard() {
-  const [index, setIndex] = useState(0)
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setIndex((i) => (i + 1) % STATUSES.length)
-    }, 2000)
-    return () => clearInterval(id)
-  }, [])
-
   return (
     <div role="status" className={MESSAGE_CARD_BASE}>
       <div className="flex gap-1">
@@ -24,7 +14,7 @@ function LoadingCard() {
         <span className="h-2 w-2 rounded-full bg-ink-muted animate-pulse [animation-delay:150ms]" />
         <span className="h-2 w-2 rounded-full bg-ink-muted animate-pulse [animation-delay:300ms]" />
       </div>
-      <p className="text-sm text-ink-muted mt-2">{STATUSES[index]}</p>
+      <p className="text-sm text-ink-muted mt-2">{STATUS}</p>
     </div>
   )
 }
