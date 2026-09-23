@@ -3,6 +3,12 @@
 **"Why Did We Build It This Way?"** — RAG elevated to organizational
 memory.
 
+Also a live experiment in the other direction: can a single project run
+itself as an organization? Everything past the initial scaffold —
+coding, review, roadmapping, backlog grooming — is done by four
+unattended, hard-isolated automations (see [Automation](#automation)
+below) instead of a human doing those jobs by hand.
+
 Writing ADRs suffers from misaligned incentives: the cost of documenting a
 decision is paid immediately, the benefit is reaped by whoever reads it
 months later. Adoption is inconsistent as a result. This project skips the
@@ -97,7 +103,22 @@ Early scaffold — see open issues labeled `daily-task` for in-flight work.
 
 ## Automation
 
-This repo is wired to [automation-kit](https://github.com/anubhab-m02/automation-kit)'s
-daily-agent workflow: a scheduled job picks up the oldest open `daily-task`
-issue each day, implements it, and opens a PR for review. See that repo's
-README for the design and guardrails.
+This repo is run by [automation-kit](https://github.com/anubhab-m02/automation-kit)'s
+four-automation org — a Coder, Reviewer, Brainstormer, and Issue Generator,
+each a separate scheduled GitHub Actions job with no shared memory between
+runs:
+
+- **Coder** picks up the oldest open `daily-task` issue each day, implements
+  it, and opens a PR.
+- **Reviewer** reviews every open PR in a fresh, isolated context (no
+  knowledge of who wrote it or why), approves or requests changes, and
+  auto-merges clean ones.
+- **Brainstormer** reads the latest review report, open blockers, and
+  security alerts, then updates `ROADMAP.md` and posts a daily status
+  summary.
+- **Issue Generator** turns `ROADMAP.md` items into sized, scoped issues
+  for the Coder, deduping against existing issue history first.
+
+See that repo's README and `docs/superpowers/specs/` in this repo for the
+design, credential model, and guardrails (sensitive-path denylist, no
+AI/bot attribution, single human-notification source).
