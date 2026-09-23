@@ -4,6 +4,7 @@
 // for inline confirmation (no modal, per UI-DESIGN.md) before calling the
 // onRemove callback LibraryPage supplies.
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { patchRepo } from '../api.js'
 import InlineConfirm from '../components/InlineConfirm.jsx'
 import { useIngestStatus } from '../lib/useIngestStatus.js'
@@ -107,6 +108,12 @@ function RepoRow({ repo, onRemove, onReindex }) {
           >
             {reindexing ? 'Re-indexing…' : 'Re-index'}
           </button>
+          <Link to={`/library/${encodeURIComponent(repo.repo)}/timeline`} className="text-sm text-ink-muted underline">
+            Timeline
+          </Link>
+          <Link to={`/library/${encodeURIComponent(repo.repo)}/graph`} className="text-sm text-ink-muted underline">
+            Graph
+          </Link>
           <button type="button" onClick={() => setConfirming(true)} className="text-sm text-ink-muted">
             Remove
           </button>
