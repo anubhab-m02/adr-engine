@@ -5,7 +5,14 @@
 // (co-occurrence edges are a possible follow-up, out of scope here).
 // Shares fetch/loading/error/date-grouping conventions with
 // DecisionTimeline.jsx via lib/sourceFormat.js.
+//
+// Node click reuses the `#source-{unit.id}` anchor contract established
+// between CitationMarker.jsx and SourceCard.jsx (also implemented by
+// DecisionTimeline.jsx's list items) instead of a second navigation
+// mechanism: it links into that repo's timeline view at the matching
+// anchor rather than out to GitHub directly.
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { getDecisions } from '../api.js'
 import { badgeText, groupByDate } from '../lib/sourceFormat.js'
 
@@ -63,15 +70,13 @@ function DecisionGraph({ repo }) {
               {group.units.map((unit, index) => {
                 const { x, y } = nodePosition(index)
                 return (
-                  <a
+                  <Link
                     key={unit.id}
-                    href={unit.url}
-                    target="_blank"
-                    rel="noreferrer"
+                    to={`/library/${encodeURIComponent(repo)}/timeline#source-${unit.id}`}
                     aria-label={`${unit.title}, ${badgeText(unit)}`}
                   >
                     <circle cx={x} cy={y} r={RADIUS} fill={KIND_COLOR[unit.kind] ?? KIND_COLOR.commit} />
-                  </a>
+                  </Link>
                 )
               })}
             </svg>
