@@ -115,22 +115,36 @@ everything after Phase 2 — 23 tracks across 7 waves, gated behind a
 recall@5 quality bar after Wave 0. This section is kept only so a reader
 following Phase 2 forward knows where the plan actually continues.
 
-## Product decisions (resolved 2026-09-22, status as of 2026-09-23)
+## Product decisions (resolved 2026-09-22, status as of 2026-09-24)
 
 These were filed `needs-input` pending a PM-level call, not a missing
 implementation. All three were promoted to `daily-task`; status below.
 
 - **#138 Decision graph view — no new dependency.** Shipped: PR #188
-  merged 2026-09-23 (static grid/date layout, no `d3-force`). Issue
-  itself is still showing `OPEN` — see the bot-merge gap noted below —
-  but the work is done and unblocks #139/#140.
+  merged 2026-09-23 (static grid/date layout, no `d3-force`). Was
+  manually closed 2026-09-23 after sitting falsely `OPEN` — see the
+  bot-merge gap below. Unblocked #139/#140, both now also shipped.
 - **#129 LoadingCard — client-side two-state, no backend change.**
   Shipped: PR #189 merged 2026-09-23 (single honest in-flight message,
-  no polled backend). Issue is also still showing `OPEN`, same gap.
+  no polled backend). Manually closed 2026-09-23, same gap.
 - **#145 File-tree click-to-scope — two calls (caret vs. name-text
   click target; frontend-only pre-fill, backend path filter deferred
-  to its own issue).** Still open, no PR yet — ready for the Coder,
-  decision itself isn't blocking anything further.
+  to its own issue).** Shipped: PR #193 merged 2026-09-24. Its two
+  routing/graph follow-ups also shipped the same day — #139 (timeline/
+  graph view routing and toggle, PR #191) and #140 (graph node click
+  navigates to decision detail, PR #192). All three (#139, #140, #145)
+  are still showing `OPEN` despite the merged, working code — the same
+  bot-merge gap as #138/#129, now confirmed on a second batch and
+  tracked as `needs-input` #190. They need the same manual closure
+  #138/#129 got.
+- **#194 (needs-triage) Mount FileTree in a Library route, wire
+  AskPage to consume the pre-filled question.** Filed 2026-09-23 as
+  the natural next step now that #145 has landed: `FileTree` renders
+  and its clicks navigate with `prefillQuestion` state, but nothing
+  mounts the tree on a route or reads that state on the other end, so
+  the feature isn't reachable yet. Scope is already concrete (route
+  choice, `AskPage.jsx` wiring, clearing nav state after consumption)
+  — ready to promote to `daily-task`.
 
 ## Known gap — bot-merged PRs aren't auto-closing linked issues (found 2026-09-23)
 
@@ -148,13 +162,22 @@ This is load-bearing for the delivery model's own issue state machine
 ("merging closes the issue via `Closes #N`") — left alone, completed
 daily-task issues will keep silently piling up as falsely `OPEN`,
 eventually reading as backlog that's actually already done. Filing as
-`needs-input` rather than `daily-task`: the fix almost certainly means
-adding an explicit `gh issue close` step to the merge automation, which
-lives under `.github/workflows/*` — a sensitive path the merge gate
-itself excludes from normal daily-task auto-merge, so this can't just be
-picked up and shipped like an ordinary issue; a human needs to land it.
-In the meantime, #138 and #129 need manual closure — both are done, just
-mislabeled `OPEN`.
+`needs-input` (tracked as #190) rather than `daily-task`: the fix
+almost certainly means adding an explicit `gh issue close` step to the
+merge automation, which lives under `.github/workflows/*` — a
+sensitive path the merge gate itself excludes from normal daily-task
+auto-merge, so this can't just be picked up and shipped like an
+ordinary issue; a human needs to land it.
+
+**Update 2026-09-24:** #138 and #129 were manually closed, but the gap
+recurred immediately on the next batch — PRs #191 ("Closes #139"),
+#192 ("Closes #140"), and #193 ("Closes #145"), all merged by
+`github-actions[bot]` on 2026-09-24, again left their linked issues
+`OPEN` despite complete, merged work. Two-for-two on bot-merged PRs now
+failing to auto-close is enough to call this systemic rather than a
+one-off; #190 fixing it should be treated as higher priority among the
+`needs-input` items, not just tracked passively. In the meantime,
+#139, #140, and #145 need the same manual closure #138/#129 got.
 
 ## Process note
 
@@ -167,12 +190,13 @@ push-time warning ("18 vulnerabilities: 2 critical, 6 high, 10
 moderate"). Treat a `[]` response right after alerts get enabled as
 possibly stale, not as ground truth — re-check before reporting zero.
 
-## Security — open dependency alerts (found 2026-09-22, re-checked 2026-09-23)
+## Security — open dependency alerts (found 2026-09-22, re-checked 2026-09-24)
 
 Of the original 18, 11 are now `fixed` via merged Dependabot/daily-task
 PRs: react-router (#181), undici (#180), python-dotenv (#177, closed
-issue #185), postcss + nanoid (#178). 7 remain open, falling into two
-groups, both already tracked — nothing new to file here today:
+issue #185), postcss + nanoid (#178). 7 remain open, unchanged since
+2026-09-23, falling into two groups, both already tracked — nothing
+new to file here today:
 
 - **chromadb — 1 critical + 2 high, no patch yet.** Same CVEs as
   before (CVE-2026-45833/45831/45830), duplicated across
