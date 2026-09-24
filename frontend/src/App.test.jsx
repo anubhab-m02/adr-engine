@@ -2,13 +2,14 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App.jsx'
-import { getIngestStatus, getRepos, getSetupState } from './api.js'
+import { getDecisions, getIngestStatus, getRepos, getSetupState } from './api.js'
 
 vi.mock('./api.js', () => ({
   getSetupState: vi.fn(),
   getRepos: vi.fn(),
   postQuery: vi.fn(),
   getIngestStatus: vi.fn(),
+  getDecisions: vi.fn(),
 }))
 
 // OnboardingPage has its own dedicated test file for its step machine —
@@ -83,5 +84,25 @@ describe('App', () => {
     renderAt('/onboarding')
 
     expect(await screen.findByLabelText('Ask a question')).toBeInTheDocument()
+  })
+
+  it('renders DecisionTimeline scoped to the repo at /library/:repo/timeline', async () => {
+    getSetupState.mockResolvedValue(COMPLETE_STATE)
+    getDecisions.mockResolvedValue({ units: [], total: 0, page: 1, limit: 20 })
+
+    renderAt('/library/owner%2Frepo/timeline')
+
+    expect(await screen.findByText('owner/repo · Timeline')).toBeInTheDocument()
+    expect(getDecisions).toHaveBeenCalledWith({ repo: 'owner/repo', since: undefined, until: undefined })
+  })
+
+  it('renders DecisionGraph scoped to the repo at /library/:repo/graph', async () => {
+    getSetupState.mockResolvedValue(COMPLETE_STATE)
+    getDecisions.mockResolvedValue({ units: [], total: 0, page: 1, limit: 20 })
+
+    renderAt('/library/owner%2Frepo/graph')
+
+    expect(await screen.findByText('owner/repo · Graph')).toBeInTheDocument()
+    expect(getDecisions).toHaveBeenCalledWith({ repo: 'owner/repo' })
   })
 })

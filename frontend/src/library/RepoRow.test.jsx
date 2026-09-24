@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { patchRepo } from '../api.js'
 import { useIngestStatus } from '../lib/useIngestStatus.js'
@@ -8,6 +9,10 @@ vi.mock('../lib/useIngestStatus.js', () => ({ useIngestStatus: vi.fn() }))
 vi.mock('../api.js', () => ({ patchRepo: vi.fn() }))
 
 const repo = { repo: 'owner/repo', indexed_units: 42 }
+
+function renderRepoRow(ui) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>)
+}
 
 function mockStatus(repoState) {
   useIngestStatus.mockReturnValue({
@@ -19,7 +24,7 @@ function mockStatus(repoState) {
 describe('RepoRow', () => {
   it('renders the repo name and indexed-unit count when idle', () => {
     mockStatus(null)
-    render(<RepoRow repo={repo} />)
+    renderRepoRow(<RepoRow repo={repo} />)
 
     expect(screen.getByText('owner/repo')).toBeInTheDocument()
     expect(screen.getByText('42 decisions')).toBeInTheDocument()
@@ -27,7 +32,7 @@ describe('RepoRow', () => {
 
   it('uses the singular "decision" for a count of exactly 1', () => {
     mockStatus(null)
-    render(<RepoRow repo={{ repo: 'owner/repo', indexed_units: 1 }} />)
+    renderRepoRow(<RepoRow repo={{ repo: 'owner/repo', indexed_units: 1 }} />)
 
     expect(screen.getByText('1 decision')).toBeInTheDocument()
   })
@@ -38,7 +43,7 @@ describe('RepoRow', () => {
       phase: 'fetching',
       counts: { fetched: 5, extracted: 0, skipped: 0, stored: 0 },
     })
-    render(<RepoRow repo={repo} />)
+    renderRepoRow(<RepoRow repo={repo} />)
 
     expect(screen.getByText('Reading commits — 5 examined')).toBeInTheDocument()
     expect(screen.queryByText('42 decisions')).not.toBeInTheDocument()
@@ -46,7 +51,7 @@ describe('RepoRow', () => {
 
   it('shows a zero-decision explanation instead of a bare "0 decisions" when idle', () => {
     mockStatus(null)
-    render(<RepoRow repo={{ repo: 'owner/repo', indexed_units: 0 }} />)
+    renderRepoRow(<RepoRow repo={{ repo: 'owner/repo', indexed_units: 0 }} />)
 
     expect(screen.getByText(/No decisions extracted yet/)).toBeInTheDocument()
     expect(screen.queryByText('0 decisions')).not.toBeInTheDocument()
@@ -58,7 +63,7 @@ describe('RepoRow', () => {
       phase: 'fetching',
       counts: { fetched: 5, extracted: 0, skipped: 0, stored: 0 },
     })
-    render(<RepoRow repo={{ repo: 'owner/repo', indexed_units: 0 }} />)
+    renderRepoRow(<RepoRow repo={{ repo: 'owner/repo', indexed_units: 0 }} />)
 
     expect(screen.getByText('Reading commits — 5 examined')).toBeInTheDocument()
     expect(screen.queryByText(/No decisions extracted yet/)).not.toBeInTheDocument()
@@ -70,7 +75,7 @@ describe('RepoRow', () => {
       phase: 'done',
       counts: { fetched: 5, extracted: 5, skipped: 0, stored: 5 },
     })
-    render(<RepoRow repo={repo} />)
+    renderRepoRow(<RepoRow repo={repo} />)
 
     expect(screen.getByText('42 decisions')).toBeInTheDocument()
   })
@@ -82,7 +87,7 @@ describe('RepoRow', () => {
       counts: { fetched: 5, extracted: 0, skipped: 0, stored: 0 },
       error: 'GitHub rate limited',
     })
-    render(<RepoRow repo={repo} />)
+    renderRepoRow(<RepoRow repo={repo} />)
 
     expect(screen.getByText('42 decisions')).toBeInTheDocument()
   })
@@ -93,7 +98,7 @@ describe('RepoRow', () => {
       phase: 'fetching',
       counts: { fetched: 5, extracted: 0, skipped: 0, stored: 0 },
     })
-    render(<RepoRow repo={repo} />)
+    renderRepoRow(<RepoRow repo={repo} />)
 
     expect(screen.getByText('42 decisions')).toBeInTheDocument()
   })
@@ -101,7 +106,7 @@ describe('RepoRow', () => {
   it('shows an inline confirmation before removing, and calls onRemove on confirm', async () => {
     mockStatus(null)
     const onRemove = vi.fn().mockResolvedValue()
-    render(<RepoRow repo={repo} onRemove={onRemove} />)
+    renderRepoRow(<RepoRow repo={repo} onRemove={onRemove} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Remove' }))
     expect(screen.getByText(/Remove owner\/repo and its 42 indexed decisions\?/)).toBeInTheDocument()
@@ -114,7 +119,7 @@ describe('RepoRow', () => {
   it('cancel dismisses the confirmation without calling onRemove', () => {
     mockStatus(null)
     const onRemove = vi.fn()
-    render(<RepoRow repo={repo} onRemove={onRemove} />)
+    renderRepoRow(<RepoRow repo={repo} onRemove={onRemove} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Remove' }))
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
@@ -126,7 +131,7 @@ describe('RepoRow', () => {
   it('shows an inline error and stays confirmable when onRemove fails', async () => {
     mockStatus(null)
     const onRemove = vi.fn().mockRejectedValue(new Error('network error'))
-    render(<RepoRow repo={repo} onRemove={onRemove} />)
+    renderRepoRow(<RepoRow repo={repo} onRemove={onRemove} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Remove' }))
     fireEvent.click(screen.getByRole('button', { name: 'Remove' }))
@@ -137,7 +142,7 @@ describe('RepoRow', () => {
   it('calls onReindex with the repo name when Re-index is clicked', async () => {
     mockStatus(null)
     const onReindex = vi.fn().mockResolvedValue()
-    render(<RepoRow repo={repo} onReindex={onReindex} />)
+    renderRepoRow(<RepoRow repo={repo} onReindex={onReindex} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Re-index' }))
 
@@ -147,7 +152,7 @@ describe('RepoRow', () => {
   it('shows an inline error when onReindex fails', async () => {
     mockStatus(null)
     const onReindex = vi.fn().mockRejectedValue(new Error('network error'))
-    render(<RepoRow repo={repo} onReindex={onReindex} />)
+    renderRepoRow(<RepoRow repo={repo} onReindex={onReindex} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Re-index' }))
 
@@ -156,14 +161,14 @@ describe('RepoRow', () => {
 
   it('reflects the initial cloud_synthesis_allowed value on render', () => {
     mockStatus(null)
-    render(<RepoRow repo={{ ...repo, cloud_synthesis_allowed: false }} />)
+    renderRepoRow(<RepoRow repo={{ ...repo, cloud_synthesis_allowed: false }} />)
 
     expect(screen.getByRole('switch', { name: 'Cloud synthesis: off' })).toBeInTheDocument()
   })
 
   it('defaults the toggle to on when cloud_synthesis_allowed is absent', () => {
     mockStatus(null)
-    render(<RepoRow repo={repo} />)
+    renderRepoRow(<RepoRow repo={repo} />)
 
     expect(screen.getByRole('switch', { name: 'Cloud synthesis: on' })).toBeInTheDocument()
   })
@@ -171,7 +176,7 @@ describe('RepoRow', () => {
   it('toggling calls PATCH /repos/{repo} with the flipped value', async () => {
     mockStatus(null)
     patchRepo.mockResolvedValue({})
-    render(<RepoRow repo={{ ...repo, cloud_synthesis_allowed: true }} />)
+    renderRepoRow(<RepoRow repo={{ ...repo, cloud_synthesis_allowed: true }} />)
 
     fireEvent.click(screen.getByRole('switch', { name: 'Cloud synthesis: on' }))
 
@@ -182,11 +187,22 @@ describe('RepoRow', () => {
   it('reverts the toggle and shows an inline error when the PATCH fails', async () => {
     mockStatus(null)
     patchRepo.mockRejectedValue(new Error('network error'))
-    render(<RepoRow repo={{ ...repo, cloud_synthesis_allowed: true }} />)
+    renderRepoRow(<RepoRow repo={{ ...repo, cloud_synthesis_allowed: true }} />)
 
     fireEvent.click(screen.getByRole('switch', { name: 'Cloud synthesis: on' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't update cloud synthesis setting.")
     expect(screen.getByRole('switch', { name: 'Cloud synthesis: on' })).toBeInTheDocument()
+  })
+
+  it('links to the timeline and graph views, percent-encoding the repo name', () => {
+    mockStatus(null)
+    renderRepoRow(<RepoRow repo={repo} />)
+
+    expect(screen.getByRole('link', { name: 'Timeline' })).toHaveAttribute(
+      'href',
+      '/library/owner%2Frepo/timeline',
+    )
+    expect(screen.getByRole('link', { name: 'Graph' })).toHaveAttribute('href', '/library/owner%2Frepo/graph')
   })
 })

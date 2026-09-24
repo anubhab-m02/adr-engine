@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AskPage from './ask/AskPage.jsx'
 import LibraryPage from './library/LibraryPage.jsx'
+import RepoDecisionsPage from './library/RepoDecisionsPage.jsx'
 import { getSetupState } from './api.js'
 import { IngestStatusProvider } from './lib/useIngestStatus.js'
 import { NewQuestionProvider } from './lib/useNewQuestion.js'
@@ -44,6 +45,8 @@ function App() {
             <Route element={<AppShell />}>
               <Route path="/" element={<AskPage />} />
               <Route path="/library" element={<LibraryPage />} />
+              <Route path="/library/:repo/timeline" element={<RepoDecisionsPage view="timeline" />} />
+              <Route path="/library/:repo/graph" element={<RepoDecisionsPage view="graph" />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
