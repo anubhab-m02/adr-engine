@@ -1,8 +1,17 @@
 // Nested file-tree view built from a flat list of repo paths (e.g.
 // `Object.keys()` of the decisions-by-path aggregation), heatmap-colored
-// by decision density when a `{path: count}` map is supplied. Prerequisite
-// shell for the click-to-question issue that follows.
+// by decision density when a `{path: count}` map is supplied.
+//
+// Two separate click targets per directory row, per the click-to-question
+// product decision (ROADMAP.md): the caret expands/collapses, the name
+// text scopes a question to that path. Backend path filtering is deferred
+// to its own issue — this only pre-fills the question text.
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+
+function questionForPath(path) {
+  return `Why is \`${path}\` the way it is?`
+}
 
 // A ~40-line recursive build: no tree library needed for splitting `/`
 // paths into a nested { dirs, files } shape. Each node carries its own
@@ -54,42 +63,54 @@ function heatStyle(count, maxCount) {
   return { className: 'heat', style: { '--heat-intensity': `${intensity}%` } }
 }
 
-function DirNode({ name, node, maxCount }) {
+function DirNode({ name, node, maxCount, onSelect }) {
   const [open, setOpen] = useState(true)
   const heat = heatStyle(node.count, maxCount)
 
   return (
     <li>
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
-        className={`flex items-center gap-1 text-sm text-ink rounded px-1 ${heat ? heat.className : ''}`}
-        style={heat?.style}
-      >
-        <span aria-hidden="true">{open ? '▾' : '▸'}</span>
-        {name}
-      </button>
-      {open && <TreeList node={node} maxCount={maxCount} indent />}
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-label={`${open ? 'Collapse' : 'Expand'} ${name}`}
+          onClick={() => setOpen((current) => !current)}
+          className="text-sm text-ink rounded px-1"
+        >
+          <span aria-hidden="true">{open ? '▾' : '▸'}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => onSelect(node.path)}
+          className={`text-sm text-ink rounded px-1 ${heat ? heat.className : ''}`}
+          style={heat?.style}
+        >
+          {name}
+        </button>
+      </div>
+      {open && <TreeList node={node} maxCount={maxCount} indent onSelect={onSelect} />}
     </li>
   )
 }
 
-function TreeList({ node, maxCount, indent }) {
+function TreeList({ node, maxCount, indent, onSelect }) {
   return (
     <ul className={`flex flex-col gap-1 ${indent ? 'pl-4' : ''}`}>
       {[...node.dirs.entries()].map(([name, child]) => (
-        <DirNode key={name} name={name} node={child} maxCount={maxCount} />
+        <DirNode key={name} name={name} node={child} maxCount={maxCount} onSelect={onSelect} />
       ))}
       {node.files.map((file) => {
         const heat = heatStyle(file.count, maxCount)
         return (
-          <li
-            key={file.path}
-            className={`text-sm text-ink-muted rounded px-1 ${heat ? heat.className : ''}`}
-            style={heat?.style}
-          >
-            {file.name}
+          <li key={file.path}>
+            <button
+              type="button"
+              onClick={() => onSelect(file.path)}
+              className={`text-sm text-ink-muted rounded px-1 ${heat ? heat.className : ''}`}
+              style={heat?.style}
+            >
+              {file.name}
+            </button>
           </li>
         )
       })}
@@ -98,9 +119,15 @@ function TreeList({ node, maxCount, indent }) {
 }
 
 function FileTree({ paths, counts = {} }) {
+  const navigate = useNavigate()
   const root = buildTree(paths, counts)
   const maxCount = treeMaxCount(root)
-  return <TreeList node={root} maxCount={maxCount} />
+
+  function handleSelect(path) {
+    navigate('/', { state: { prefillQuestion: questionForPath(path) } })
+  }
+
+  return <TreeList node={root} maxCount={maxCount} onSelect={handleSelect} />
 }
 
 export default FileTree
