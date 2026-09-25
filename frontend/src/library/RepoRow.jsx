@@ -114,6 +114,9 @@ function RepoRow({ repo, onRemove, onReindex }) {
           <Link to={`/library/${encodeURIComponent(repo.repo)}/graph`} className="text-sm text-ink-muted underline">
             Graph
           </Link>
+          <Link to={`/library/${encodeURIComponent(repo.repo)}/files`} className="text-sm text-ink-muted underline">
+            Files
+          </Link>
           <button type="button" onClick={() => setConfirming(true)} className="text-sm text-ink-muted">
             Remove
           </button>

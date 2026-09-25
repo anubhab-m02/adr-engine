@@ -195,7 +195,7 @@ describe('RepoRow', () => {
     expect(screen.getByRole('switch', { name: 'Cloud synthesis: on' })).toBeInTheDocument()
   })
 
-  it('links to the timeline and graph views, percent-encoding the repo name', () => {
+  it('links to the timeline, graph, and files views, percent-encoding the repo name', () => {
     mockStatus(null)
     renderRepoRow(<RepoRow repo={repo} />)
 
@@ -204,5 +204,6 @@ describe('RepoRow', () => {
       '/library/owner%2Frepo/timeline',
     )
     expect(screen.getByRole('link', { name: 'Graph' })).toHaveAttribute('href', '/library/owner%2Frepo/graph')
+    expect(screen.getByRole('link', { name: 'Files' })).toHaveAttribute('href', '/library/owner%2Frepo/files')
   })
 })

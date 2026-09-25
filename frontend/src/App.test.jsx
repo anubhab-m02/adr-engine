@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App.jsx'
-import { getDecisions, getIngestStatus, getRepos, getSetupState } from './api.js'
+import { getDecisions, getDecisionsByPath, getIngestStatus, getRepos, getSetupState } from './api.js'
 
 vi.mock('./api.js', () => ({
   getSetupState: vi.fn(),
@@ -10,6 +10,7 @@ vi.mock('./api.js', () => ({
   postQuery: vi.fn(),
   getIngestStatus: vi.fn(),
   getDecisions: vi.fn(),
+  getDecisionsByPath: vi.fn(),
 }))
 
 // OnboardingPage has its own dedicated test file for its step machine —
@@ -104,5 +105,16 @@ describe('App', () => {
 
     expect(await screen.findByText('owner/repo · Graph')).toBeInTheDocument()
     expect(getDecisions).toHaveBeenCalledWith({ repo: 'owner/repo' })
+  })
+
+  it('renders FileTreeView scoped to the repo at /library/:repo/files', async () => {
+    getSetupState.mockResolvedValue(COMPLETE_STATE)
+    getDecisionsByPath.mockResolvedValue({ paths: { 'backend/auth.py': 3 } })
+
+    renderAt('/library/owner%2Frepo/files')
+
+    expect(await screen.findByText('owner/repo · Files')).toBeInTheDocument()
+    expect(getDecisionsByPath).toHaveBeenCalledWith({ repo: 'owner/repo' })
+    expect(await screen.findByRole('button', { name: 'auth.py' })).toBeInTheDocument()
   })
 })
