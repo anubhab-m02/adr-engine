@@ -65,6 +65,8 @@ function AskPage() {
         mode: result.mode,
         answer: result.answer,
         citations: result.citations,
+        sentToCloud: result.sent_to_cloud,
+        cloudSynthesisFields: result.cloud_synthesis_fields,
       })
     } catch (err) {
       replaceLastMessage({

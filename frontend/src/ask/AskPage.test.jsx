@@ -159,6 +159,32 @@ describe('AskPage', () => {
     ).toBeInTheDocument()
   })
 
+  it('passes the real sent_to_cloud/cloud_synthesis_fields from the query response into the privacy panel', async () => {
+    const user = userEvent.setup()
+    getRepos.mockResolvedValue(REPOS)
+    postQuery.mockResolvedValue({
+      mode: 'synthesized',
+      answer: 'We use OAuth2 for auth.',
+      citations: [],
+      retrieved_count: 0,
+      sent_to_cloud: true,
+      cloud_synthesis_fields: ['id', 'title', 'decision', 'rationale', 'url'],
+    })
+
+    render(<AskPage />)
+
+    await user.type(screen.getByLabelText('Ask a question'), 'Why OAuth2?')
+    await user.click(screen.getByRole('button', { name: 'Ask' }))
+
+    await screen.findByText('We use OAuth2 for auth.')
+    await user.click(screen.getByText('What was sent'))
+
+    expect(
+      screen.getByText('These fields were sent to the cloud model to synthesize this answer:'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('rationale')).toBeInTheDocument()
+  })
+
   it('renders the input area as a plain footer, not a sticky floating bar', async () => {
     getRepos.mockResolvedValue(REPOS)
 

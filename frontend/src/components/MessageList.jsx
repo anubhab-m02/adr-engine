@@ -24,6 +24,8 @@ function AssistantMessage({ message, question, repos, selectedRepos, disabled })
         citations={citations}
         repos={repos}
         selectedRepos={selectedRepos}
+        sentToCloud={message.sentToCloud}
+        cloudSynthesisFields={message.cloudSynthesisFields}
       />
     )
   }
