@@ -145,6 +145,22 @@ implementation. All three were promoted to `daily-task`; status below.
   the feature isn't reachable yet. Scope is already concrete (route
   choice, `AskPage.jsx` wiring, clearing nav state after consumption)
   — ready to promote to `daily-task`.
+- **#173 UI-DESIGN.md's Ask section is stale — reconcile in favor of
+  the shipped design.** Filed 2026-09-25 as `needs-input`+`daily-task`
+  after PR #167 shipped the margin-citation grid (`AnswerPage.jsx`)
+  without updating `UI-DESIGN.md`'s Ask section, which still describes
+  the superscript-marker-plus-row layout it replaced. PM call: the
+  margin-citation redesign was a deliberate, planned piece of work
+  (Track B, #121-#131) that's been running in production since
+  2026-09-08 with no reported regression — reconcile by rewriting
+  `UI-DESIGN.md`'s Ask section to document the shipped grid (including
+  its three responsive tiers and the density/measure/focus-mode
+  additions) as the current binding spec, not by treating any part of
+  it as provisional. Cross-reference
+  `docs/superpowers/specs/2026-08-04-v2-design.md` from the updated
+  section per the issue's own acceptance criteria. Ready to drop the
+  `needs-input` label and promote to a plain `daily-task` — this is a
+  docs-only diff, no sensitive path involved.
 
 ## Known gap — bot-merged PRs aren't auto-closing linked issues (found 2026-09-23)
 
@@ -179,6 +195,16 @@ one-off; #190 fixing it should be treated as higher priority among the
 `needs-input` items, not just tracked passively. In the meantime,
 #139, #140, and #145 need the same manual closure #138/#129 got.
 
+**Update 2026-09-25:** recurred a third time — PR #195 ("Closes
+#172", privacy panel fix) and PR #196 ("Closes #186", pytest bump),
+both merged by `github-actions[bot]` on 2026-09-25, again left #172
+and #186 `OPEN` despite complete, merged work. Manually closed both
+today. Three-for-three now; #190 stays the top `needs-input` item
+until someone lands an explicit `gh issue close` fallback step in the
+merge workflow (still blocked on a human because it touches
+`.github/workflows/*`, a sensitive path the auto-merge gate itself
+excludes).
+
 ## Process note
 
 Dependabot alerts were re-checked on 2026-09-22 (later the same day this
@@ -190,22 +216,21 @@ push-time warning ("18 vulnerabilities: 2 critical, 6 high, 10
 moderate"). Treat a `[]` response right after alerts get enabled as
 possibly stale, not as ground truth — re-check before reporting zero.
 
-## Security — open dependency alerts (found 2026-09-22, re-checked 2026-09-24)
+## Security — open dependency alerts (found 2026-09-22, re-checked 2026-09-25)
 
-Of the original 18, 11 are now `fixed` via merged Dependabot/daily-task
+Of the original 18, 12 are now `fixed` via merged Dependabot/daily-task
 PRs: react-router (#181), undici (#180), python-dotenv (#177, closed
-issue #185), postcss + nanoid (#178). 7 remain open, unchanged since
-2026-09-23, falling into two groups, both already tracked — nothing
-new to file here today:
+issue #185), postcss + nanoid (#178), and pytest (#196, closed issue
+#186 — see the bot-merge note above). 6 remain open, all the same
+group as yesterday, already tracked — nothing new to file here today:
 
-- **chromadb — 1 critical + 2 high, no patch yet.** Same CVEs as
-  before (CVE-2026-45833/45831/45830), duplicated across
-  `backend/requirements.txt` and `backend/requirements-dev.txt` (6
-  alerts, 3 unique). Tracked as `needs-input` issue #187, pending a
-  risk-acceptance call — still no version bump that fixes this.
-- **pytest — 1 medium, dev-only, fix available.** `backend/requirements-dev.txt`,
-  bundled with the postcss/vitest bump into `daily-task` issue #186
-  (already filed and open).
+- **chromadb — 1 critical + 2 high, no patch yet.** Same three CVEs as
+  before (CVE-2026-45833 critical, CVE-2026-45831/CVE-2026-45830
+  high), duplicated across `backend/requirements.txt` and
+  `backend/requirements-dev.txt` (6 alerts, 3 unique, unchanged since
+  2026-09-22). Tracked as `needs-input` issue #187, pending a
+  risk-acceptance call — still no upstream version bump that fixes
+  this, so there's nothing for Dependabot to open a PR against yet.
 
 ## Later / parking lot
 
@@ -240,6 +265,22 @@ Worth naming plainly: until #108 lands, Track B UI work keeps shipping
 without the recall@5 quality bar the delivery model itself calls for
 ("gated behind a recall@5 quality bar after Wave 0"). That gate has
 never actually been enforced since Wave 0 began.
+
+**New: #111 can be split so part of it stops waiting on #108.** #111's
+scope is really two things bundled together — a CI workflow that runs
+`pytest backend/` on every backend PR, and the recall@5 harness gate
+riding along in the same workflow. Only the second half needs #108's
+fixture; the first half is old, standalone, and already filed as #42
+("Add CI workflow to run backend pytest suite," `needs-triage` since
+2026-08-17, still unpicked). There's no reason plain pytest-on-PR
+enforcement — which ARCHITECTURE.md already calls for and nothing
+currently runs — should sit blocked behind eval-fixture generation.
+Promote #42 on its own now; keep #111 scoped to just adding the
+recall@5 step once #108 lands. Same caveat as #190: both touch
+`.github/workflows/*`, a sensitive path the auto-merge gate excludes,
+so a human has to actually merge whatever PR the Coder produces for
+either one — but that's a merge step, not a reason to leave #42
+sitting untriaged for over a month.
 
 Manual verification against docs/eval-questions.md remains the fallback
 until the harness is runnable — run each question through `/query`
