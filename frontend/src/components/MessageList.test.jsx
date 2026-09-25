@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import MessageList from './MessageList.jsx'
 
@@ -69,6 +70,31 @@ describe('MessageList', () => {
     expect(screen.getByText('searched 1 repo · 5 decisions')).toBeInTheDocument()
     expect(screen.getByText(/We use OAuth2 for auth/)).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: /Citation:/ })[0]).toHaveAttribute('href', citation.url)
+  })
+
+  it('forwards sentToCloud/cloudSynthesisFields from the message into the privacy panel', async () => {
+    render(
+      <MessageList
+        messages={[
+          { role: 'user', content: 'Why OAuth2?' },
+          {
+            role: 'assistant',
+            type: 'answer',
+            mode: 'synthesized',
+            answer: 'We use OAuth2 for auth.',
+            citations: [],
+            sentToCloud: true,
+            cloudSynthesisFields: ['id', 'title'],
+          },
+        ]}
+      />,
+    )
+
+    await userEvent.click(screen.getByText('What was sent'))
+
+    expect(
+      screen.getByText('These fields were sent to the cloud model to synthesize this answer:'),
+    ).toBeInTheDocument()
   })
 
   it('renders an AnswerPage for an assistant message with an omitted type (defaults to answer)', () => {
