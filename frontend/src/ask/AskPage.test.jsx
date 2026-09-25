@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AskPage from './AskPage.jsx'
 import { getRepos, postQuery } from '../api.js'
@@ -18,6 +19,23 @@ vi.mock('../lib/useNewQuestion.js', () => ({
 
 const REPOS = { repos: [{ repo: 'owner/repo-a', indexed_units: 12 }] }
 
+// Surfaces the router's current location.state as text, so a test can
+// assert AskPage cleared it after consuming prefillQuestion — sharing
+// the same MemoryRouter context rather than re-mocking useLocation.
+function LocationStateProbe() {
+  const location = useLocation()
+  return <div data-testid="location-state">{JSON.stringify(location.state)}</div>
+}
+
+function renderAskPage({ initialEntries = ['/'] } = {}) {
+  return render(
+    <MemoryRouter initialEntries={initialEntries}>
+      <AskPage />
+      <LocationStateProbe />
+    </MemoryRouter>,
+  )
+}
+
 beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn()
 })
@@ -33,7 +51,7 @@ describe('AskPage', () => {
     let resolveQuery
     postQuery.mockReturnValue(new Promise((resolve) => { resolveQuery = resolve }))
 
-    render(<AskPage />)
+    renderAskPage()
 
     await user.type(screen.getByLabelText('Ask a question'), 'Why OAuth2?')
     await user.click(screen.getByRole('button', { name: 'Ask' }))
@@ -51,7 +69,7 @@ describe('AskPage', () => {
     getRepos.mockResolvedValue(REPOS)
     postQuery.mockRejectedValueOnce(new Error('Gemini returned 401'))
 
-    render(<AskPage />)
+    renderAskPage()
 
     await user.type(screen.getByLabelText('Ask a question'), 'Why Redis?')
     await user.click(screen.getByRole('button', { name: 'Ask' }))
@@ -74,7 +92,7 @@ describe('AskPage', () => {
     getRepos.mockResolvedValue(REPOS)
     postQuery.mockRejectedValueOnce(new Error('Gemini returned 401'))
 
-    render(<AskPage />)
+    renderAskPage()
 
     await user.type(screen.getByLabelText('Ask a question'), 'Why Redis?')
     await user.click(screen.getByRole('button', { name: 'Ask' }))
@@ -102,7 +120,7 @@ describe('AskPage', () => {
   it('shows a distinct failed state, not an eternal skeleton, when GET /repos fails', async () => {
     getRepos.mockRejectedValue(new Error('network error'))
 
-    render(<AskPage />)
+    renderAskPage()
 
     expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't load repos")
     expect(screen.queryByRole('status', { name: 'Loading repos' })).not.toBeInTheDocument()
@@ -112,7 +130,7 @@ describe('AskPage', () => {
     const user = userEvent.setup()
     getRepos.mockResolvedValue(REPOS)
 
-    render(<AskPage />)
+    renderAskPage()
 
     const chip = await screen.findByRole('button', { name: 'Why is repo-a built this way?' })
     await user.click(chip)
@@ -130,7 +148,7 @@ describe('AskPage', () => {
       ],
     })
 
-    render(<AskPage />)
+    renderAskPage()
 
     expect(await screen.findByRole('button', { name: 'Why is repo-a built this way?' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Why is repo-b built this way?' })).toBeInTheDocument()
@@ -141,7 +159,7 @@ describe('AskPage', () => {
   it('falls back to the static example questions while repos are still loading', () => {
     getRepos.mockReturnValue(new Promise(() => {}))
 
-    render(<AskPage />)
+    renderAskPage()
 
     expect(
       screen.getByRole('button', { name: 'Why is authentication done this way?' }),
@@ -151,7 +169,7 @@ describe('AskPage', () => {
   it('falls back to the static example questions when GET /repos fails', async () => {
     getRepos.mockRejectedValue(new Error('network error'))
 
-    render(<AskPage />)
+    renderAskPage()
 
     await screen.findByRole('alert')
     expect(
@@ -171,7 +189,7 @@ describe('AskPage', () => {
       cloud_synthesis_fields: ['id', 'title', 'decision', 'rationale', 'url'],
     })
 
-    render(<AskPage />)
+    renderAskPage()
 
     await user.type(screen.getByLabelText('Ask a question'), 'Why OAuth2?')
     await user.click(screen.getByRole('button', { name: 'Ask' }))
@@ -188,7 +206,7 @@ describe('AskPage', () => {
   it('renders the input area as a plain footer, not a sticky floating bar', async () => {
     getRepos.mockResolvedValue(REPOS)
 
-    const { container } = render(<AskPage />)
+    const { container } = renderAskPage()
     await screen.findByLabelText('Ask a question')
 
     expect(container.querySelector('.sticky')).not.toBeInTheDocument()
@@ -199,5 +217,28 @@ describe('AskPage', () => {
     // the footer is the last element of the page's own content, i.e. it
     // scrolls with the composed page rather than floating over it
     expect(footer.parentElement.lastElementChild).toBe(footer)
+  })
+
+  it('pre-fills the input from a FileTree click-to-question navigation and clears the nav state', async () => {
+    getRepos.mockResolvedValue(REPOS)
+
+    renderAskPage({
+      initialEntries: [
+        { pathname: '/', state: { prefillQuestion: 'Why is `backend/auth.py` the way it is?' } },
+      ],
+    })
+
+    expect(await screen.findByLabelText('Ask a question')).toHaveValue(
+      'Why is `backend/auth.py` the way it is?',
+    )
+    expect(screen.getByTestId('location-state')).toHaveTextContent('null')
+  })
+
+  it('leaves the input empty when there is no prefillQuestion in nav state', async () => {
+    getRepos.mockResolvedValue(REPOS)
+
+    renderAskPage()
+
+    expect(await screen.findByLabelText('Ask a question')).toHaveValue('')
   })
 })

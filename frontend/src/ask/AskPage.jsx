@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { getRepos, postQuery } from '../api.js'
 import ChatInput from '../components/ChatInput.jsx'
 import MessageList from '../components/MessageList.jsx'
@@ -31,6 +32,8 @@ function AskPage() {
   const [loading, setLoading] = useState(false)
   const [chatKey, setChatKey] = useState(0)
   const [prefill, setPrefill] = useState('')
+  const location = useLocation()
+  const navigate = useNavigate()
 
   useEffect(() => {
     let cancelled = false
@@ -50,6 +53,18 @@ function AskPage() {
       cancelled = true
     }
   }, [])
+
+  // Consumes FileTree's click-to-question navigation
+  // (`navigate('/', { state: { prefillQuestion } })`): pre-fill the input
+  // once, then clear the nav state so a refresh or back-navigation doesn't
+  // re-trigger it.
+  useEffect(() => {
+    const prefillQuestion = location.state?.prefillQuestion
+    if (!prefillQuestion) return
+    setPrefill(prefillQuestion)
+    setChatKey((key) => key + 1)
+    navigate(location.pathname, { replace: true, state: null })
+  }, [location, navigate])
 
   function replaceLastMessage(message) {
     setMessages((prev) => [...prev.slice(0, -1), message])
