@@ -1,0 +1,46 @@
+name: Backend tests
+
+# Runs the daily agent's own self-verification gate (ARCHITECTURE.md:
+# "pytest from backend/ must pass in a clean environment") on every PR
+# that touches backend/, so it's an enforced check, not an advisory one.
+# Absorbs #42. Also runs the recall@5 harness (eval/harness.py), but only
+# once the frozen fixture exists (backend/eval/fixtures/, built by #108) —
+# until then that step is a no-op so this workflow doesn't hard-fail on a
+# fixture that hasn't been generated yet.
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: pytest
+        run: pytest
+
+      - name: recall@5 eval harness
+        run: |
+          if [ -d eval/fixtures ] && [ -n "$(ls -A eval/fixtures 2>/dev/null)" ]; then
+            python -m eval.harness
+          else
+            echo "No frozen fixture at backend/eval/fixtures/ yet (see issue #108) — skipping the gate for now."
+          fi
