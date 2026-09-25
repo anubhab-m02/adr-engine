@@ -5,10 +5,8 @@
 // longer accepts (revoked/expired outside the app) shows a distinct
 // danger banner rather than collapsing into plain "disconnected".
 //
-// Not implemented here: UI-DESIGN.md also calls for the expired state
-// to trigger "a global quiet banner on Ask" — that's a cross-page
-// concern (AskPage would need to check auth status too), out of scope
-// for this section component alone.
+// The expired state also triggers a global quiet banner on Ask
+// (AskPage.jsx checks auth status independently — see its own comment).
 import { useEffect, useState } from 'react'
 import InlineConfirm from '../components/InlineConfirm.jsx'
 import ConnectStep from '../onboarding/ConnectStep.jsx'

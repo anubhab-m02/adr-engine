@@ -1,12 +1,14 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AskPage from './AskPage.jsx'
-import { getRepos, postQuery } from '../api.js'
+import { getAuthStatus, getRepos, postQuery } from '../api.js'
 
 vi.mock('../api.js', () => ({
   getRepos: vi.fn(),
   postQuery: vi.fn(),
+  getAuthStatus: vi.fn(),
 }))
 
 // AskPage registers a new-question handler with the command palette's
@@ -18,8 +20,18 @@ vi.mock('../lib/useNewQuestion.js', () => ({
 
 const REPOS = { repos: [{ repo: 'owner/repo-a', indexed_units: 12 }] }
 
+function renderAskPage() {
+  return render(
+    <MemoryRouter>
+      <AskPage />
+    </MemoryRouter>,
+  )
+}
+
 beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn()
+  getAuthStatus.mockResolvedValue({ state: 'authorized', login: 'octocat' })
+  sessionStorage.clear()
 })
 
 afterEach(() => {
@@ -33,7 +45,7 @@ describe('AskPage', () => {
     let resolveQuery
     postQuery.mockReturnValue(new Promise((resolve) => { resolveQuery = resolve }))
 
-    render(<AskPage />)
+    renderAskPage()
 
     await user.type(screen.getByLabelText('Ask a question'), 'Why OAuth2?')
     await user.click(screen.getByRole('button', { name: 'Ask' }))
@@ -51,7 +63,7 @@ describe('AskPage', () => {
     getRepos.mockResolvedValue(REPOS)
     postQuery.mockRejectedValueOnce(new Error('Gemini returned 401'))
 
-    render(<AskPage />)
+    renderAskPage()
 
     await user.type(screen.getByLabelText('Ask a question'), 'Why Redis?')
     await user.click(screen.getByRole('button', { name: 'Ask' }))
@@ -74,7 +86,7 @@ describe('AskPage', () => {
     getRepos.mockResolvedValue(REPOS)
     postQuery.mockRejectedValueOnce(new Error('Gemini returned 401'))
 
-    render(<AskPage />)
+    renderAskPage()
 
     await user.type(screen.getByLabelText('Ask a question'), 'Why Redis?')
     await user.click(screen.getByRole('button', { name: 'Ask' }))
@@ -102,7 +114,7 @@ describe('AskPage', () => {
   it('shows a distinct failed state, not an eternal skeleton, when GET /repos fails', async () => {
     getRepos.mockRejectedValue(new Error('network error'))
 
-    render(<AskPage />)
+    renderAskPage()
 
     expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't load repos")
     expect(screen.queryByRole('status', { name: 'Loading repos' })).not.toBeInTheDocument()
@@ -112,7 +124,7 @@ describe('AskPage', () => {
     const user = userEvent.setup()
     getRepos.mockResolvedValue(REPOS)
 
-    render(<AskPage />)
+    renderAskPage()
 
     const chip = await screen.findByRole('button', { name: 'Why is repo-a built this way?' })
     await user.click(chip)
@@ -130,7 +142,7 @@ describe('AskPage', () => {
       ],
     })
 
-    render(<AskPage />)
+    renderAskPage()
 
     expect(await screen.findByRole('button', { name: 'Why is repo-a built this way?' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Why is repo-b built this way?' })).toBeInTheDocument()
@@ -141,7 +153,7 @@ describe('AskPage', () => {
   it('falls back to the static example questions while repos are still loading', () => {
     getRepos.mockReturnValue(new Promise(() => {}))
 
-    render(<AskPage />)
+    renderAskPage()
 
     expect(
       screen.getByRole('button', { name: 'Why is authentication done this way?' }),
@@ -151,7 +163,7 @@ describe('AskPage', () => {
   it('falls back to the static example questions when GET /repos fails', async () => {
     getRepos.mockRejectedValue(new Error('network error'))
 
-    render(<AskPage />)
+    renderAskPage()
 
     await screen.findByRole('alert')
     expect(
@@ -171,7 +183,7 @@ describe('AskPage', () => {
       cloud_synthesis_fields: ['id', 'title', 'decision', 'rationale', 'url'],
     })
 
-    render(<AskPage />)
+    renderAskPage()
 
     await user.type(screen.getByLabelText('Ask a question'), 'Why OAuth2?')
     await user.click(screen.getByRole('button', { name: 'Ask' }))
@@ -188,7 +200,7 @@ describe('AskPage', () => {
   it('renders the input area as a plain footer, not a sticky floating bar', async () => {
     getRepos.mockResolvedValue(REPOS)
 
-    const { container } = render(<AskPage />)
+    const { container } = renderAskPage()
     await screen.findByLabelText('Ask a question')
 
     expect(container.querySelector('.sticky')).not.toBeInTheDocument()
@@ -199,5 +211,52 @@ describe('AskPage', () => {
     // the footer is the last element of the page's own content, i.e. it
     // scrolls with the composed page rather than floating over it
     expect(footer.parentElement.lastElementChild).toBe(footer)
+  })
+
+  it('shows a GitHub-expired banner when the auth status is expired', async () => {
+    getRepos.mockResolvedValue(REPOS)
+    getAuthStatus.mockResolvedValue({ state: 'expired' })
+
+    renderAskPage()
+
+    expect(await screen.findByText(/Your GitHub connection expired/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/settings')
+  })
+
+  it('does not show the GitHub-expired banner when the auth status is authorized', async () => {
+    getRepos.mockResolvedValue(REPOS)
+    getAuthStatus.mockResolvedValue({ state: 'authorized', login: 'octocat' })
+
+    renderAskPage()
+
+    await screen.findByLabelText('Ask a question')
+    expect(screen.queryByText(/Your GitHub connection expired/)).not.toBeInTheDocument()
+  })
+
+  it('does not show the GitHub-expired banner when the auth status check fails', async () => {
+    getRepos.mockResolvedValue(REPOS)
+    getAuthStatus.mockRejectedValue(new Error('network error'))
+
+    renderAskPage()
+
+    await screen.findByLabelText('Ask a question')
+    expect(screen.queryByText(/Your GitHub connection expired/)).not.toBeInTheDocument()
+  })
+
+  it('dismisses the GitHub-expired banner for the session, without re-showing it on remount', async () => {
+    const user = userEvent.setup()
+    getRepos.mockResolvedValue(REPOS)
+    getAuthStatus.mockResolvedValue({ state: 'expired' })
+
+    const { unmount } = renderAskPage()
+
+    await user.click(await screen.findByRole('button', { name: 'Dismiss' }))
+    expect(screen.queryByText(/Your GitHub connection expired/)).not.toBeInTheDocument()
+
+    unmount()
+    renderAskPage()
+
+    await screen.findByLabelText('Ask a question')
+    expect(screen.queryByText(/Your GitHub connection expired/)).not.toBeInTheDocument()
   })
 })

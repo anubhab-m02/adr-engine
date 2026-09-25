@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App.jsx'
-import { getDecisions, getIngestStatus, getRepos, getSetupState } from './api.js'
+import { getAuthStatus, getDecisions, getIngestStatus, getRepos, getSetupState } from './api.js'
 
 vi.mock('./api.js', () => ({
   getSetupState: vi.fn(),
@@ -10,6 +10,7 @@ vi.mock('./api.js', () => ({
   postQuery: vi.fn(),
   getIngestStatus: vi.fn(),
   getDecisions: vi.fn(),
+  getAuthStatus: vi.fn(),
 }))
 
 // OnboardingPage has its own dedicated test file for its step machine —
@@ -45,6 +46,7 @@ beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn()
   getRepos.mockResolvedValue({ repos: [] })
   getIngestStatus.mockResolvedValue({ active: false, repos: [] })
+  getAuthStatus.mockResolvedValue({ state: 'authorized', login: 'octocat' })
 })
 
 afterEach(() => {
