@@ -4,10 +4,43 @@ on:
   schedule:
     - cron: "30 0 * * *"  # 06:00 IST, sleeps up to 180min -> lands 6am-9am IST
   workflow_dispatch: {}
+  pull_request:
+    types: [closed]
 
 jobs:
   run:
+    if: github.event_name != 'pull_request'
     uses: anubhab-m02/automation-kit/.github/workflows/reviewer.yml@main
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
       GH_PAT: ${{ secrets.GH_PAT }}
+
+  close-linked-issues:
+    # GitHub's own "Closes #N" keyword auto-closing doesn't reliably fire
+    # when the merge is performed by github-actions[bot] via the API
+    # (gh pr merge --auto) rather than a human through the UI — confirmed
+    # live: PR #188 (Closes #138) and PR #189 (Closes #129) both merged
+    # clean but left their linked issue open (see issue #190). Parse and
+    # close explicitly instead of relying on GitHub's implicit link.
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close issues referenced by Closes/Fixes/Resolves in the PR body
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          issues=$(echo "$PR_BODY" | grep -ioE "(close[sd]?|fix(e[sd])?|resolve[sd]?) #[0-9]+" | grep -oE "[0-9]+" || true)
+          if [ -z "$issues" ]; then
+            echo "No Closes/Fixes/Resolves keyword found in PR #${PR_NUMBER}'s body — nothing to close."
+            exit 0
+          fi
+          for n in $issues; do
+            state=$(gh issue view "$n" --repo "${{ github.repository }}" --json state --jq '.state' 2>/dev/null || echo "MISSING")
+            if [ "$state" = "OPEN" ]; then
+              gh issue close "$n" --repo "${{ github.repository }}" \
+                --comment "Closed by PR #${PR_NUMBER}, merged by automation — GitHub's keyword auto-close doesn't reliably fire for bot-performed merges."
+            fi
+          done
