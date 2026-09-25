@@ -1,13 +1,16 @@
-// Thin route wrapper for /library/:repo/timeline and /library/:repo/graph —
-// decodes the repo path param (repo names contain a slash, so the route
-// segment is percent-encoded) and scopes the requested view to it.
+// Thin route wrapper for /library/:repo/timeline, /library/:repo/graph,
+// and /library/:repo/files — decodes the repo path param (repo names
+// contain a slash, so the route segment is percent-encoded) and scopes
+// the requested view to it.
 import { Link, useParams } from 'react-router-dom'
 import DecisionGraph from './DecisionGraph.jsx'
 import DecisionTimeline from './DecisionTimeline.jsx'
+import FileTreeView from './FileTreeView.jsx'
 
 const VIEWS = {
   timeline: { label: 'Timeline', Component: DecisionTimeline },
   graph: { label: 'Graph', Component: DecisionGraph },
+  files: { label: 'Files', Component: FileTreeView },
 }
 
 function RepoDecisionsPage({ view }) {
