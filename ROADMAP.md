@@ -120,6 +120,16 @@ following Phase 2 forward knows where the plan actually continues.
 These were filed `needs-input` pending a PM-level call, not a missing
 implementation. All three were promoted to `daily-task`; status below.
 
+- **#173 UI-DESIGN.md Ask-section reconciliation — shipped.** PR #205
+  merged 2026-09-26, rewriting the Ask section to document the shipped
+  margin-citation grid as the binding spec. Manually closed 2026-09-26
+  (same bot-merge gap as below). Spun off one follow-up, #204
+  (`needs-triage`): `AskPage.jsx`'s `max-w-3xl` thread wrapper caps the
+  page below the grid's 900/1280px tiers.
+- **#194 Mount FileTree in a Library route — in flight.** Promoted to
+  `daily-task`; PR #206 (adds `/library/:repo/files`, wires
+  `AskPage.jsx` to consume `prefillQuestion` nav state) is open,
+  reviewed and approved 2026-09-26, not yet merged.
 - **#138 Decision graph view — no new dependency.** Shipped: PR #188
   merged 2026-09-23 (static grid/date layout, no `d3-force`). Was
   manually closed 2026-09-23 after sitting falsely `OPEN` — see the
@@ -133,34 +143,7 @@ implementation. All three were promoted to `daily-task`; status below.
   routing/graph follow-ups also shipped the same day — #139 (timeline/
   graph view routing and toggle, PR #191) and #140 (graph node click
   navigates to decision detail, PR #192). All three (#139, #140, #145)
-  are still showing `OPEN` despite the merged, working code — the same
-  bot-merge gap as #138/#129, now confirmed on a second batch and
-  tracked as `needs-input` #190. They need the same manual closure
-  #138/#129 got.
-- **#194 (needs-triage) Mount FileTree in a Library route, wire
-  AskPage to consume the pre-filled question.** Filed 2026-09-23 as
-  the natural next step now that #145 has landed: `FileTree` renders
-  and its clicks navigate with `prefillQuestion` state, but nothing
-  mounts the tree on a route or reads that state on the other end, so
-  the feature isn't reachable yet. Scope is already concrete (route
-  choice, `AskPage.jsx` wiring, clearing nav state after consumption)
-  — ready to promote to `daily-task`.
-- **#173 UI-DESIGN.md's Ask section is stale — reconcile in favor of
-  the shipped design.** Filed 2026-09-25 as `needs-input`+`daily-task`
-  after PR #167 shipped the margin-citation grid (`AnswerPage.jsx`)
-  without updating `UI-DESIGN.md`'s Ask section, which still describes
-  the superscript-marker-plus-row layout it replaced. PM call: the
-  margin-citation redesign was a deliberate, planned piece of work
-  (Track B, #121-#131) that's been running in production since
-  2026-09-08 with no reported regression — reconcile by rewriting
-  `UI-DESIGN.md`'s Ask section to document the shipped grid (including
-  its three responsive tiers and the density/measure/focus-mode
-  additions) as the current binding spec, not by treating any part of
-  it as provisional. Cross-reference
-  `docs/superpowers/specs/2026-08-04-v2-design.md` from the updated
-  section per the issue's own acceptance criteria. Ready to drop the
-  `needs-input` label and promote to a plain `daily-task` — this is a
-  docs-only diff, no sensitive path involved.
+  are now closed.
 
 ## Known gap — bot-merged PRs aren't auto-closing linked issues (found 2026-09-23)
 
@@ -205,6 +188,38 @@ merge workflow (still blocked on a human because it touches
 `.github/workflows/*`, a sensitive path the auto-merge gate itself
 excludes).
 
+**Update 2026-09-26 — the fix landed but doesn't work; root cause
+found.** #190 was closed 2026-09-25 by commit 56beda1, which added a
+`pull_request: closed` trigger to adr-engine's own `reviewer.yml` to
+close linked issues explicitly. It didn't help: PR #205 ("Closes
+#173") and PR #207 ("Closes #201"), both merged by `github-actions[bot]`
+on 2026-09-26 *after* that fix was live, again left their linked
+issues `OPEN`. Checked the workflow run history directly — every
+`reviewer.yml` run since the fix landed is `schedule` or
+`workflow_dispatch`; there has never been a single `pull_request`-
+triggered run. Root cause: the actual merge happens inside the shared
+reusable workflow (`anubhab-m02/automation-kit/.github/workflows/reviewer.yml`,
+step "Extract verdict and submit the real GitHub review") via `gh pr
+merge --squash --auto` run with `GH_TOKEN: ${{ github.token }}` — the
+default `GITHUB_TOKEN`, not `GH_PAT`. GitHub does not fire downstream
+workflow runs (including `pull_request` events on the same repo) for
+actions performed with the default `GITHUB_TOKEN` — this is documented
+platform behavior to prevent recursive triggering, not a flake. That
+means the trigger #190's fix added is structurally incapable of ever
+firing for these auto-merges; it's dead code, not a rare miss.
+Reopened #190 with this diagnosis. Manually closed #173 and #201
+today, same as every prior occurrence. Two real fixes exist, both
+needing a human:
+1. Change automation-kit's merge step to use `GH_PAT` instead of
+   `github.token` (that secret is already threaded through the same
+   workflow for the report commit) — but automation-kit is a separate,
+   shared repo, so this isn't an adr-engine daily-task.
+2. Add a scheduled fallback sweep to adr-engine's own `reviewer.yml`
+   that periodically scans recently-merged PRs for unclosed linked
+   issues, independent of the `pull_request` trigger — doable within
+   this repo, but still touches `.github/workflows/*`, so it needs a
+   human to land it, same as every other candidate fix for this gap.
+
 ## Process note
 
 Dependabot alerts were re-checked on 2026-09-22 (later the same day this
@@ -244,43 +259,34 @@ group as yesterday, already tracked — nothing new to file here today:
 
 Harness code (`backend/eval/harness.py`), golden questions
 (`docs/eval-questions.md`), and the recall@5 gate design (70% floor, 50%
-broken, 5-point ratchet — #109) are all in place, but the harness can't
-run end to end yet: the frozen fixture it reads
-(`backend/eval/fixtures/decision_units.json`, `embeddings.json`,
+broken, 5-point ratchet — #109) are all in place. **CI enforcement
+landed 2026-09-25:** `.github/workflows/backend-tests.yml` (commit
+a66653d, closing #111 and #42) now runs `pytest` on every backend-
+touching PR, plus a recall@5 step that's a no-op until the frozen
+fixture exists, then auto-enforces once it does. Since that's a
+workflow-path change, a human merged it directly (outside the normal
+auto-merge gate, which excludes `.github/workflows/*`).
+
+The one remaining blocker is unchanged: the frozen fixture the harness
+reads (`backend/eval/fixtures/decision_units.json`, `embeddings.json`,
 `golden_question_embeddings.json`) is never checked in, and the script
 that's supposed to generate it, `backend/eval/build_fixture.py`, doesn't
 exist either (#108, expanded by #171). Generating it requires a human
 running real ingestion against a live local Ollama instance — not
 something any of the four unattended automations can do — so #108 stays
 `needs-input` and is the **single highest-priority human action item**
-in this roadmap right now: it blocks CI enforcement of the quality gate
-(#111) and retrieval tuning (#112), and until it's done the harness
-itself can't be exercised for real. #171's scope (also emit
-`golden_question_embeddings.json`) resolves #111's second blocker too —
-precomputed query embeddings mean `eval/harness.py` no longer needs a
-live Ollama call at run time. Fold #171 into #108's scope rather than
-tracking them as two separate blockers.
+in this roadmap right now: it's the only thing standing between the
+now-wired-up CI gate and it actually enforcing anything, and it also
+blocks retrieval tuning (#112, confirmed still blocked as of
+2026-09-26). #171's scope (also emit `golden_question_embeddings.json`)
+means `eval/harness.py` won't need a live Ollama call at run time either
+— folded into #108's scope rather than tracked separately.
 
 Worth naming plainly: until #108 lands, Track B UI work keeps shipping
 without the recall@5 quality bar the delivery model itself calls for
 ("gated behind a recall@5 quality bar after Wave 0"). That gate has
-never actually been enforced since Wave 0 began.
-
-**New: #111 can be split so part of it stops waiting on #108.** #111's
-scope is really two things bundled together — a CI workflow that runs
-`pytest backend/` on every backend PR, and the recall@5 harness gate
-riding along in the same workflow. Only the second half needs #108's
-fixture; the first half is old, standalone, and already filed as #42
-("Add CI workflow to run backend pytest suite," `needs-triage` since
-2026-08-17, still unpicked). There's no reason plain pytest-on-PR
-enforcement — which ARCHITECTURE.md already calls for and nothing
-currently runs — should sit blocked behind eval-fixture generation.
-Promote #42 on its own now; keep #111 scoped to just adding the
-recall@5 step once #108 lands. Same caveat as #190: both touch
-`.github/workflows/*`, a sensitive path the auto-merge gate excludes,
-so a human has to actually merge whatever PR the Coder produces for
-either one — but that's a merge step, not a reason to leave #42
-sitting untriaged for over a month.
+never actually been enforced since Wave 0 began — it's wired up now,
+but still dormant.
 
 Manual verification against docs/eval-questions.md remains the fallback
 until the harness is runnable — run each question through `/query`
