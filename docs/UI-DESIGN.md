@@ -171,57 +171,104 @@ nothing; Ask runs in sources-only mode.
 
 ## Ask (`/`) — the reading room
 
-The Phase 1 chat becomes an editorial surface. Files: existing
-components move to `frontend/src/ask/` (`AskPage.jsx` owns state —
-extracted from `App.jsx`, which shrinks to shell+router):
-`AnswerPassage.jsx` (replaces `AnswerCard`), `CitationMarker.jsx`,
-`SourceCard.jsx` (evolved `CitationCard`), `SourcesView.jsx` (degraded
-mode), restyled `ChatInput` / `MessageList` / `LoadingCard` /
-`ErrorCard` in place.
+The Phase 1 chat first became an editorial surface, then Track B
+(#121-#131, running in production since 2026-09-08 with no reported
+regression) replaced that superscript-marker-plus-row layout with the
+margin-citation grid documented below, which supersedes it as the
+current binding spec. Design rationale:
+[superpowers/specs/2026-08-04-v2-design.md](superpowers/specs/2026-08-04-v2-design.md)'s
+"Track B · Reading surfaces" section.
 
-Layout unchanged in skeleton (scrolling thread, `max-w-3xl` centered,
-sticky bottom input on `bg-panel`) — the redesign is in the pieces:
+Files: `frontend/src/ask/` — `AskPage.jsx` (owns thread state,
+extracted from `App.jsx`, which shrinks to shell+router), `AnswerPage.jsx`
+(one composed, annotated page per answered question — replaces the old
+chat-bubble `AnswerPassage`-plus-"Sources row" pairing), `AnswerPassage.jsx`
+(now exports `AnswerParagraph`, the shared per-paragraph renderer),
+`CitationMarker.jsx`, `SourceCard.jsx`, `SourceCardList.jsx`,
+`SourcesView.jsx` (degraded mode), `PrivacyPanel.jsx`; restyled
+`ChatInput` / `MessageList` / `LoadingCard` / `ErrorCard` in
+`frontend/src/components/`.
+
+Layout: scrolling thread (`max-w-3xl` centered); no sticky input bar —
+"Ask another question" is the page's own footer, not a fixed chrome
+element. Each answered question renders as one composed **AnswerPage**:
 
 - **User question**: compact bubble, right-aligned, `bg-highlight
-  text-ink` (no more solid accent slab), `rounded-xl p-3`, text-sm.
+  text-ink`, `rounded-xl p-3`, text-sm.
+- **AnswerPage heading**: the question itself as an `h1` (`--font-ui`
+  text-2xl), with a provenance dek stated before the answer is read
+  (design principle 3, "honest state"): "searched N repos · M
+  decisions". When there are citations, a second line states coverage —
+  "From N decisions spanning YYYY–YYYY" (or a single year for a
+  one-year span) — with "; coverage for this area is thin" appended
+  when the citation count or its density over the date span looks thin.
+  A "What was sent" `<details>` opens **PrivacyPanel**: "Nothing left
+  this machine for this answer" for a sources-only answer, or the exact
+  list of fields sent to the cloud model otherwise, read verbatim from
+  the `/query` response rather than hardcoded — the privacy claim made
+  inspectable, not just asserted.
+- **Reading controls** (top-right, `print:hidden`): **Comfortable /
+  Compact** density toggle (line-height + paragraph spacing) and
+  **Narrow / Default / Wide** measure toggle (54ch / 70ch / 86ch reading
+  column), plus a **Print / Save as PDF** button. Density and measure
+  persist to `localStorage` under one `readingPreferences` key, together
+  with **focus mode** (a command-palette action that suppresses
+  `TopNav`; it has no control on this page itself).
 - **AnswerPassage**: no card chrome — prose set directly on surface.
-  `--font-reading`, 1.0625rem/1.7, `max-width: 70ch`. Inline
-  **CitationMarker**s: superscript `¹ ²` in `--color-accent`,
-  `--font-ui` text-xs, `cursor-pointer`, rendered from `[unit-id]`
-  citations in the answer text (parse order of first appearance → 1..n).
-  Hover/focus on a marker → linked SourceCard gets `--color-highlight`
-  wash (`--dur-state`); click → card scrolls into view + 1.2s wash.
-- **Sources row**: beneath the passage, label "Sources" (`text-sm
-  text-ink-muted`), horizontal wrap of **SourceCard**s: `w-64 bg-panel
-  rounded-xl p-4 border border-transparent transition-colors
-  hover:border-accent`, containing marker number + kind badge
-  (`PR #42` / `commit a1b2c3d` in `--font-mono` text-xs on
-  `bg-highlight` rounded), title (2-line clamp, `--font-ui`), author ·
-  relative date · repo (`text-sm text-ink-muted`). Whole card one `<a>`
-  to `unit.url` (unchanged a11y name format).
+  `--font-reading`, 1.0625rem, `max-width` set by the measure
+  preference (70ch default). Inline **CitationMarker**s: superscript
+  numerals in `--color-accent`, `--font-ui` text-xs, numbered by parse
+  order of first appearance in the answer text (not citations' array
+  order), ink-in staggered 60ms apart starting 180ms after the passage
+  settles. Each marker targets `#source-{unitId}` / a `SourceCard` with
+  matching `id="source-{unitId}"`: hover/focus washes that card with
+  `--color-highlight`; click scrolls it into view and holds the wash
+  1.2s.
+- **Margin-citation grid**: a paragraph's citations sit beside it
+  rather than collected in a list beneath the whole passage. The
+  responsive citation apparatus is specified per breakpoint, not left
+  to judgment:
+
+  | Width | Treatment |
+  |---|---|
+  | ≥1280px | Two-column grid: `minmax(0, 68ch)` reading column + 260px right margin track holding that paragraph's `SourceCard`s |
+  | 900–1280px | Same grid; margin track narrows to 180px, notes stay beside their paragraph |
+  | <900px | No margin track — each paragraph's `SourceCard`s collapse inline immediately after it, one per citation, deduped within the paragraph |
+
+  Each `SourceCard` shows marker number + kind badge (`PR #42` /
+  `commit a1b2c3d`, `--font-mono` text-xs on `bg-highlight`), title
+  (2-line clamp, `--font-ui`), author · relative date · repo. Whole card
+  one `<a>` to `unit.url`. A paragraph's `SourceCard`s fade in together
+  (not staggered per-card like markers), offset 90ms after the passage
+  settles.
+- **Print stylesheet**: forces the page back to its own <900px
+  inline-collapse layout on paper regardless of the viewport the print
+  preview renders at, and hides `TopNav` and the reading controls.
 - **SourcesView** (degraded, `mode: "sources_only"` from `/query`):
   passage slot instead shows serif lead-in "N decisions found —" then a
-  vertical list of SourceCards **expanded**: extracted `decision` text
+  vertical list of `SourceCard`s **expanded**: extracted `decision` text
   as card body (serif, 3-line clamp) with `rationale` below it muted.
-  Quiet banner above thread (dismissible per session): "Add a Gemini
-  key in Settings to get synthesized answers." — `bg-highlight`, not
-  danger.
-- **LoadingCard**: keeps three-dot pulse; status line now reports the
-  real stage when a first-token wait is long ("Searching decision
-  history…" → "Reading 5 sources…"). Same `role="status"`.
-- **Empty state**: serif prompt line + 3 example chips **generated from
-  indexed repos** (template: "Why does {repo-short} use {topic}?" is
-  Phase 3 polish — Phase 2 keeps 3 static-but-relevant questions built
-  from indexed repo names); chips `bg-panel hover:border-accent`.
+  Quiet banner above thread, dismissible for the session
+  (`sessionStorage`, not carried across sessions): "Add a Gemini key in
+  Settings to get synthesized answers." — `bg-highlight`, not danger.
+- **LoadingCard**: three-dot pulse, one honest static status line
+  ("Searching decision history…") for the whole in-flight request — no
+  invented per-stage cycling, since `/query` is a single synchronous
+  call the client can't observe mid-flight (Product decisions,
+  ROADMAP.md, #129). Same `role="status"`.
+- **Empty state**: serif prompt line + 3 example chips generated from
+  indexed repos ("Why is {repo-short} built this way?"), falling back
+  to 3 static generic questions while repos haven't loaded, failed to
+  load, or none are indexed. Chips `bg-panel hover:border-accent`.
 - **ErrorCard**: unchanged behavior (message + Retry, `disabled` while
-  in flight); restyled: `bg-panel`, 1px `--color-danger` full border,
-  danger text, plain-text detail from the server.
+  in flight); `bg-panel`, 1px `--color-danger` border, danger text,
+  plain-text detail from the server.
 
-**Signature moment** (the one): on answer arrival, passage fades up 8px
-(`--dur-surface`, `--ease-out`), then markers "ink in" — opacity 0→1
-staggered 60ms each starting 180ms after passage settle; SourceCards
-follow as one group (+90ms). Reduced-motion: single crossfade, no
-stagger, no translate.
+**Signature moment** (unchanged): on answer arrival, passage fades up
+8px (`--dur-surface`, `--ease-out`), then markers "ink in" — opacity
+0→1 staggered 60ms each starting 180ms after passage settle;
+`SourceCard`s follow as one group per paragraph (+90ms). Reduced-motion:
+single crossfade, no stagger, no translate.
 
 Repo filter chip (existing RepoFilter) stays on this page, right of the
 thread header — not in global chrome.
