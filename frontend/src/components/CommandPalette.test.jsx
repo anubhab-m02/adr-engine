@@ -4,12 +4,13 @@ import { MemoryRouter, useLocation } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import CommandPalette from './CommandPalette.jsx'
 import AskPage from '../ask/AskPage.jsx'
-import { getRepos, postQuery } from '../api.js'
+import { getAuthStatus, getRepos, postQuery } from '../api.js'
 import { NewQuestionProvider } from '../lib/useNewQuestion.js'
 
 vi.mock('../api.js', () => ({
   getRepos: vi.fn(),
   postQuery: vi.fn(),
+  getAuthStatus: vi.fn(),
 }))
 
 function LocationDisplay() {
@@ -31,6 +32,7 @@ function renderPalette({ path = '/' } = {}) {
 beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn()
   getRepos.mockResolvedValue({ repos: [] })
+  getAuthStatus.mockResolvedValue({ state: 'authorized', login: 'octocat' })
 })
 
 afterEach(() => {
