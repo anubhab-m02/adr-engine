@@ -115,7 +115,7 @@ everything after Phase 2 — 23 tracks across 7 waves, gated behind a
 recall@5 quality bar after Wave 0. This section is kept only so a reader
 following Phase 2 forward knows where the plan actually continues.
 
-## Product decisions (resolved 2026-09-22, status as of 2026-09-24)
+## Product decisions (resolved 2026-09-22, status as of 2026-09-27)
 
 These were filed `needs-input` pending a PM-level call, not a missing
 implementation. All three were promoted to `daily-task`; status below.
@@ -137,6 +137,19 @@ implementation. All three were promoted to `daily-task`; status below.
 - **#129 LoadingCard — client-side two-state, no backend change.**
   Shipped: PR #189 merged 2026-09-23 (single honest in-flight message,
   no polled backend). Manually closed 2026-09-23, same gap.
+- **#203 UI-DESIGN.md Gemini/Ollama live-validation language — stale, recommend closing.**
+  Filed against a premise (a "no-live-verification policy" needing
+  reconciliation) that's already been superseded: `docs/superpowers/specs/2026-08-04-v2-design.md`
+  decision 9 reinstates live validation pings on explicit save, and
+  the shipped code already matches it — `backend/routers/validation.py`
+  (`POST /config/validate-gemini`, `POST /config/validate-ollama`),
+  `frontend/src/settings/GeminiSection.jsx` and `ModelsSection.jsx`
+  both call them on save, and `UI-DESIGN.md`'s Settings table already
+  documents this shipped behavior correctly. There is no stale-doc/
+  no-live-verification gap left to fix — implementing #203 as scoped
+  would make `UI-DESIGN.md` wrong, not right. No code or doc change
+  needed; the Issue Generator should close #203 as resolved by
+  decision 9 rather than promote it to a daily-task run.
 - **#145 File-tree click-to-scope — two calls (caret vs. name-text
   click target; frontend-only pre-fill, backend path filter deferred
   to its own issue).** Shipped: PR #193 merged 2026-09-24. Its two
