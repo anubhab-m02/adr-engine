@@ -126,10 +126,17 @@ implementation. All three were promoted to `daily-task`; status below.
   (same bot-merge gap as below). Spun off one follow-up, #204
   (`needs-triage`): `AskPage.jsx`'s `max-w-3xl` thread wrapper caps the
   page below the grid's 900/1280px tiers.
-- **#194 Mount FileTree in a Library route — in flight.** Promoted to
-  `daily-task`; PR #206 (adds `/library/:repo/files`, wires
-  `AskPage.jsx` to consume `prefillQuestion` nav state) is open,
-  reviewed and approved 2026-09-26, not yet merged.
+- **#194 Mount FileTree in a Library route — in flight, stuck on a merge
+  conflict.** PR #206 (adds `/library/:repo/files`, wires `AskPage.jsx`
+  to consume `prefillQuestion` nav state) has now been approved three
+  days running (2026-09-26, 2026-09-27, 2026-09-28) but never merged:
+  GitHub reports it `CONFLICTING`/`DIRTY` against `main`, almost
+  certainly from overlap with #205 and #207 (both touching
+  `AskPage.jsx`/`App.jsx`, both merged the same day #206's auto-merge
+  was enabled). See the new gap below — nothing in the current
+  automation rebases a conflicted, already-approved PR, so this will
+  keep re-approving into a wall indefinitely without a human (or a
+  re-triggered Coder) rebasing the branch.
 - **#138 Decision graph view — no new dependency.** Shipped: PR #188
   merged 2026-09-23 (static grid/date layout, no `d3-force`). Was
   manually closed 2026-09-23 after sitting falsely `OPEN` — see the
@@ -233,6 +240,77 @@ needing a human:
    this repo, but still touches `.github/workflows/*`, so it needs a
    human to land it, same as every other candidate fix for this gap.
 
+**Update 2026-09-27/28 — fix #1 landed, unconfirmed.** Per #190's
+thread, `automation-kit@d05e59b` splits the merge step's token from the
+review step's: review submission keeps `github.token` (needed to dodge
+the self-review restriction), but the merge call now uses `GH_PAT`,
+which does fire downstream `pull_request` events. That should make
+adr-engine's existing `pull_request: closed` trigger (56beda1) actually
+fire on the next bot-merge. Still unconfirmed as of 2026-09-28, though
+— not because it failed, but because there hasn't been a bot-merge to
+test it against: #206 is the only open PR, and it's stuck in the
+merge-conflict deadlock described below, so nothing has merged since
+#205/#207 on 2026-09-26 (before the fix landed). Leave #190 open until
+a bot-merge actually happens and its linked issue is observed closing.
+
+## Known gap — auto-merge-enabled PRs never get rebased on conflict (found 2026-09-28)
+
+PR #206 has had auto-merge enabled since 2026-09-26T05:30:20Z but
+GitHub reports its merge state as `CONFLICTING`/`DIRTY` against `main`
+— it can never merge as-is. The Reviewer has re-approved it three
+separate times since (2026-09-26, 2026-09-27, 2026-09-28), because its
+review logic only checks the diff's merits and sensitive-path list, not
+whether the PR is actually mergeable, so it keeps stamping the same
+already-approved, unmergeable PR once a day.
+
+Nothing in the current delivery model closes this loop: the Coder
+"runs again right after the Reviewer... to resolve review feedback on
+its own open PRs," but a merge conflict isn't review feedback — the
+review is `APPROVED`, not `Request changes` — so there's no trigger
+that tells the Coder to rebase. Left alone, this PR (and any future one
+that lands in the same state) will sit in exactly this loop
+indefinitely: approved daily, merged never. It also means #206 is
+currently the only lever available to confirm or refute the #190 fix
+above, and it's stalled.
+
+Needs a human for now: rebase/update `issue/194-filetree-library-route`
+against `main` (or close #206 and let the Coder regenerate it against
+current `main`). Worth roadmapping properly once unblocked: either the
+Reviewer should skip re-approving (or explicitly flag) a PR whose
+`mergeable_state` is `dirty`/`conflicting`, or the Coder's
+already-open-PR pass should detect and rebase conflicted branches
+before the Reviewer re-reviews them.
+
+## Known gap — no CI actually enforces frontend tests on PRs (found 2026-09-28)
+
+The delivery model's merge gate (top of this file) claims: "Required
+status checks pass (`pytest`, `npm test`/build/lint, and the recall@5
+gate once available)." Checking `.github/workflows/*` directly: only
+`backend-tests.yml` exists, and it triggers solely on `pull_request`
+with `paths: backend/**` — it runs `pytest` (and the recall@5 harness,
+still a no-op pending #108). There is no workflow anywhere that runs
+`npm test`, `npm run build`, or `npm run lint`. Confirmed by grepping
+all five workflow files for those commands — zero matches outside that
+one line in `backend-tests.yml`'s own comment.
+
+Practical effect: every frontend-only PR (which is most of them lately
+— #191–#193, #205–#207, #206) merges with zero CI enforcement of
+frontend correctness. The only thing standing behind "all pass
+locally" in a PR body is the Coder's own self-report and the
+Reviewer's read of the diff; neither is independently verified the way
+`pytest` is for backend changes. Branch protection on `main` also has
+no `required_status_checks` configured at all (checked via the GitHub
+API directly) — only one required approving review — so this isn't
+even a caught-but-unenforced gap, it's fully open.
+
+This is a real gap, not a `needs-input` blocker — the fix is
+mechanical (a `frontend-tests.yml` mirroring `backend-tests.yml`'s
+shape: `pull_request` trigger scoped to `frontend/**` paths, `npm ci`,
+`npm run lint`, `npm test`, `npm run build`). Same constraint as
+`backend-tests.yml` had, though: it's a `.github/workflows/*` change,
+which the auto-merge gate itself excludes, so a human has to land it
+directly rather than it going through the normal daily-task pipeline.
+
 ## Process note
 
 Dependabot alerts were re-checked on 2026-09-22 (later the same day this
@@ -244,13 +322,16 @@ push-time warning ("18 vulnerabilities: 2 critical, 6 high, 10
 moderate"). Treat a `[]` response right after alerts get enabled as
 possibly stale, not as ground truth — re-check before reporting zero.
 
-## Security — open dependency alerts (found 2026-09-22, re-checked 2026-09-25)
+## Security — open dependency alerts (found 2026-09-22, re-checked 2026-09-28)
 
 Of the original 18, 12 are now `fixed` via merged Dependabot/daily-task
 PRs: react-router (#181), undici (#180), python-dotenv (#177, closed
 issue #185), postcss + nanoid (#178), and pytest (#196, closed issue
-#186 — see the bot-merge note above). 6 remain open, all the same
-group as yesterday, already tracked — nothing new to file here today:
+#186 — see the bot-merge note above). 6 remain open, same three CVEs,
+same group as every check since 2026-09-22 — no Dependabot PR exists
+for chromadb (checked `gh pr list --search "chromadb in:title"`,
+confirming there's still no patched version to bump to) — nothing new
+to file here today:
 
 - **chromadb — 1 critical + 2 high, no patch yet.** Same three CVEs as
   before (CVE-2026-45833 critical, CVE-2026-45831/CVE-2026-45830
