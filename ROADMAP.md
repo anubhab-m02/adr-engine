@@ -165,6 +165,19 @@ implementation. All three were promoted to `daily-task`; status below.
   navigates to decision detail, PR #192). All three (#139, #140, #145)
   are now closed.
 
+## Update 2026-09-29 — #194 shipped via #209; #206 is now obsolete
+
+The conflict deadlock below resolved itself the human way: PR #209
+(a regenerated, current-`main` version of the same work) was merged by
+`anubhab-m02` on 2026-09-29 and #194 auto-closed. #206 is a superseded
+duplicate that is still open — **close it** (no rebase needed) so the
+Reviewer stops re-approving it daily. #209's merge did trigger a real
+`pull_request`-event `reviewer.yml` run, but since a human (not the
+bot) merged it, it doesn't yet confirm the #190 fix; #190 stays open
+until a bot-merge is observed closing its linked issue. The
+Reviewer/Coder still lack any conflict-handling path (see gap below);
+that stays worth roadmapping.
+
 ## Known gap — bot-merged PRs aren't auto-closing linked issues (found 2026-09-23)
 
 `Closes #N` in a PR body has auto-closed the issue on merge for every
@@ -303,6 +316,13 @@ no `required_status_checks` configured at all (checked via the GitHub
 API directly) — only one required approving review — so this isn't
 even a caught-but-unenforced gap, it's fully open.
 
+**Update 2026-09-29:** the Coder implemented it (#208) but its push
+was rejected — the agent token lacks the `workflow` scope, so it can't
+write `.github/workflows/*`. #208 is now `needs-input`: a human must
+either grant the `workflow` scope or add `frontend-tests.yml` by hand
+(spec is in #208's body: Node 22, npm cache, lint → test → build),
+then add the check to `main` branch protection's required checks.
+
 This is a real gap, not a `needs-input` blocker — the fix is
 mechanical (a `frontend-tests.yml` mirroring `backend-tests.yml`'s
 shape: `pull_request` trigger scoped to `frontend/**` paths, `npm ci`,
@@ -322,7 +342,7 @@ push-time warning ("18 vulnerabilities: 2 critical, 6 high, 10
 moderate"). Treat a `[]` response right after alerts get enabled as
 possibly stale, not as ground truth — re-check before reporting zero.
 
-## Security — open dependency alerts (found 2026-09-22, re-checked 2026-09-28)
+## Security — open dependency alerts (found 2026-09-22, re-checked 2026-09-29)
 
 Of the original 18, 12 are now `fixed` via merged Dependabot/daily-task
 PRs: react-router (#181), undici (#180), python-dotenv (#177, closed
