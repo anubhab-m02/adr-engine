@@ -118,3 +118,8 @@ export function getDecisions({ repo, since, until, page } = {}) {
   if (page) params.set('page', page)
   return request(`/decisions?${params.toString()}`, { method: 'GET' })
 }
+
+export function getDecisionsByPath({ repo }) {
+  const params = new URLSearchParams({ repo })
+  return request(`/decisions/by-path?${params.toString()}`, { method: 'GET' })
+}

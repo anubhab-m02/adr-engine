@@ -47,6 +47,7 @@ function App() {
               <Route path="/library" element={<LibraryPage />} />
               <Route path="/library/:repo/timeline" element={<RepoDecisionsPage view="timeline" />} />
               <Route path="/library/:repo/graph" element={<RepoDecisionsPage view="graph" />} />
+              <Route path="/library/:repo/files" element={<RepoDecisionsPage view="files" />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>

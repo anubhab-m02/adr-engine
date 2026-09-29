@@ -4,10 +4,12 @@
 import { Link, useParams } from 'react-router-dom'
 import DecisionGraph from './DecisionGraph.jsx'
 import DecisionTimeline from './DecisionTimeline.jsx'
+import RepoFileTree from './RepoFileTree.jsx'
 
 const VIEWS = {
   timeline: { label: 'Timeline', Component: DecisionTimeline },
   graph: { label: 'Graph', Component: DecisionGraph },
+  files: { label: 'Files', Component: RepoFileTree },
 }
 
 function RepoDecisionsPage({ view }) {
