@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getAuthStatus, getRepos, postQuery } from '../api.js'
 import ChatInput from '../components/ChatInput.jsx'
 import MessageList from '../components/MessageList.jsx'
@@ -31,16 +31,26 @@ function exampleQuestions(repos) {
 }
 
 function AskPage() {
+  const location = useLocation()
+  const navigate = useNavigate()
   const [repos, setRepos] = useState(undefined)
   const [selectedRepos, setSelectedRepos] = useState([])
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(false)
   const [chatKey, setChatKey] = useState(0)
-  const [prefill, setPrefill] = useState('')
+  const [prefill, setPrefill] = useState(() => location.state?.prefillQuestion ?? '')
   const [authExpired, setAuthExpired] = useState(false)
   const [authBannerDismissed, setAuthBannerDismissed] = useState(
     () => sessionStorage.getItem(AUTH_BANNER_DISMISSED_KEY) === 'true',
   )
+
+  // FileTree navigates here with a pre-filled question; clear the
+  // navigation state so back/refresh doesn't re-trigger it.
+  useEffect(() => {
+    if (location.state?.prefillQuestion) {
+      navigate(location.pathname, { replace: true, state: null })
+    }
+  }, [location, navigate])
 
   useEffect(() => {
     let cancelled = false
