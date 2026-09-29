@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AskPage from './AskPage.jsx'
 import { getAuthStatus, getRepos, postQuery } from '../api.js'
@@ -38,7 +38,25 @@ afterEach(() => {
   vi.resetAllMocks()
 })
 
+function LocationProbe() {
+  return <div data-testid="location-state">{JSON.stringify(useLocation().state)}</div>
+}
+
 describe('AskPage', () => {
+  it('pre-fills the input from navigation state, then clears that state', async () => {
+    getRepos.mockResolvedValue(REPOS)
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/', state: { prefillQuestion: 'Why src/app.py?' } }]}>
+        <AskPage />
+        <LocationProbe />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByLabelText('Ask a question')).toHaveValue('Why src/app.py?')
+    await waitFor(() => expect(screen.getByTestId('location-state')).toHaveTextContent('null'))
+    expect(screen.getByLabelText('Ask a question')).toHaveValue('Why src/app.py?')
+  })
+
   it('shows a loading state then an answer after submitting a question', async () => {
     const user = userEvent.setup()
     getRepos.mockResolvedValue(REPOS)
