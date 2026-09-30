@@ -178,6 +178,22 @@ until a bot-merge is observed closing its linked issue. The
 Reviewer/Coder still lack any conflict-handling path (see gap below);
 that stays worth roadmapping.
 
+## Update 2026-09-30 — quiet day; state of play
+
+- **#206 is closed** (superseded by #209); the "close it" action from
+  yesterday is done. No open PRs remain, so there is still no bot-merge
+  to confirm the #190 fix against; #190 stays open.
+- **Open human-blocked items:** #208 (`frontend-tests.yml` — needs the
+  `workflow` scope or a hand-added workflow, then a required check in
+  branch protection), #108 (frozen eval fixture — still the top action;
+  also blocks #112), #190 (awaiting an observed bot-merge).
+- **Security:** 6 chromadb alerts (3 unique CVEs, 1 critical + 2 high)
+  remain open with no Dependabot PR and no patched version. Tracking
+  issue #187 is now closed, so nothing currently tracks the
+  risk-acceptance call. Worth re-filing as `needs-input` if a human
+  wants an explicit decision (accept, pin/mitigate, or replace the
+  store); otherwise the alerts sit silently.
+
 ## Known gap — bot-merged PRs aren't auto-closing linked issues (found 2026-09-23)
 
 `Closes #N` in a PR body has auto-closed the issue on merge for every
