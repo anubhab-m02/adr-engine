@@ -194,6 +194,21 @@ that stays worth roadmapping.
   wants an explicit decision (accept, pin/mitigate, or replace the
   store); otherwise the alerts sit silently.
 
+## Update 2026-10-01 — quiet day, no change in blockers
+
+- No steering issues. No new review report since 2026-09-29 (no open
+  PRs to review); no merges since #209.
+- Open human-blocked items unchanged: #108 (still the top action; blocks
+  #112), #208 (needs `workflow` scope or a hand-added workflow), #190
+  (needs an observed bot-merge).
+- Open `daily-task` pipeline is effectively empty apart from those
+  blocked issues; #204 (`needs-triage`, AskPage `max-w-3xl` cap) is the
+  only unblocked candidate and is worth promoting to `daily-task`.
+- Security: same 6 chromadb alerts (3 CVEs: 1 critical, 2 high), no
+  Dependabot PR, no patched version; nothing tracks the risk-acceptance
+  call since #187 closed. If a human wants a decision, file it as
+  `needs-input`.
+
 ## Known gap — bot-merged PRs aren't auto-closing linked issues (found 2026-09-23)
 
 `Closes #N` in a PR body has auto-closed the issue on merge for every
