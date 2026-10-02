@@ -209,6 +209,27 @@ that stays worth roadmapping.
   call since #187 closed. If a human wants a decision, file it as
   `needs-input`.
 
+## Update 2026-10-02 — #204 shipped via #210; pipeline drained
+
+- No steering issues. PR #210 (AskPage thread widened to 68rem at 900px+,
+  `Closes #204`) was merged 2026-10-02 by `anubhab-m02` (a human, not the
+  bot) and #204 closed itself, so the Ask-grid follow-up from #173 is done.
+  Because a human merged it, it again does not confirm the #190 fix; #190
+  stays open until a `github-actions[bot]` merge is observed closing its
+  linked issue.
+- Reviewer's 2026-10-02 report: #210 approved, no findings.
+- No open PRs and no unblocked `daily-task` issues remain. Everything left
+  is human-blocked: #108 (top action; blocks #112), #208 (needs `workflow`
+  scope or hand-added workflow), #190 (needs an observed bot-merge).
+- Security: same 6 chromadb alerts (3 CVEs: 1 critical, 2 high), no
+  Dependabot PR, no patched version. No open issue tracks the
+  risk-acceptance call; a human should either file a `steering` issue
+  choosing accept / pin-and-mitigate / replace the store, or confirm
+  acceptance for a local-first, single-user deployment.
+- No new product ideas today — the highest-value work is unblocking #108
+  so the recall@5 gate and retrieval tuning (#112) can start enforcing
+  quality.
+
 ## Known gap — bot-merged PRs aren't auto-closing linked issues (found 2026-09-23)
 
 `Closes #N` in a PR body has auto-closed the issue on merge for every
