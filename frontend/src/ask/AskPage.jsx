@@ -192,7 +192,7 @@ function AskPage() {
             </div>
           </div>
         ) : (
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-3xl min-[900px]:max-w-[68rem] mx-auto">
             <MessageList
               messages={messages}
               repos={Array.isArray(repos) ? repos : []}
