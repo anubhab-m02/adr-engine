@@ -231,6 +231,24 @@ describe('AskPage', () => {
     expect(footer.parentElement.lastElementChild).toBe(footer)
   })
 
+  it('widens the message thread wrapper at 900px+ but keeps the input wrapper at max-w-3xl', async () => {
+    const user = userEvent.setup()
+    getRepos.mockResolvedValue(REPOS)
+    postQuery.mockResolvedValue({ answer: 'We use OAuth2 for auth.', citations: [], retrieved_count: 0 })
+
+    renderAskPage()
+    await user.type(await screen.findByLabelText('Ask a question'), 'Why OAuth2?')
+    await user.click(screen.getByRole('button', { name: 'Ask' }))
+    const answer = await screen.findByText('We use OAuth2 for auth.')
+
+    const thread = answer.closest('main > div')
+    expect(thread).toHaveClass('max-w-3xl', 'min-[900px]:max-w-[68rem]')
+
+    const inputWrapper = screen.getByLabelText('Ask a question').closest('form').parentElement
+    expect(inputWrapper).toHaveClass('max-w-3xl')
+    expect(inputWrapper.className).not.toMatch(/min-\[900px\]:/)
+  })
+
   it('shows a GitHub-expired banner when the auth status is expired', async () => {
     getRepos.mockResolvedValue(REPOS)
     getAuthStatus.mockResolvedValue({ state: 'expired' })
