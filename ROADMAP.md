@@ -230,6 +230,14 @@ that stays worth roadmapping.
   so the recall@5 gate and retrieval tuning (#112) can start enforcing
   quality.
 
+## Update 2026-10-03 — quiet day, no change in blockers
+
+- No steering issues, no new review findings (latest report 2026-10-02:
+  #210 approved). No PRs merged since #210.
+- Still human-blocked: #108 (top action; blocks #112), #208, #190.
+- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
+  Dependabot PR, no tracking issue; unchanged from 2026-10-02.
+
 ## Known gap — bot-merged PRs aren't auto-closing linked issues (found 2026-09-23)
 
 `Closes #N` in a PR body has auto-closed the issue on merge for every
