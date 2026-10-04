@@ -238,6 +238,14 @@ that stays worth roadmapping.
 - Security: same 6 chromadb alerts (3 CVEs), no patched version, no
   Dependabot PR, no tracking issue; unchanged from 2026-10-02.
 
+## Update 2026-10-04 — quiet day, no change in blockers
+
+- No steering issues, no new review report (latest 2026-10-02), no PRs
+  opened or merged since #210.
+- Still human-blocked: #108 (top action; blocks #112), #208, #190.
+- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
+  Dependabot PR, no tracking issue. The Dependabot API call succeeded.
+
 ## Known gap — bot-merged PRs aren't auto-closing linked issues (found 2026-09-23)
 
 `Closes #N` in a PR body has auto-closed the issue on merge for every
