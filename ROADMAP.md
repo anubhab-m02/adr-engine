@@ -350,6 +350,16 @@ that stays worth roadmapping.
   chromadb risk (local file-based Chroma, no network-exposed server) so
   the decision has an open home.
 
+## Update 2026-10-17 — quiet day, no change in blockers
+
+- No steering issues, no new review report (latest 2026-10-02), no PRs
+  opened or merged since #210.
+- Still human-blocked: #108 (top action; blocks #112), #208, #190.
+- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
+  Dependabot PR, and still no open risk-acceptance issue (the Issue
+  Generator step from 2026-10-16 hasn't happened yet). The Dependabot
+  API call succeeded.
+
 ## Known gap — bot-merged PRs aren't auto-closing linked issues (found 2026-09-23)
 
 `Closes #N` in a PR body has auto-closed the issue on merge for every
