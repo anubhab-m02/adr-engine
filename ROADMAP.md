@@ -369,6 +369,25 @@ that stays worth roadmapping.
   Dependabot PR, and still no open risk-acceptance issue. The
   Dependabot API call succeeded.
 
+## Update 2026-10-19 — new security alert: source-map-js (no patch)
+
+- No steering issues, no new review report (latest 2026-10-02), no PRs
+  opened or merged since #210.
+- Still human-blocked: #108 (top action; blocks #112), #208, #190.
+- **New alert #20: source-map-js 1.2.1 (high, CVE-2026-93749 /
+  GHSA-68fv-2mgg-jv7q)** — event-loop DoS via indexed source-map section
+  offsets. Transitive dev dependency in `frontend/package-lock.json`
+  (build tooling only, not shipped to users). The advisory lists no
+  patched version and `gh pr list --search "source-map-js in:title"`
+  finds no Dependabot PR, so nothing will close it automatically.
+  Low practical exposure (local build tooling, no untrusted source
+  maps), but it needs the same explicit risk-acceptance call as
+  chromadb, or an `overrides` pin if upstream ships a fix.
+- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
+  Dependabot PR, still no open risk-acceptance issue. **Next step for the
+  Issue Generator:** one `needs-input` issue covering both chromadb and
+  source-map-js risk acceptance. The Dependabot API call succeeded.
+
 ## Known gap — bot-merged PRs aren't auto-closing linked issues (found 2026-09-23)
 
 `Closes #N` in a PR body has auto-closed the issue on merge for every
