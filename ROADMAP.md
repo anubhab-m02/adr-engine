@@ -409,6 +409,32 @@ that stays worth roadmapping.
   `needs-input` issue #211 (supersedes the closed #187 referenced in the
   Security section below). The Dependabot API call succeeded.
 
+## Update 2026-10-21 — source-map-js fixed (#213); 3 new vite/launch-editor alerts
+
+- No steering issues. Reviewer's 2026-10-21 report: #213 approved, no
+  findings. PR #213 (source-map-js 1.2.1 -> 1.2.2, `Closes #212`) was
+  merged 2026-10-21 by `anubhab-m02` (a human), and #212 closed itself;
+  alert #20 is handled. Human merge again, so #190 is still unconfirmed.
+- Still human-blocked: #108 (top action; blocks #112), #208, #190, #211
+  (chromadb risk acceptance).
+- **New alerts #21-#23 (vite, dev-only, `frontend/package-lock.json`, 8.1.5):**
+  all three are `launch-editor` advisories pulled in via vite's dev server
+  (CVE-2026-112942 high, -112943 and -112944 medium): Windows path/escape
+  bypasses and editor CLI flag injection. Exploitation needs an attacker
+  able to create `+`/`-`-prefixed filesystem entries in the working
+  directory plus a Vim/Emacs editor setup, and affects only the local dev
+  server, never shipped output. The API returned no patched-version data,
+  and `gh pr list --search "vite in:title"` / `"launch-editor in:title"`
+  find no Dependabot PR, so nothing will close these automatically.
+  **Next step for the Issue Generator:** a `daily-task` to check whether a
+  newer vite or `launch-editor` (>= 2.2.0 per the advisory text) is
+  available and, if so, bump it via `npm update`/`overrides` in
+  `frontend/package-lock.json`, verified by `npm ls launch-editor` and
+  lint/test/build. If no fix exists, fold into #211 as a dev-only
+  risk-acceptance.
+- Security: 6 chromadb alerts (3 CVEs: 1 critical, 2 high) unchanged, no
+  patch, tracked in #211. The Dependabot API call succeeded.
+
 ## Known gap — bot-merged PRs aren't auto-closing linked issues (found 2026-09-23)
 
 `Closes #N` in a PR body has auto-closed the issue on merge for every
