@@ -435,6 +435,26 @@ that stays worth roadmapping.
 - Security: 6 chromadb alerts (3 CVEs: 1 critical, 2 high) unchanged, no
   patch, tracked in #211. The Dependabot API call succeeded.
 
+## Update 2026-10-22 — vite/launch-editor fix (#214) blocked on an npm bug
+
+- No steering issues, no new review report (latest 2026-10-21, #213
+  approved), no PRs merged since #213.
+- Still human-blocked: #108 (top action; blocks #112), #208, #190, #211
+  (chromadb risk acceptance), and now #214.
+- **#214 (vite alerts #21-#23) is blocked, not just queued.** The Coder
+  found vite 8.3.5 clears all three launch-editor advisories, but
+  `npm install`/`npm update`/`npm audit fix` crash in arborist
+  (`#loadPeerSet`, `edgesOut` of null). `--legacy-peer-deps` yields a
+  ~600-line lockfile diff (over the 150-line limit) that fails `npm ci`.
+  No Dependabot PR exists for vite/launch-editor. **Human decision
+  needed on #214:** regenerate the lockfile from scratch (large diff),
+  pin a different npm version, add an `overrides` entry, or accept the
+  dev-only risk in #211. A separate vitest bump is also needed for the
+  @vitest/mocker alerts (2 moderate).
+- Security: 6 chromadb alerts (3 CVEs) unchanged, no patch, tracked in
+  #211. 3 open vite alerts (#21-#23) tracked in #214. The Dependabot API
+  call succeeded.
+
 ## Known gap — bot-merged PRs aren't auto-closing linked issues (found 2026-09-23)
 
 `Closes #N` in a PR body has auto-closed the issue on merge for every
