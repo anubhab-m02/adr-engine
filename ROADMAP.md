@@ -455,6 +455,16 @@ that stays worth roadmapping.
   #211. 3 open vite alerts (#21-#23) tracked in #214. The Dependabot API
   call succeeded.
 
+## Update 2026-10-23 — quiet day, no change in blockers
+
+- No steering issues, no new review report (latest 2026-10-21), no PRs
+  opened or merged since #213.
+- Still human-blocked: #108 (top action; blocks #112), #208, #190, #211,
+  #214 (npm arborist bug; needs a lockfile-regeneration / npm-pin /
+  accept-risk call).
+- Security: 6 chromadb alerts (3 CVEs) and vite alerts #21-#23 open, no
+  Dependabot PR or patched path. The Dependabot API call succeeded.
+
 ## Known gap — bot-merged PRs aren't auto-closing linked issues (found 2026-09-23)
 
 `Closes #N` in a PR body has auto-closed the issue on merge for every
