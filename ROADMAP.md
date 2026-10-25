@@ -455,6 +455,17 @@ that stays worth roadmapping.
   #211. 3 open vite alerts (#21-#23) tracked in #214. The Dependabot API
   call succeeded.
 
+## Update 2026-10-25 — quiet day, no change in blockers
+
+- No steering issues, no new review report (latest 2026-10-21), no PRs
+  merged since #213.
+- Still human-blocked: #108 (top action; blocks #112), #208, #190, #211,
+  #214.
+- Dependabot alerts: 3 open vite (#21-#23, tracked in #214) and 6 open
+  chromadb (#3-#5, #7-#9, no fixed version; tracked in #211). No
+  Dependabot PR covers either, so nothing new is added. The API call
+  succeeded.
+
 ## Update 2026-10-24 — quiet day, no change in blockers
 
 - No steering issues, no new review report (latest 2026-10-21), no PRs
