@@ -466,6 +466,17 @@ that stays worth roadmapping.
   Dependabot PR covers either, so nothing new is added. The API call
   succeeded.
 
+## Update 2026-10-26 — quiet day, no change in blockers
+
+- No steering issues, no new review report (latest 2026-10-21), no PRs
+  merged since #213.
+- Still human-blocked: #108 (top action; blocks #112), #208, #190, #211,
+  #214.
+- Dependabot alerts: same 3 vite (#21-#23, fixed in 8.1.6; tracked in
+  #214) and 6 chromadb (no fixed version; tracked in #211). No
+  Dependabot PR covers either, so nothing new is added. The API call
+  succeeded.
+
 ## Update 2026-10-24 — quiet day, no change in blockers
 
 - No steering issues, no new review report (latest 2026-10-21), no PRs
