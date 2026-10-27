@@ -455,6 +455,26 @@ that stays worth roadmapping.
   #211. 3 open vite alerts (#21-#23) tracked in #214. The Dependabot API
   call succeeded.
 
+## Update 2026-10-27 — new alert #24 (@vitest/mocker); #214 scope widened
+
+- No steering issues, no new review report (latest 2026-10-21), no PRs
+  merged since #213.
+- Still human-blocked: #108 (top action; blocks #112), #208, #190, #211,
+  #214.
+- **New alert #24: @vitest/mocker 4.1.11 (medium, CVE-2026-112950 /
+  GHSA-xp26-3454-mjgp)** — Windows backslash traversal bypass of the
+  mocker redirect allowlist; dev-only, transitive in
+  `frontend/package-lock.json`. Fixed in 4.1.12. The only matching
+  Dependabot PR (#182) is an older merged bump that landed 4.1.11, the
+  now-vulnerable version, so it does not cover this alert and nothing
+  will close it automatically. It hits the same npm arborist lockfile
+  bug as #214, so **fold it into #214's scope** (bump vitest /
+  @vitest/mocker to >= 4.1.12 alongside the vite >= 8.1.6 bump) rather
+  than filing a separate issue; if #214 ends in dev-only risk
+  acceptance, cover this alert in #211's decision too.
+- Dependabot alerts: 4 npm (vite #21-#23, @vitest/mocker #24) and 6
+  chromadb (no fixed version; tracked in #211). The API call succeeded.
+
 ## Update 2026-10-25 — quiet day, no change in blockers
 
 - No steering issues, no new review report (latest 2026-10-21), no PRs
