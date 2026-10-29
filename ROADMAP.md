@@ -455,6 +455,25 @@ that stays worth roadmapping.
   #211. 3 open vite alerts (#21-#23) tracked in #214. The Dependabot API
   call succeeded.
 
+## Update 2026-10-29 — two new vite alerts (#25, #26) fold into #214
+
+- No steering issues, no new review report (latest 2026-10-21), no PRs
+  merged since #213, no open PRs.
+- Still human-blocked: #108 (top action; blocks #112), #208, #190, #211,
+  #214.
+- **New alerts #25 (vite, low) and #26 (vite, medium,
+  CVE-2026-112946 / GHSA-rq7h-c2jc-7f22)** — dev-server file-serving
+  issues, only reachable when the dev server is exposed to the network.
+  Both fixed in vite 8.1.6. No Dependabot PR exists (vite PRs searched:
+  none relevant), so they fold into #214's scope: the same vite >= 8.1.6
+  bump covers alerts #21-#23, #25 and #26. Same npm arborist lockfile
+  blocker applies; if #214 ends in dev-only risk acceptance, cover them
+  in #211 too. Mitigation until then: don't run `npm run dev` with
+  `--host`.
+- Dependabot alerts: 6 npm (vite #21-#23, #25, #26; @vitest/mocker #24,
+  all tracked in #214) and 6 chromadb (tracked in #211). The API call
+  succeeded.
+
 ## Update 2026-10-28 — quiet day, no change in blockers
 
 - No steering issues, no new review report (latest 2026-10-21), no PRs
