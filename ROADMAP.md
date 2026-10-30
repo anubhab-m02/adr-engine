@@ -509,7 +509,7 @@ to file here today:
 
 ## Later / parking lot
 
-- **Retrieval-quality gate (parked 2026-10-31, was #108 + #112).** Needs `backend/eval/build_fixture.py` (does not exist yet; plan: `docs/superpowers/plans/2026-08-04-track-a-core-proving.md` Task 11), a one-time run against a live local Ollama to build the frozen fixture, then a k/RELEVANCE_FLOOR sweep. `backend-tests.yml` already runs the harness automatically once `backend/eval/fixtures/` exists. Deliberately deferred: it needs a human with Ollama, and nothing else depends on it.
+- **Retrieval-quality gate = the critical path (#108, #112).** The v2 design gates Waves 1-6 behind recall@5 >= 70%. It needs `backend/eval/build_fixture.py` (plan: `docs/superpowers/plans/2026-08-04-track-a-core-proving.md` Task 11), a one-time run against a live local Ollama, then a k/RELEVANCE_FLOOR sweep (#112). Until it clears, gate-independent work (tests, a11y, spec gaps, refactors) keeps the Coder busy.
 
 - **Editor & CLI integration** (`adr why "..."`, VS Code) — meet the
   question where it arises. Deliberately parked until the web product

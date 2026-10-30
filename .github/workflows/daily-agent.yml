@@ -17,6 +17,7 @@ jobs:
     with:
       random_window_minutes: 180
       mode: new-issues
+      max_issues: 5
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
       GH_PAT: ${{ secrets.GH_PAT }}

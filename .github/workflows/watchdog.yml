@@ -1,6 +1,6 @@
 name: Watchdog
 
-# Keeps the unattended automation org alive and loud when it can't be:
+# Keeps the unattended automation org alive, productive, and loud when it can't be:
 # re-enables any workflow GitHub auto-disabled (60 days of inactivity),
 # and opens ONE tracking issue (assigned to the owner, so GitHub emails
 # them) if an automation stopped succeeding, main went quiet, or the
@@ -9,7 +9,7 @@ name: Watchdog
 
 on:
   schedule:
-    - cron: "0 3 * * 1"  # Mondays 03:00 UTC
+    - cron: "0 3 * * *"  # daily 03:00 UTC
   workflow_dispatch: {}
 
 jobs:
@@ -48,6 +48,29 @@ jobs:
               add "$wf has no successful run since $cutoff (last: ${ok:-never}). Likely an expired CLAUDE_CODE_OAUTH_TOKEN or GH_PAT, or a broken workflow."
             fi
           done
+
+          # 2b. OUTCOMES, not just green runs. A team ships work every day:
+          # merged non-docs PRs in the last 3 days, and a healthy backlog.
+          since3=$(date -u -d '3 days ago' +%Y-%m-%dT%H:%M:%SZ)
+          shipped=$(gh pr list --repo "$REPO" --state merged --limit 50 \
+            --json title,mergedAt --jq "[.[] | select(.mergedAt > \"$since3\") | select(.title | test(\"^(docs|ci)[:(]\") | not)] | length")
+          backlog=$(gh issue list --repo "$REPO" --label daily-task --state open --limit 1000 \
+            --json labels --jq '[.[] | select(.labels | map(.name) | (index("in-pr") or index("needs-input")) | not)] | length')
+          echo "Shipped (3d): $shipped; eligible backlog: $backlog"
+          nudge=false
+          [ "$backlog" -lt 5 ] && nudge=true
+          [ "$shipped" -eq 0 ] && nudge=true
+          if [ "$nudge" = true ]; then
+            # Self-heal first (no human involved): wake the producers, then the Coder.
+            for wf in "Brainstormer" "Issue Generator" "Daily Agent"; do
+              gh workflow run "$wf" --repo "$REPO" && echo "Nudged $wf"
+            done
+          fi
+          # Only escalate to the human when a week of nudging produced nothing.
+          since7=$(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%SZ)
+          shipped7=$(gh pr list --repo "$REPO" --state merged --limit 100 \
+            --json title,mergedAt --jq "[.[] | select(.mergedAt > \"$since7\") | select(.title | test(\"^(docs|ci)[:(]\") | not)] | length")
+          [ "$shipped7" -eq 0 ] && add "No code PR merged in 7 days despite daily nudges (eligible backlog: $backlog). The automation is running but not producing work; needs a look."
 
           # 3. main must not have gone quiet (keeps scheduled workflows alive).
           last=$(gh api "repos/$REPO/commits?per_page=1" --jq '.[0].commit.committer.date')
