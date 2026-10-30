@@ -1,0 +1,79 @@
+name: Watchdog
+
+# Keeps the unattended automation org alive and loud when it can't be:
+# re-enables any workflow GitHub auto-disabled (60 days of inactivity),
+# and opens ONE tracking issue (assigned to the owner, so GitHub emails
+# them) if an automation stopped succeeding, main went quiet, or the
+# GH_PAT is close to expiring. Tokens expiring is the one failure the
+# automation cannot repair itself.
+
+on:
+  schedule:
+    - cron: "0 3 * * 1"  # Mondays 03:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+      issues: write
+    steps:
+      - name: Check automation health
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PAT: ${{ secrets.GH_PAT }}
+          REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -uo pipefail
+          problems=""
+          add() { problems="${problems}- $1"$'\n'; }
+
+          # 1. Re-enable anything GitHub auto-disabled.
+          for wf in "Daily Agent" "Reviewer" "Brainstormer" "Issue Generator"; do
+            state=$(gh workflow view "$wf" --repo "$REPO" --json state --jq .state 2>/dev/null || echo missing)
+            if [ "$state" != "active" ]; then
+              gh workflow enable "$wf" --repo "$REPO" && add "$wf was $state; re-enabled."
+            fi
+          done
+
+          # 2. Each automation must have succeeded recently (Daily Agent
+          # no-ops green on an empty backlog, so 4 days is generous).
+          cutoff=$(date -u -d '4 days ago' +%Y-%m-%dT%H:%M:%SZ)
+          for wf in "Daily Agent" "Reviewer" "Brainstormer" "Issue Generator"; do
+            ok=$(gh run list --repo "$REPO" --workflow "$wf" --status success --limit 1 --json createdAt --jq '.[0].createdAt // ""')
+            if [ -z "$ok" ] || [[ "$ok" < "$cutoff" ]]; then
+              add "$wf has no successful run since $cutoff (last: ${ok:-never}). Likely an expired CLAUDE_CODE_OAUTH_TOKEN or GH_PAT, or a broken workflow."
+            fi
+          done
+
+          # 3. main must not have gone quiet (keeps scheduled workflows alive).
+          last=$(gh api "repos/$REPO/commits?per_page=1" --jq '.[0].commit.committer.date')
+          if [[ "$last" < "$(date -u -d '14 days ago' +%Y-%m-%dT%H:%M:%SZ)" ]]; then
+            add "No commit on main since $last."
+          fi
+
+          # 4. GH_PAT expiry (response header on PAT-authenticated calls).
+          exp=$(curl -sI -H "Authorization: Bearer $PAT" https://api.github.com/user \
+            | tr -d '\r' | awk -F': ' 'tolower($1)=="github-authentication-token-expiration"{print $2}')
+          if [ -n "$exp" ]; then
+            days=$(( ($(date -d "$exp" +%s) - $(date +%s)) / 86400 ))
+            [ "$days" -lt 60 ] && add "GH_PAT expires in $days days ($exp). Regenerate it (Administration, Contents, Issues, Pull requests: read/write) and update the GH_PAT secret in both repos."
+          fi
+
+          # One tracking issue, reused; closed automatically when healthy.
+          num=$(gh issue list --repo "$REPO" --state open --json number,title \
+            --jq '[.[] | select(.title == "Automation health alert")][0].number // empty')
+          if [ -n "$problems" ]; then
+            body="Watchdog findings ($(date -u +%Y-%m-%d)):"$'\n\n'"$problems"
+            if [ -z "$num" ]; then
+              gh issue create --repo "$REPO" --title "Automation health alert" \
+                --label needs-input --assignee "$OWNER" --body "$body"
+            else
+              gh issue comment "$num" --repo "$REPO" --body "$body"
+            fi
+          elif [ -n "$num" ]; then
+            gh issue close "$num" --repo "$REPO" --comment "Watchdog: all checks healthy again."
+          fi

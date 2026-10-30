@@ -178,37 +178,6 @@ until a bot-merge is observed closing its linked issue. The
 Reviewer/Coder still lack any conflict-handling path (see gap below);
 that stays worth roadmapping.
 
-## Update 2026-09-30 — quiet day; state of play
-
-- **#206 is closed** (superseded by #209); the "close it" action from
-  yesterday is done. No open PRs remain, so there is still no bot-merge
-  to confirm the #190 fix against; #190 stays open.
-- **Open human-blocked items:** #208 (`frontend-tests.yml` — needs the
-  `workflow` scope or a hand-added workflow, then a required check in
-  branch protection), #108 (frozen eval fixture — still the top action;
-  also blocks #112), #190 (awaiting an observed bot-merge).
-- **Security:** 6 chromadb alerts (3 unique CVEs, 1 critical + 2 high)
-  remain open with no Dependabot PR and no patched version. Tracking
-  issue #187 is now closed, so nothing currently tracks the
-  risk-acceptance call. Worth re-filing as `needs-input` if a human
-  wants an explicit decision (accept, pin/mitigate, or replace the
-  store); otherwise the alerts sit silently.
-
-## Update 2026-10-01 — quiet day, no change in blockers
-
-- No steering issues. No new review report since 2026-09-29 (no open
-  PRs to review); no merges since #209.
-- Open human-blocked items unchanged: #108 (still the top action; blocks
-  #112), #208 (needs `workflow` scope or a hand-added workflow), #190
-  (needs an observed bot-merge).
-- Open `daily-task` pipeline is effectively empty apart from those
-  blocked issues; #204 (`needs-triage`, AskPage `max-w-3xl` cap) is the
-  only unblocked candidate and is worth promoting to `daily-task`.
-- Security: same 6 chromadb alerts (3 CVEs: 1 critical, 2 high), no
-  Dependabot PR, no patched version; nothing tracks the risk-acceptance
-  call since #187 closed. If a human wants a decision, file it as
-  `needs-input`.
-
 ## Update 2026-10-02 — #204 shipped via #210; pipeline drained
 
 - No steering issues. PR #210 (AskPage thread widened to 68rem at 900px+,
@@ -229,145 +198,6 @@ that stays worth roadmapping.
 - No new product ideas today — the highest-value work is unblocking #108
   so the recall@5 gate and retrieval tuning (#112) can start enforcing
   quality.
-
-## Update 2026-10-03 — quiet day, no change in blockers
-
-- No steering issues, no new review findings (latest report 2026-10-02:
-  #210 approved). No PRs merged since #210.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190.
-- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
-  Dependabot PR, no tracking issue; unchanged from 2026-10-02.
-
-## Update 2026-10-04 — quiet day, no change in blockers
-
-- No steering issues, no new review report (latest 2026-10-02), no PRs
-  opened or merged since #210.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190.
-- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
-  Dependabot PR, no tracking issue. The Dependabot API call succeeded.
-
-## Update 2026-10-05 — quiet day, no change in blockers
-
-- No steering issues, no new review report (latest 2026-10-02), no PRs
-  opened or merged since #210.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190.
-- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
-  Dependabot PR, no tracking issue. The Dependabot API call succeeded.
-
-## Update 2026-10-06 — quiet day, no change in blockers
-
-- No steering issues, no new review report (latest 2026-10-02), no PRs
-  opened or merged since #210.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190.
-- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
-  Dependabot PR, no tracking issue. The Dependabot API call succeeded.
-
-## Update 2026-10-07 — quiet day, no change in blockers
-
-- No steering issues, no new review report (latest 2026-10-02), no PRs
-  opened or merged since #210.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190.
-- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
-  Dependabot PR, no tracking issue. The Dependabot API call succeeded.
-
-## Update 2026-10-08 — quiet day, no change in blockers
-
-- No steering issues, no new review report (latest 2026-10-02), no PRs
-  opened or merged since #210.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190.
-- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
-  Dependabot PR, no tracking issue. The Dependabot API call succeeded.
-
-## Update 2026-10-09 — quiet day, no change in blockers
-
-- No steering issues, no new review report (latest 2026-10-02), no PRs
-  opened or merged since #210.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190.
-- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
-  Dependabot PR, no tracking issue. The Dependabot API call succeeded.
-
-## Update 2026-10-10 — quiet day, no change in blockers
-
-- No steering issues, no new review report (latest 2026-10-02), no PRs
-  opened or merged since #210.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190.
-- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
-  Dependabot PR, no tracking issue. The Dependabot API call succeeded.
-
-## Update 2026-10-11 — quiet day, no change in blockers
-
-- No steering issues, no new review report (latest 2026-10-02), no PRs
-  opened or merged since #210.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190.
-- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
-  Dependabot PR, no tracking issue. The Dependabot API call succeeded.
-
-## Update 2026-10-12 — quiet day, no change in blockers
-
-- No steering issues, no new review report (latest 2026-10-02), no PRs
-  opened or merged since #210.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190.
-- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
-  Dependabot PR, no tracking issue. The Dependabot API call succeeded.
-
-## Update 2026-10-13 — quiet day, no change in blockers
-
-- No steering issues, no new review report (latest 2026-10-02), no PRs
-  opened or merged since #210.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190.
-- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
-  Dependabot PR, no tracking issue. The Dependabot API call succeeded.
-
-## Update 2026-10-14 — quiet day, no change in blockers
-
-- No steering issues, no new review report (latest 2026-10-02), no PRs
-  opened or merged since #210.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190.
-- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
-  Dependabot PR. Previously tracked #187 is closed, so no open
-  risk-acceptance issue exists; the human accept-the-risk call is still
-  outstanding. The Dependabot API call succeeded.
-
-## Update 2026-10-15 — quiet day, no change in blockers
-
-- No steering issues, no new review report (latest 2026-10-02), no PRs
-  opened or merged since #210.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190.
-- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
-  Dependabot PR, no open risk-acceptance issue. The Dependabot API call
-  succeeded.
-
-## Update 2026-10-16 — quiet day, no change in blockers
-
-- No steering issues, no new review report (latest 2026-10-02), no PRs
-  opened or merged since #210.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190.
-- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
-  Dependabot PR. The Dependabot API call succeeded. Correction: the
-  Security section below still says the risk-acceptance call is tracked
-  as #187, but #187 is closed. **Next step for the Issue Generator:** file
-  a fresh `needs-input` issue asking the owner to accept or reject the
-  chromadb risk (local file-based Chroma, no network-exposed server) so
-  the decision has an open home.
-
-## Update 2026-10-17 — quiet day, no change in blockers
-
-- No steering issues, no new review report (latest 2026-10-02), no PRs
-  opened or merged since #210.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190.
-- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
-  Dependabot PR, and still no open risk-acceptance issue (the Issue
-  Generator step from 2026-10-16 hasn't happened yet). The Dependabot
-  API call succeeded.
-
-## Update 2026-10-18 — quiet day, no change in blockers
-
-- No steering issues, no new review report (latest 2026-10-02), no PRs
-  opened or merged since #210.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190.
-- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
-  Dependabot PR, and still no open risk-acceptance issue. The
-  Dependabot API call succeeded.
 
 ## Update 2026-10-19 — new security alert: source-map-js (no patch)
 
@@ -474,16 +304,6 @@ that stays worth roadmapping.
   all tracked in #214) and 6 chromadb (tracked in #211). The API call
   succeeded.
 
-## Update 2026-10-28 — quiet day, no change in blockers
-
-- No steering issues, no new review report (latest 2026-10-21), no PRs
-  merged since #213, no open PRs.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190, #211,
-  #214 (now also covers alert #24).
-- Dependabot alerts: vite #21-#23 and @vitest/mocker #24 (tracked in
-  #214) and 6 chromadb (tracked in #211); no Dependabot PR covers any of
-  them, so nothing new is added. The API call succeeded.
-
 ## Update 2026-10-27 — new alert #24 (@vitest/mocker); #214 scope widened
 
 - No steering issues, no new review report (latest 2026-10-21), no PRs
@@ -503,59 +323,6 @@ that stays worth roadmapping.
   acceptance, cover this alert in #211's decision too.
 - Dependabot alerts: 4 npm (vite #21-#23, @vitest/mocker #24) and 6
   chromadb (no fixed version; tracked in #211). The API call succeeded.
-
-## Update 2026-10-25 — quiet day, no change in blockers
-
-- No steering issues, no new review report (latest 2026-10-21), no PRs
-  merged since #213.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190, #211,
-  #214.
-- Dependabot alerts: 3 open vite (#21-#23, tracked in #214) and 6 open
-  chromadb (#3-#5, #7-#9, no fixed version; tracked in #211). No
-  Dependabot PR covers either, so nothing new is added. The API call
-  succeeded.
-
-## Update 2026-10-26 — quiet day, no change in blockers
-
-- No steering issues, no new review report (latest 2026-10-21), no PRs
-  merged since #213.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190, #211,
-  #214.
-- Dependabot alerts: same 3 vite (#21-#23, fixed in 8.1.6; tracked in
-  #214) and 6 chromadb (no fixed version; tracked in #211). No
-  Dependabot PR covers either, so nothing new is added. The API call
-  succeeded.
-
-## Update 2026-10-24 — quiet day, no change in blockers
-
-- No steering issues, no new review report (latest 2026-10-21), no PRs
-  merged since #213.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190, #211,
-  #214.
-- Dependabot alerts: 3 open vite (#21-#23, tracked in #214) and 6 open
-  chromadb (#3-#5, #7-#9, no fixed version; tracked in #211). No
-  Dependabot PR covers either, so nothing new is added. The API call
-  succeeded.
-
-## Update 2026-10-23 — quiet day, no change in blockers
-
-- No steering issues, no new review report (latest 2026-10-21), no PRs
-  opened or merged since #213.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190, #211,
-  #214 (npm arborist bug; needs a lockfile-regeneration / npm-pin /
-  accept-risk call).
-- Security: 6 chromadb alerts (3 CVEs) and vite alerts #21-#23 open, no
-  Dependabot PR or patched path. The Dependabot API call succeeded.
-
-## Update 2026-10-30 — no change; blockers unchanged
-
-- No steering issues, no new review report (latest 2026-09-26), no merges
-  since #213. Dependabot API call succeeded: 12 open alerts, same set as
-  yesterday (6 chromadb unpatched, tracked in #211; vite #21-#23, #25, #26
-  and @vitest/mocker #24 fixable but blocked in #214 by the npm arborist
-  bug). No Dependabot PR exists for any of them.
-- Still the human-action queue, in priority order: #108 (eval fixture),
-  #214 (lockfile approach), #211 (risk acceptance), #208, #190.
 
 ## Known gap — bot-merged PRs aren't auto-closing linked issues (found 2026-09-23)
 
@@ -791,3 +558,11 @@ Hosted/multi-user deployment, user accounts, real-time ingestion,
 fine-tuning, TypeScript migration. GitHub *authorization* is in scope
 (Phase 2); *accounts* are not — adr-engine remains a single-user,
 local-first tool whose index never leaves the machine.
+
+## Accepted risks
+
+Decided 2026-10-31 by the owner; settled, do not re-raise.
+
+- **chromadb 0.6.3 (3 CVEs: 1 critical, 2 high; no patched version exists).** Chroma runs in-process via `PersistentClient` — no HTTP server, no multi-tenant RBAC surface, no `trust_remote_code` use. Not reachable in this deployment. Revisit only if a networked/shared Chroma server is ever introduced.
+- **Dev-only npm findings (vite dev server / launch-editor, @vitest/mocker, source-map-js).** Build and test tooling only, never shipped to users; `launch-editor` is absent from the lockfile. Apply fixes only when a clean Dependabot PR appears.
+
