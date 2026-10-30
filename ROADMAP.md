@@ -547,6 +547,16 @@ that stays worth roadmapping.
 - Security: 6 chromadb alerts (3 CVEs) and vite alerts #21-#23 open, no
   Dependabot PR or patched path. The Dependabot API call succeeded.
 
+## Update 2026-10-30 — no change; blockers unchanged
+
+- No steering issues, no new review report (latest 2026-09-26), no merges
+  since #213. Dependabot API call succeeded: 12 open alerts, same set as
+  yesterday (6 chromadb unpatched, tracked in #211; vite #21-#23, #25, #26
+  and @vitest/mocker #24 fixable but blocked in #214 by the npm arborist
+  bug). No Dependabot PR exists for any of them.
+- Still the human-action queue, in priority order: #108 (eval fixture),
+  #214 (lockfile approach), #211 (risk acceptance), #208, #190.
+
 ## Known gap — bot-merged PRs aren't auto-closing linked issues (found 2026-09-23)
 
 `Closes #N` in a PR body has auto-closed the issue on merge for every
