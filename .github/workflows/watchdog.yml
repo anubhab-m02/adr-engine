@@ -58,6 +58,7 @@ jobs:
           # 4. GH_PAT expiry (response header on PAT-authenticated calls).
           exp=$(curl -sI -H "Authorization: Bearer $PAT" https://api.github.com/user \
             | tr -d '\r' | awk -F': ' 'tolower($1)=="github-authentication-token-expiration"{print $2}')
+          echo "GH_PAT expiry: ${exp:-none reported}"
           if [ -n "$exp" ]; then
             days=$(( ($(date -d "$exp" +%s) - $(date +%s)) / 86400 ))
             [ "$days" -lt 60 ] && add "GH_PAT expires in $days days ($exp). Regenerate it (Administration, Contents, Issues, Pull requests: read/write) and update the GH_PAT secret in both repos."
