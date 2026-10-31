@@ -4,7 +4,7 @@ Per ARCHITECTURE.md's "routers are thin" rule: parse request, call one
 service function, shape response. No business logic here.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from ingestion.store import count_units_by_path, list_units
 from models import DecisionsByPathResponse, DecisionsResponse
@@ -17,8 +17,8 @@ def decisions(
     repo: str,
     since: str | None = None,
     until: str | None = None,
-    page: int = 1,
-    limit: int = 20,
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
 ) -> DecisionsResponse:
     units, total = list_units(repo, since=since, until=until, limit=limit, offset=(page - 1) * limit)
     return DecisionsResponse(units=units, total=total, page=page, limit=limit)
