@@ -66,493 +66,147 @@ branch protection, not just workflow instructions):
   whatever the daily email actually flags; nothing else is required to
   keep the organization moving.
 
-## Phase 1 — MVP: GitHub only (complete, pending final polish)
+## Phase 1 — MVP: GitHub only (complete)
 
-Goal reached: ask a question about the indexed repos in the React UI and
-get a correctly cited answer, end to end, locally. All batches (A–F)
-delivered; remaining loose ends: #39 (.env reconciliation), #40
-(ingestion CLI entry point) — both fold naturally into Phase 2's config
-work.
+Ask a question about indexed repos in the React UI and get a correctly
+cited answer, end to end, locally. All batches (A–F) delivered.
 
-## Phase 2 — Productization (current)
+## Phase 2 — Productization (shipped; polish only)
 
 A stranger can run adr-engine without touching a config file. Form
 factor locked by [PRODUCT.md](PRODUCT.md): **local-first product** — no
 user accounts, no hosting; "login" is GitHub authorization via OAuth
-device flow. Full UX/visual spec: [docs/UI-DESIGN.md](docs/UI-DESIGN.md)
+device flow. UX/visual spec: [docs/UI-DESIGN.md](docs/UI-DESIGN.md)
 (binding); API contracts: [docs/SYSTEM-DESIGN.md](docs/SYSTEM-DESIGN.md).
 
-Success: launch → first cited answer in minutes, zero file editing; the
-UI stops looking like a stock chat template (editorial/archival
-identity, WCAG 2.1 AA).
+Batches G–K (config store + GitHub auth, background ingestion, app shell
+and onboarding, the reading room, Library and Settings) are shipped, as
+are the decision timeline/graph views, FileTree library route, and
+UI-DESIGN.md Ask-section reconciliation. Batch L (hardening: responsive,
+a11y verification, state-coverage sweep) is the remaining Phase 2 work
+and is represented by the gate-independent items below.
 
-Batches (dependency order, each = several one-PR-sized issues):
+## After Phase 2
 
-- **G. Config store & GitHub auth (backend)** — UI-managed local config
-  store (`.env` demoted to dev override), `GET/PATCH /config`, GitHub
-  device-flow endpoints, `GET /setup/state`, `GET /github/repos`.
-  Absorbs #39/#40.
-- **H. Background ingestion** — `POST /ingest` → 202 + job state,
-  `GET /ingest/status` with per-repo phase and live counts; frontend
-  `useIngestStatus` hook + StatusPill in the shell.
-- **I. App shell & onboarding (frontend)** — react-router, shell with
-  top nav, onboarding flow: Connect (device code) → Choose repos →
-  Indexing, optional Gemini key step; setup gate.
-- **J. The reading room** — editorial identity: new tokens/fonts,
-  AnswerPassage + inline citation markers + SourceCards, degraded
-  sources-only mode (`/query` `mode` field, backend), signature motion.
-- **K. Library & Settings** — repo rows with live status, re-index /
-  remove, add-repos; settings sections (GitHub, Gemini, models, data).
-- **L. Hardening pass** — responsive/mobile fixes, a11y verification
-  (contrast, keyboard, reduced motion), state-coverage sweep.
-
-## Phase 3 and 4 — superseded
-
-Superseded by the wave/track structure in
+The wave/track structure in
 [docs/superpowers/specs/2026-08-04-v2-design.md](docs/superpowers/specs/2026-08-04-v2-design.md)
-(merged via #97). That document is the current source of truth for
-everything after Phase 2 — 23 tracks across 7 waves, gated behind a
-recall@5 quality bar after Wave 0. This section is kept only so a reader
-following Phase 2 forward knows where the plan actually continues.
+is the source of truth: 23 tracks across 7 waves, gated behind recall@5
+>= 70% after Wave 0. Track A (core proving) is built except the two
+human-run steps below.
 
-## Product decisions (resolved 2026-09-22, status as of 2026-09-27)
+## Next up (critical path first, then gate-independent work)
 
-These were filed `needs-input` pending a PM-level call, not a missing
-implementation. All three were promoted to `daily-task`; status below.
+Each item is one PR, ≤150 lines, checkable in CI with no network/Ollama.
+The Issue Generator files these as `daily-task` issues.
 
-- **#173 UI-DESIGN.md Ask-section reconciliation — shipped.** PR #205
-  merged 2026-09-26, rewriting the Ask section to document the shipped
-  margin-citation grid as the binding spec. Manually closed 2026-09-26
-  (same bot-merge gap as below). Spun off one follow-up, #204
-  (`needs-triage`): `AskPage.jsx`'s `max-w-3xl` thread wrapper caps the
-  page below the grid's 900/1280px tiers.
-- **#194 Mount FileTree in a Library route — in flight, stuck on a merge
-  conflict.** PR #206 (adds `/library/:repo/files`, wires `AskPage.jsx`
-  to consume `prefillQuestion` nav state) has now been approved three
-  days running (2026-09-26, 2026-09-27, 2026-09-28) but never merged:
-  GitHub reports it `CONFLICTING`/`DIRTY` against `main`, almost
-  certainly from overlap with #205 and #207 (both touching
-  `AskPage.jsx`/`App.jsx`, both merged the same day #206's auto-merge
-  was enabled). See the new gap below — nothing in the current
-  automation rebases a conflicted, already-approved PR, so this will
-  keep re-approving into a wall indefinitely without a human (or a
-  re-triggered Coder) rebasing the branch.
-- **#138 Decision graph view — no new dependency.** Shipped: PR #188
-  merged 2026-09-23 (static grid/date layout, no `d3-force`). Was
-  manually closed 2026-09-23 after sitting falsely `OPEN` — see the
-  bot-merge gap below. Unblocked #139/#140, both now also shipped.
-- **#129 LoadingCard — client-side two-state, no backend change.**
-  Shipped: PR #189 merged 2026-09-23 (single honest in-flight message,
-  no polled backend). Manually closed 2026-09-23, same gap.
-- **#203 UI-DESIGN.md Gemini/Ollama live-validation language — stale, recommend closing.**
-  Filed against a premise (a "no-live-verification policy" needing
-  reconciliation) that's already been superseded: `docs/superpowers/specs/2026-08-04-v2-design.md`
-  decision 9 reinstates live validation pings on explicit save, and
-  the shipped code already matches it — `backend/routers/validation.py`
-  (`POST /config/validate-gemini`, `POST /config/validate-ollama`),
-  `frontend/src/settings/GeminiSection.jsx` and `ModelsSection.jsx`
-  both call them on save, and `UI-DESIGN.md`'s Settings table already
-  documents this shipped behavior correctly. There is no stale-doc/
-  no-live-verification gap left to fix — implementing #203 as scoped
-  would make `UI-DESIGN.md` wrong, not right. No code or doc change
-  needed; the Issue Generator should close #203 as resolved by
-  decision 9 rather than promote it to a daily-task run.
-- **#145 File-tree click-to-scope — two calls (caret vs. name-text
-  click target; frontend-only pre-fill, backend path filter deferred
-  to its own issue).** Shipped: PR #193 merged 2026-09-24. Its two
-  routing/graph follow-ups also shipped the same day — #139 (timeline/
-  graph view routing and toggle, PR #191) and #140 (graph node click
-  navigates to decision detail, PR #192). All three (#139, #140, #145)
-  are now closed.
+Critical path — needs a human (both `needs-input`):
 
-## Update 2026-09-29 — #194 shipped via #209; #206 is now obsolete
+1. **#108 — build the frozen eval fixture.** A human runs
+   `backend/eval/build_fixture.py` (per
+   `docs/superpowers/plans/2026-08-04-track-a-core-proving.md` Task 11)
+   against a live local Ollama and commits `backend/eval/fixtures/`.
+   Activates the recall@5 CI gate. Top human action.
+2. **#112 — sweep k and RELEVANCE_FLOOR** against the harness. Blocked
+   on #108. (`backend/retrieval/search.py` is sensitive-path: human merge.)
 
-The conflict deadlock below resolved itself the human way: PR #209
-(a regenerated, current-`main` version of the same work) was merged by
-`anubhab-m02` on 2026-09-29 and #194 auto-closed. #206 is a superseded
-duplicate that is still open — **close it** (no rebase needed) so the
-Reviewer stops re-approving it daily. #209's merge did trigger a real
-`pull_request`-event `reviewer.yml` run, but since a human (not the
-bot) merged it, it doesn't yet confirm the #190 fix; #190 stays open
-until a bot-merge is observed closing its linked issue. The
-Reviewer/Coder still lack any conflict-handling path (see gap below);
-that stays worth roadmapping.
+Gate-independent (unstarted, all test/a11y/doc work found by reading code):
 
-## Update 2026-10-02 — #204 shipped via #210; pipeline drained
+3. **Test `parseAnswer`** — new `frontend/src/ask/parseAnswer.test.js`.
+   Citation-marker parsing is load-bearing. Cover: unknown ids stay
+   literal text, numbering follows first appearance across paragraphs,
+   repeated ids reuse a number, blank paragraphs dropped, empty answer.
+4. **Test `sourceFormat`** — new `frontend/src/lib/sourceFormat.test.js`
+   covering each exported formatter's normal, empty, and malformed input.
+5. **Test `TopNav`** — new `frontend/src/shell/TopNav.test.jsx`: nav
+   landmark has an accessible name, active route sets `aria-current`,
+   every link reachable by keyboard.
+6. **Test `InlineConfirm`** — new
+   `frontend/src/components/InlineConfirm.test.jsx`: confirm/cancel
+   callbacks, Escape cancels, focus lands on the safe action first.
+7. **Test `useNewQuestion`** — new
+   `frontend/src/lib/useNewQuestion.test.jsx` (hook behavior, navigation
+   target, state reset).
+8. **Test `SourceCardList` and `RepoDecisionsPage`** — new
+   `frontend/src/ask/SourceCardList.test.jsx` and
+   `frontend/src/library/RepoDecisionsPage.test.jsx`: empty, loading,
+   error, and populated states; one card per citation, each linking to
+   its commit/PR URL.
+9. **Test `chroma_client`** — new `backend/tests/test_chroma_client.py`:
+   honors `CHROMA_DATA_DIR` (use `tmp_path`), falls back to the default
+   path, and `lru_cache` returns one shared instance
+   (`get_chroma_client.cache_clear()` in setup/teardown).
+10. **Test `ollama_client`** — new
+    `backend/tests/test_ollama_client.py` with a mocked HTTP layer: happy
+    path, connection error and non-200 surface a clear exception,
+    timeout honored. No live Ollama.
+11. **Ingestion idempotency regression test** — extend
+    `backend/tests/test_ingestion_run.py`: run `run_ingestion` twice over
+    the same fake commits/PRs and assert the Chroma collection count and
+    ids are unchanged after the second run (CLAUDE.md convention).
+12. **Citation traceability test** — extend
+    `backend/tests/test_answer.py`: every id cited in a synthesized answer
+    maps back to a retrieved unit with a commit/PR URL, and ids not in the
+    retrieved set are not returned as citations.
+13. **Skip-to-content link and `<main>` landmark** — modify
+    `frontend/src/shell/AppShell.jsx` (+ `AppShell.test.jsx`) so keyboard
+    users can bypass the nav (WCAG 2.4.1). No existing skip link in the
+    frontend.
+14. **Test `ingestion/github_client.py` pagination and rate-limit
+    branches** — extend `backend/tests/test_github_client.py` (250-line
+    module, largest ingestion file): multi-page fetch, empty repo,
+    403 rate-limit response.
 
-- No steering issues. PR #210 (AskPage thread widened to 68rem at 900px+,
-  `Closes #204`) was merged 2026-10-02 by `anubhab-m02` (a human, not the
-  bot) and #204 closed itself, so the Ask-grid follow-up from #173 is done.
-  Because a human merged it, it again does not confirm the #190 fix; #190
-  stays open until a `github-actions[bot]` merge is observed closing its
-  linked issue.
-- Reviewer's 2026-10-02 report: #210 approved, no findings.
-- No open PRs and no unblocked `daily-task` issues remain. Everything left
-  is human-blocked: #108 (top action; blocks #112), #208 (needs `workflow`
-  scope or hand-added workflow), #190 (needs an observed bot-merge).
-- Security: same 6 chromadb alerts (3 CVEs: 1 critical, 2 high), no
-  Dependabot PR, no patched version. No open issue tracks the
-  risk-acceptance call; a human should either file a `steering` issue
-  choosing accept / pin-and-mitigate / replace the store, or confirm
-  acceptance for a local-first, single-user deployment.
-- No new product ideas today — the highest-value work is unblocking #108
-  so the recall@5 gate and retrieval tuning (#112) can start enforcing
-  quality.
+When the gate clears (#108 then #112 done), the next unstarted work is
+Track B (reading surfaces) in the v2 design doc.
 
-## Update 2026-10-19 — new security alert: source-map-js (no patch)
+## Known gaps
 
-- No steering issues, no new review report (latest 2026-10-02), no PRs
-  opened or merged since #210.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190.
-- **New alert #20: source-map-js 1.2.1 (high, CVE-2026-93749 /
-  GHSA-68fv-2mgg-jv7q)** — event-loop DoS via indexed source-map section
-  offsets. Transitive dev dependency in `frontend/package-lock.json`
-  (build tooling only, not shipped to users). The advisory lists no
-  patched version and `gh pr list --search "source-map-js in:title"`
-  finds no Dependabot PR, so nothing will close it automatically.
-  Low practical exposure (local build tooling, no untrusted source
-  maps), but it needs the same explicit risk-acceptance call as
-  chromadb, or an `overrides` pin if upstream ships a fix.
-- Security: same 6 chromadb alerts (3 CVEs), no patched version, no
-  Dependabot PR, still no open risk-acceptance issue. **Next step for the
-  Issue Generator:** one `needs-input` issue covering both chromadb and
-  source-map-js risk acceptance. The Dependabot API call succeeded.
-
-## Update 2026-10-20 — source-map-js has a patch; chromadb decision now tracked in #211
-
-- No steering issues, no new review report (latest 2026-10-02), no PRs
-  opened or merged since #210.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190, and
-  now #211 (chromadb risk acceptance).
-- **Correction to 2026-10-19: alert #20 (source-map-js) is patchable.**
-  The Dependabot API reports `first_patched_version` 1.2.2
-  (vulnerable range `>= 1.0.0, < 1.2.2`); the 10/19 note and #211 said
-  no patch exists. `gh pr list --search "source-map-js in:title"` still
-  finds no Dependabot PR. **Next step for the Issue Generator:** a
-  `daily-task` to bump source-map-js to >= 1.2.2 in
-  `frontend/package-lock.json` (npm `overrides` entry or
-  `npm update source-map-js`), verified by `npm ls source-map-js` and
-  lint/test/build. No risk-acceptance call is needed for it, so #211
-  reduces to chromadb only.
-- Security: 6 chromadb alerts (3 CVEs: 1 critical, 2 high) remain, no
-  patched version, no Dependabot PR; risk-acceptance is tracked in open
-  `needs-input` issue #211 (supersedes the closed #187 referenced in the
-  Security section below). The Dependabot API call succeeded.
-
-## Update 2026-10-21 — source-map-js fixed (#213); 3 new vite/launch-editor alerts
-
-- No steering issues. Reviewer's 2026-10-21 report: #213 approved, no
-  findings. PR #213 (source-map-js 1.2.1 -> 1.2.2, `Closes #212`) was
-  merged 2026-10-21 by `anubhab-m02` (a human), and #212 closed itself;
-  alert #20 is handled. Human merge again, so #190 is still unconfirmed.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190, #211
-  (chromadb risk acceptance).
-- **New alerts #21-#23 (vite, dev-only, `frontend/package-lock.json`, 8.1.5):**
-  all three are `launch-editor` advisories pulled in via vite's dev server
-  (CVE-2026-112942 high, -112943 and -112944 medium): Windows path/escape
-  bypasses and editor CLI flag injection. Exploitation needs an attacker
-  able to create `+`/`-`-prefixed filesystem entries in the working
-  directory plus a Vim/Emacs editor setup, and affects only the local dev
-  server, never shipped output. The API returned no patched-version data,
-  and `gh pr list --search "vite in:title"` / `"launch-editor in:title"`
-  find no Dependabot PR, so nothing will close these automatically.
-  **Next step for the Issue Generator:** a `daily-task` to check whether a
-  newer vite or `launch-editor` (>= 2.2.0 per the advisory text) is
-  available and, if so, bump it via `npm update`/`overrides` in
-  `frontend/package-lock.json`, verified by `npm ls launch-editor` and
-  lint/test/build. If no fix exists, fold into #211 as a dev-only
-  risk-acceptance.
-- Security: 6 chromadb alerts (3 CVEs: 1 critical, 2 high) unchanged, no
-  patch, tracked in #211. The Dependabot API call succeeded.
-
-## Update 2026-10-22 — vite/launch-editor fix (#214) blocked on an npm bug
-
-- No steering issues, no new review report (latest 2026-10-21, #213
-  approved), no PRs merged since #213.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190, #211
-  (chromadb risk acceptance), and now #214.
-- **#214 (vite alerts #21-#23) is blocked, not just queued.** The Coder
-  found vite 8.3.5 clears all three launch-editor advisories, but
-  `npm install`/`npm update`/`npm audit fix` crash in arborist
-  (`#loadPeerSet`, `edgesOut` of null). `--legacy-peer-deps` yields a
-  ~600-line lockfile diff (over the 150-line limit) that fails `npm ci`.
-  No Dependabot PR exists for vite/launch-editor. **Human decision
-  needed on #214:** regenerate the lockfile from scratch (large diff),
-  pin a different npm version, add an `overrides` entry, or accept the
-  dev-only risk in #211. A separate vitest bump is also needed for the
-  @vitest/mocker alerts (2 moderate).
-- Security: 6 chromadb alerts (3 CVEs) unchanged, no patch, tracked in
-  #211. 3 open vite alerts (#21-#23) tracked in #214. The Dependabot API
-  call succeeded.
-
-## Update 2026-10-29 — two new vite alerts (#25, #26) fold into #214
-
-- No steering issues, no new review report (latest 2026-10-21), no PRs
-  merged since #213, no open PRs.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190, #211,
-  #214.
-- **New alerts #25 (vite, low) and #26 (vite, medium,
-  CVE-2026-112946 / GHSA-rq7h-c2jc-7f22)** — dev-server file-serving
-  issues, only reachable when the dev server is exposed to the network.
-  Both fixed in vite 8.1.6. No Dependabot PR exists (vite PRs searched:
-  none relevant), so they fold into #214's scope: the same vite >= 8.1.6
-  bump covers alerts #21-#23, #25 and #26. Same npm arborist lockfile
-  blocker applies; if #214 ends in dev-only risk acceptance, cover them
-  in #211 too. Mitigation until then: don't run `npm run dev` with
-  `--host`.
-- Dependabot alerts: 6 npm (vite #21-#23, #25, #26; @vitest/mocker #24,
-  all tracked in #214) and 6 chromadb (tracked in #211). The API call
-  succeeded.
-
-## Update 2026-10-27 — new alert #24 (@vitest/mocker); #214 scope widened
-
-- No steering issues, no new review report (latest 2026-10-21), no PRs
-  merged since #213.
-- Still human-blocked: #108 (top action; blocks #112), #208, #190, #211,
-  #214.
-- **New alert #24: @vitest/mocker 4.1.11 (medium, CVE-2026-112950 /
-  GHSA-xp26-3454-mjgp)** — Windows backslash traversal bypass of the
-  mocker redirect allowlist; dev-only, transitive in
-  `frontend/package-lock.json`. Fixed in 4.1.12. The only matching
-  Dependabot PR (#182) is an older merged bump that landed 4.1.11, the
-  now-vulnerable version, so it does not cover this alert and nothing
-  will close it automatically. It hits the same npm arborist lockfile
-  bug as #214, so **fold it into #214's scope** (bump vitest /
-  @vitest/mocker to >= 4.1.12 alongside the vite >= 8.1.6 bump) rather
-  than filing a separate issue; if #214 ends in dev-only risk
-  acceptance, cover this alert in #211's decision too.
-- Dependabot alerts: 4 npm (vite #21-#23, @vitest/mocker #24) and 6
-  chromadb (no fixed version; tracked in #211). The API call succeeded.
-
-## Known gap — bot-merged PRs aren't auto-closing linked issues (found 2026-09-23)
-
-`Closes #N` in a PR body has auto-closed the issue on merge for every
-PR in this repo's history merged by a human (`anubhab-m02`) — but the
-two most recent daily-task PRs, both merged by the `github-actions[bot]`
-actor, did not: #188 ("Closes #138", merged 2026-09-23T07:37:53Z) and
-#189 ("Closes #129", merged 2026-09-23T07:29:21Z) both left their linked
-issue open despite the work being complete and merged. No workflow in
-`.github/workflows/` currently calls `gh issue close` as a fallback —
-the design relies entirely on GitHub's implicit keyword-closing, which
-this data point shows isn't reliable for bot-actuated merges here.
-
-This is load-bearing for the delivery model's own issue state machine
-("merging closes the issue via `Closes #N`") — left alone, completed
-daily-task issues will keep silently piling up as falsely `OPEN`,
-eventually reading as backlog that's actually already done. Filing as
-`needs-input` (tracked as #190) rather than `daily-task`: the fix
-almost certainly means adding an explicit `gh issue close` step to the
-merge automation, which lives under `.github/workflows/*` — a
-sensitive path the merge gate itself excludes from normal daily-task
-auto-merge, so this can't just be picked up and shipped like an
-ordinary issue; a human needs to land it.
-
-**Update 2026-09-24:** #138 and #129 were manually closed, but the gap
-recurred immediately on the next batch — PRs #191 ("Closes #139"),
-#192 ("Closes #140"), and #193 ("Closes #145"), all merged by
-`github-actions[bot]` on 2026-09-24, again left their linked issues
-`OPEN` despite complete, merged work. Two-for-two on bot-merged PRs now
-failing to auto-close is enough to call this systemic rather than a
-one-off; #190 fixing it should be treated as higher priority among the
-`needs-input` items, not just tracked passively. In the meantime,
-#139, #140, and #145 need the same manual closure #138/#129 got.
-
-**Update 2026-09-25:** recurred a third time — PR #195 ("Closes
-#172", privacy panel fix) and PR #196 ("Closes #186", pytest bump),
-both merged by `github-actions[bot]` on 2026-09-25, again left #172
-and #186 `OPEN` despite complete, merged work. Manually closed both
-today. Three-for-three now; #190 stays the top `needs-input` item
-until someone lands an explicit `gh issue close` fallback step in the
-merge workflow (still blocked on a human because it touches
-`.github/workflows/*`, a sensitive path the auto-merge gate itself
-excludes).
-
-**Update 2026-09-26 — the fix landed but doesn't work; root cause
-found.** #190 was closed 2026-09-25 by commit 56beda1, which added a
-`pull_request: closed` trigger to adr-engine's own `reviewer.yml` to
-close linked issues explicitly. It didn't help: PR #205 ("Closes
-#173") and PR #207 ("Closes #201"), both merged by `github-actions[bot]`
-on 2026-09-26 *after* that fix was live, again left their linked
-issues `OPEN`. Checked the workflow run history directly — every
-`reviewer.yml` run since the fix landed is `schedule` or
-`workflow_dispatch`; there has never been a single `pull_request`-
-triggered run. Root cause: the actual merge happens inside the shared
-reusable workflow (`anubhab-m02/automation-kit/.github/workflows/reviewer.yml`,
-step "Extract verdict and submit the real GitHub review") via `gh pr
-merge --squash --auto` run with `GH_TOKEN: ${{ github.token }}` — the
-default `GITHUB_TOKEN`, not `GH_PAT`. GitHub does not fire downstream
-workflow runs (including `pull_request` events on the same repo) for
-actions performed with the default `GITHUB_TOKEN` — this is documented
-platform behavior to prevent recursive triggering, not a flake. That
-means the trigger #190's fix added is structurally incapable of ever
-firing for these auto-merges; it's dead code, not a rare miss.
-Reopened #190 with this diagnosis. Manually closed #173 and #201
-today, same as every prior occurrence. Two real fixes exist, both
-needing a human:
-1. Change automation-kit's merge step to use `GH_PAT` instead of
-   `github.token` (that secret is already threaded through the same
-   workflow for the report commit) — but automation-kit is a separate,
-   shared repo, so this isn't an adr-engine daily-task.
-2. Add a scheduled fallback sweep to adr-engine's own `reviewer.yml`
-   that periodically scans recently-merged PRs for unclosed linked
-   issues, independent of the `pull_request` trigger — doable within
-   this repo, but still touches `.github/workflows/*`, so it needs a
-   human to land it, same as every other candidate fix for this gap.
-
-**Update 2026-09-27/28 — fix #1 landed, unconfirmed.** Per #190's
-thread, `automation-kit@d05e59b` splits the merge step's token from the
-review step's: review submission keeps `github.token` (needed to dodge
-the self-review restriction), but the merge call now uses `GH_PAT`,
-which does fire downstream `pull_request` events. That should make
-adr-engine's existing `pull_request: closed` trigger (56beda1) actually
-fire on the next bot-merge. Still unconfirmed as of 2026-09-28, though
-— not because it failed, but because there hasn't been a bot-merge to
-test it against: #206 is the only open PR, and it's stuck in the
-merge-conflict deadlock described below, so nothing has merged since
-#205/#207 on 2026-09-26 (before the fix landed). Leave #190 open until
-a bot-merge actually happens and its linked issue is observed closing.
-
-## Known gap — auto-merge-enabled PRs never get rebased on conflict (found 2026-09-28)
-
-PR #206 has had auto-merge enabled since 2026-09-26T05:30:20Z but
-GitHub reports its merge state as `CONFLICTING`/`DIRTY` against `main`
-— it can never merge as-is. The Reviewer has re-approved it three
-separate times since (2026-09-26, 2026-09-27, 2026-09-28), because its
-review logic only checks the diff's merits and sensitive-path list, not
-whether the PR is actually mergeable, so it keeps stamping the same
-already-approved, unmergeable PR once a day.
-
-Nothing in the current delivery model closes this loop: the Coder
-"runs again right after the Reviewer... to resolve review feedback on
-its own open PRs," but a merge conflict isn't review feedback — the
-review is `APPROVED`, not `Request changes` — so there's no trigger
-that tells the Coder to rebase. Left alone, this PR (and any future one
-that lands in the same state) will sit in exactly this loop
-indefinitely: approved daily, merged never. It also means #206 is
-currently the only lever available to confirm or refute the #190 fix
-above, and it's stalled.
-
-Needs a human for now: rebase/update `issue/194-filetree-library-route`
-against `main` (or close #206 and let the Coder regenerate it against
-current `main`). Worth roadmapping properly once unblocked: either the
-Reviewer should skip re-approving (or explicitly flag) a PR whose
-`mergeable_state` is `dirty`/`conflicting`, or the Coder's
-already-open-PR pass should detect and rebase conflicted branches
-before the Reviewer re-reviews them.
-
-## Known gap — no CI actually enforces frontend tests on PRs (found 2026-09-28)
-
-The delivery model's merge gate (top of this file) claims: "Required
-status checks pass (`pytest`, `npm test`/build/lint, and the recall@5
-gate once available)." Checking `.github/workflows/*` directly: only
-`backend-tests.yml` exists, and it triggers solely on `pull_request`
-with `paths: backend/**` — it runs `pytest` (and the recall@5 harness,
-still a no-op pending #108). There is no workflow anywhere that runs
-`npm test`, `npm run build`, or `npm run lint`. Confirmed by grepping
-all five workflow files for those commands — zero matches outside that
-one line in `backend-tests.yml`'s own comment.
-
-Practical effect: every frontend-only PR (which is most of them lately
-— #191–#193, #205–#207, #206) merges with zero CI enforcement of
-frontend correctness. The only thing standing behind "all pass
-locally" in a PR body is the Coder's own self-report and the
-Reviewer's read of the diff; neither is independently verified the way
-`pytest` is for backend changes. Branch protection on `main` also has
-no `required_status_checks` configured at all (checked via the GitHub
-API directly) — only one required approving review — so this isn't
-even a caught-but-unenforced gap, it's fully open.
-
-**Update 2026-09-29:** the Coder implemented it (#208) but its push
-was rejected — the agent token lacks the `workflow` scope, so it can't
-write `.github/workflows/*`. #208 is now `needs-input`: a human must
-either grant the `workflow` scope or add `frontend-tests.yml` by hand
-(spec is in #208's body: Node 22, npm cache, lint → test → build),
-then add the check to `main` branch protection's required checks.
-
-This is a real gap, not a `needs-input` blocker — the fix is
-mechanical (a `frontend-tests.yml` mirroring `backend-tests.yml`'s
-shape: `pull_request` trigger scoped to `frontend/**` paths, `npm ci`,
-`npm run lint`, `npm test`, `npm run build`). Same constraint as
-`backend-tests.yml` had, though: it's a `.github/workflows/*` change,
-which the auto-merge gate itself excludes, so a human has to land it
-directly rather than it going through the normal daily-task pipeline.
-
-## Process note
-
-Dependabot alerts were re-checked on 2026-09-22 (later the same day this
-file was first updated) and are now enabled for this repository — a
-human must have flipped the repo setting. The very first re-check
-returned `200 []` (indexing lag right after enabling); a follow-up
-seconds later returned 18 real open alerts, confirmed by GitHub's own
-push-time warning ("18 vulnerabilities: 2 critical, 6 high, 10
-moderate"). Treat a `[]` response right after alerts get enabled as
-possibly stale, not as ground truth — re-check before reporting zero.
-
-## Security — open dependency alerts (found 2026-09-22, re-checked 2026-09-29)
-
-Of the original 18, 12 are now `fixed` via merged Dependabot/daily-task
-PRs: react-router (#181), undici (#180), python-dotenv (#177, closed
-issue #185), postcss + nanoid (#178), and pytest (#196, closed issue
-#186 — see the bot-merge note above). 6 remain open, same three CVEs,
-same group as every check since 2026-09-22 — no Dependabot PR exists
-for chromadb (checked `gh pr list --search "chromadb in:title"`,
-confirming there's still no patched version to bump to) — nothing new
-to file here today:
-
-- **chromadb — 1 critical + 2 high, no patch yet.** Same three CVEs as
-  before (CVE-2026-45833 critical, CVE-2026-45831/CVE-2026-45830
-  high), duplicated across `backend/requirements.txt` and
-  `backend/requirements-dev.txt` (6 alerts, 3 unique, unchanged since
-  2026-09-22). Tracked as `needs-input` issue #187, pending a
-  risk-acceptance call — still no upstream version bump that fixes
-  this, so there's nothing for Dependabot to open a PR against yet.
+- **#190 — bot-merge issue closing is unconfirmed.** `Closes #N` did not
+  auto-close issues for PRs merged by `github-actions[bot]` (default
+  `GITHUB_TOKEN` suppresses downstream events). automation-kit now merges
+  with `GH_PAT` and `reviewer.yml` has a `pull_request: closed` trigger;
+  stays open until a bot-merge is seen closing its linked issue. Until
+  then, close linked issues by hand after a bot merge.
+- **No conflict handling for approved-but-conflicting PRs.** The Reviewer
+  re-approves a PR whose merge state is `dirty` daily without flagging it,
+  and nothing makes the Coder rebase. Worth fixing in automation-kit (skip
+  or flag dirty PRs; have the Coder rebase conflicted branches). Not an
+  adr-engine daily-task.
+- **Automation health (#215, watchdog).** No code PR merged in 7 days
+  because the eligible backlog hit 0 (only #108/#112 remain, both
+  human-blocked). The 14 items above restore supply; the Coder should
+  resume once the Issue Generator files them.
+- **PR #206 is a superseded duplicate** of the work merged in #209;
+  close it if still open.
 
 ## Later / parking lot
 
-- **Retrieval-quality gate = the critical path (#108, #112).** The v2 design gates Waves 1-6 behind recall@5 >= 70%. It needs `backend/eval/build_fixture.py` (plan: `docs/superpowers/plans/2026-08-04-track-a-core-proving.md` Task 11), a one-time run against a live local Ollama, then a k/RELEVANCE_FLOOR sweep (#112). Until it clears, gate-independent work (tests, a11y, spec gaps, refactors) keeps the Coder busy.
-
 - **Editor & CLI integration** (`adr why "..."`, VS Code) — meet the
-  question where it arises. Deliberately parked until the web product
-  proves the core loop.
+  question where it arises. Parked until the web product proves the core
+  loop.
 - **Phase J+ sources: Jira, then Slack (opt-in per channel)** — pushed
   until GitHub is fully proven; same DecisionUnit model, new `kind`s.
+- **Golden-set growth (10 → ~40 questions)** across both repos, needing
+  real expected SHAs; human-assisted, do after #108.
 
 ## Evaluation
 
-Harness code (`backend/eval/harness.py`), golden questions
+Harness (`backend/eval/harness.py`), golden questions
 (`docs/eval-questions.md`), and the recall@5 gate design (70% floor, 50%
-broken, 5-point ratchet — #109) are all in place. **CI enforcement
-landed 2026-09-25:** `.github/workflows/backend-tests.yml` (commit
-a66653d, closing #111 and #42) now runs `pytest` on every backend-
-touching PR, plus a recall@5 step that's a no-op until the frozen
-fixture exists, then auto-enforces once it does. Since that's a
-workflow-path change, a human merged it directly (outside the normal
-auto-merge gate, which excludes `.github/workflows/*`).
+broken, 5-point ratchet) are in place, and `.github/workflows/backend-tests.yml`
+runs `pytest` plus a recall@5 step that is a no-op until the frozen
+fixture exists. `.github/workflows/frontend-tests.yml` runs frontend
+lint/test/build.
 
-The one remaining blocker is unchanged: the frozen fixture the harness
-reads (`backend/eval/fixtures/decision_units.json`, `embeddings.json`,
-`golden_question_embeddings.json`) is never checked in, and the script
-that's supposed to generate it, `backend/eval/build_fixture.py`, doesn't
-exist either (#108, expanded by #171). Generating it requires a human
-running real ingestion against a live local Ollama instance — not
-something any of the four unattended automations can do — so #108 stays
-`needs-input` and is the **single highest-priority human action item**
-in this roadmap right now: it's the only thing standing between the
-now-wired-up CI gate and it actually enforcing anything, and it also
-blocks retrieval tuning (#112, confirmed still blocked as of
-2026-09-26). #171's scope (also emit `golden_question_embeddings.json`)
-means `eval/harness.py` won't need a live Ollama call at run time either
-— folded into #108's scope rather than tracked separately.
-
-Worth naming plainly: until #108 lands, Track B UI work keeps shipping
-without the recall@5 quality bar the delivery model itself calls for
-("gated behind a recall@5 quality bar after Wave 0"). That gate has
-never actually been enforced since Wave 0 began — it's wired up now,
-but still dormant.
-
-Manual verification against docs/eval-questions.md remains the fallback
-until the harness is runnable — run each question through `/query`
-after a retrieval or extraction change and watch for drift.
+The one blocker: the frozen fixture
+(`backend/eval/fixtures/decision_units.json`, `embeddings.json`,
+`golden_question_embeddings.json`) is not checked in and
+`backend/eval/build_fixture.py` does not exist (#108, expanded by #171).
+Generating it needs real ingestion against a live local Ollama, which no
+unattended automation can do. Until it lands, UI work ships without the
+recall@5 quality bar the v2 design calls for. Fallback: run each
+question in `docs/eval-questions.md` through `/query` after retrieval or
+extraction changes and watch for drift.
 
 ## Non-goals (still)
 
@@ -568,3 +222,11 @@ Decided 2026-10-31 by the owner; settled, do not re-raise.
 - **chromadb 0.6.3 (3 CVEs: 1 critical, 2 high; no patched version exists).** Chroma runs in-process via `PersistentClient` — no HTTP server, no multi-tenant RBAC surface, no `trust_remote_code` use. Not reachable in this deployment. Revisit only if a networked/shared Chroma server is ever introduced.
 - **Dev-only npm findings (vite dev server / launch-editor, @vitest/mocker, source-map-js).** Build and test tooling only, never shipped to users; `launch-editor` is absent from the lockfile. Apply fixes only when a clean Dependabot PR appears.
 
+## Latest update — 2026-10-31
+
+- No steering issues; no new review report (latest 2026-10-21). Dependabot
+  API succeeded: 12 open alerts (6 chromadb, 6 vite/@vitest/mocker), all
+  covered by Accepted risks, so none roadmapped.
+- Eligible backlog was 0 (the cause of #215). Added items 3-14 to "Next
+  up" and condensed this file from 570 to ~270 lines (dated updates and
+  resolved history removed).
