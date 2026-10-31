@@ -1,0 +1,2161 @@
+[
+ {
+  "id": "anubhab-m02/BuFin:commit:01025d9798e92b3ab56d3acf07e87de0883a05f3",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "01025d9798e92b3ab56d3acf07e87de0883a05f3",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-02T20:11:35+05:30",
+  "title": "refactor: extract duplicated last-working-day date resolution into shared utils.resolveExpectedDay",
+  "decision": "Refactor duplicated logic for resolving last working day into shared utility function.",
+  "rationale": "The repeated code blocks in different components that handle the resolution of 'last-working' dates were refactored to use a single, reusable helper function called `resolveExpectedDay`. This reduces duplication and centralizes date handling logic, making it easier to maintain and update. The alternative considered was keeping this as individual component logic or creating separate utility functions for each specific case ('last', 'last-working'), but that would have led back to code redundancy.",
+  "alternatives": [
+   "Keep the existing duplicated inline implementations within components",
+   "Create multiple distinct utility functions (e.g., `resolveLastDay`, `resolveLastWorkingDay`) without centralization"
+  ],
+  "source_excerpt": "refactor: extract duplicated last-working-day date resolution into shared utils.resolveExpectedDay",
+  "files_changed": [
+   "src/components/CashFlowForecast.jsx",
+   "src/components/FiscalCalendar.jsx",
+   "src/components/SafeToSpendWidget.jsx",
+   "src/lib/utils.js"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:03ee78b88fac53cf6b8834de8af31bc0b89e2c5c",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "03ee78b88fac53cf6b8834de8af31bc0b89e2c5c",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2025-11-24T02:52:20+05:30",
+  "title": "fixes: Refine safe-to-spend calculations and transaction filtering with local dates and conservative logic.",
+  "decision": "Refine safe-to-spend calculations and transaction filtering to use local dates instead of ISO strings. Implement conservative logic for calculating daily savings limit.",
+  "rationale": "Local time usage aligns better with user's perspective, especially when handling past transactions or recurring expenses that are not yet paid out within the current month.",
+  "alternatives": [
+   "Continue using ISO string-based calculations which rely on UTC dates but may cause confusion due to timezone differences and future transaction filtering issues."
+  ],
+  "source_excerpt": "fixes: Refine safe-to-spend calculations and transaction filtering with local dates and conservative logic.",
+  "files_changed": [
+   "backend/ai_service.py",
+   "src/components/Dashboard.jsx",
+   "src/components/SafeToSpendWidget.jsx",
+   "src/components/SpendingMonitor.jsx",
+   "src/components/TransactionTable.jsx",
+   "src/context/FinancialContext.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:06a93237771b228e5a180df94c4bada446ce94d3",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "06a93237771b228e5a180df94c4bada446ce94d3",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-02T20:16:37+05:30",
+  "title": "fix: compare date-only substrings in balance calc so full-ISO timestamps aren't misread as future",
+  "decision": "Ignore future transactions in balance calculation and compare only the date portion of ISO timestamps",
+  "rationale": "Comparing full strings against a plain date string breaks ('...T18:30:00.000Z' > '2026-07-02' is true), so comparing just the date portion prevents this issue.",
+  "alternatives": [
+   "Ignore future transactions entirely (not considering them in balance calculation)",
+   "Use only ISO timestamps without converting to strings for comparison",
+   "Compare full dates including time and timezone components"
+  ],
+  "source_excerpt": "fix: compare date-only substrings in balance calc so full-ISO timestamps aren't misread as future",
+  "files_changed": [
+   "src/context/FinancialContext.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:08a2eb70a29ba229a27a72316e1bbdcff019c33f",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "08a2eb70a29ba229a27a72316e1bbdcff019c33f",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2025-11-23T22:15:45+05:30",
+  "title": "feat: Consolidate recurring items and debt tracking into a new CommitmentsHub component on PlannerPage.",
+  "decision": "Refactor components to pass props for better flexibility and reusability.",
+  "rationale": "Passing props allows each component to be more flexible by accepting custom values passed from parent components. This makes the code easier to maintain, test, and reuse in different contexts within larger applications or across projects.",
+  "alternatives": [
+   "Hard coding specific instances of elements directly into their respective files",
+   "Making all changes entirely internal without exposing them as public props for easy updates"
+  ],
+  "source_excerpt": "feat: Consolidate recurring items and debt tracking into a new CommitmentsHub component on PlannerPage.",
+  "files_changed": [
+   "src/components/CommitmentsHub.jsx",
+   "src/components/DebtTracker.jsx",
+   "src/components/FiscalCalendar.jsx",
+   "src/components/RecurringManager.jsx",
+   "src/pages/PlannerPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:0adefcaaf55ed7f6eb193f507c12052a15039b16",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "0adefcaaf55ed7f6eb193f507c12052a15039b16",
+  "url": "",
+  "author": "wized2",
+  "date": "2026-09-16T16:44:55Z",
+  "title": "refactor: absorb Ollama try/except inside _try_ollama (#78)",
+  "decision": "Refactor _try_ollama to return None instead of raising an exception when Ollama service fails.",
+  "rationale": "To simplify the error handling for callers and avoid unnecessary try/except blocks, making it easier for them to fall back on Gemini directly if Ollama is unavailable or skipped.",
+  "alternatives": [
+   "_try_ollama would keep its original behavior of raising an exception upon failure."
+  ],
+  "source_excerpt": "refactor: absorb Ollama try/except inside _try_ollama (#78)",
+  "files_changed": [
+   "backend/ai_service.py"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:0b9820350902d4e973f52b5cd4963a811eca5ce9",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "0b9820350902d4e973f52b5cd4963a811eca5ce9",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2025-11-24T03:42:35+05:30",
+  "title": "docs: Remove the roadmap from README.",
+  "decision": "Remove the roadmap section from README",
+  "rationale": "",
+  "alternatives": [
+   "[ ] Multi-currency support",
+   "[ ] Bank account integration"
+  ],
+  "source_excerpt": "docs: Remove the roadmap from README.",
+  "files_changed": [
+   "README.md"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:0ba6ca4048ffe5c8e8bd22211698324c8afb0973",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "0ba6ca4048ffe5c8e8bd22211698324c8afb0973",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-02T20:07:04+05:30",
+  "title": "fix: include bills/income due today in safe-to-spend calculation",
+  "decision": "Include bills/income due today in safe-to-spend calculation",
+  "rationale": "The change ensures that expenses for the current day are considered when calculating available funds.",
+  "alternatives": [
+   "Exclude today's income and bill amounts",
+   "..."
+  ],
+  "source_excerpt": "fix: include bills/income due today in safe-to-spend calculation",
+  "files_changed": [
+   "src/components/SafeToSpendWidget.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:0c55b4db72e493be47c811d4f4be7bbd6df6cec4",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "0c55b4db72e493be47c811d4f4be7bbd6df6cec4",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T14:10:14+05:30",
+  "title": "fix: cap Dashboard ExpenseBreakdown/ActivityFeed to equal fixed heights with internal scroll",
+  "decision": "Cap Dashboard ExpenseBreakdown/ActivityFeed to equal fixed heights",
+  "rationale": "To improve user experience by ensuring consistent and predictable scrolling behavior across these components.",
+  "alternatives": [
+   "Allow dynamic height adjustment based on content or viewport size"
+  ],
+  "source_excerpt": "fix: cap Dashboard ExpenseBreakdown/ActivityFeed to equal fixed heights with internal scroll",
+  "files_changed": [
+   "src/components/ActivityFeed.jsx",
+   "src/components/Dashboard.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:0caa2bc79aa7e27fdc53b381384db36bdfcd6ee0",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "0caa2bc79aa7e27fdc53b381384db36bdfcd6ee0",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2025-11-23T15:10:54+05:30",
+  "title": "feat: Add edit and delete functionality for future transactions via a dialog.",
+  "decision": "Added edit and delete functionality for future transactions via dialog.",
+  "rationale": "To provide users with more control over their financial data by allowing them to easily manage (edit or remove) upcoming expenses in the FutureTransactions component, improving user experience and interaction within the application interface.",
+  "alternatives": [
+   "Allowing inline editing directly on each future transaction without a dialog for simplicity but less intuitive UI",
+   "Removing edit/delete options altogether as they may be confusing to users not familiar with financial applications"
+  ],
+  "source_excerpt": "feat: Add edit and delete functionality for future transactions via a dialog.",
+  "files_changed": [
+   "src/components/FutureTransactions.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:0cda85581b330d5e9685ace7a9539b621c0d39be",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "0cda85581b330d5e9685ace7a9539b621c0d39be",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T15:51:38+05:30",
+  "title": "fix: reorder Profile page hierarchy, fold Export Data into Privacy & Preferences to fix orphaned grid cell",
+  "decision": "Reorder Profile page hierarchy and fold Export Data into Privacy & Preferences section.",
+  "rationale": "The 'Export data' feature was moved closer to the user's personal preferences for better visibility of user-related settings, rather than being grouped with miscellaneous privacy options. This change aims to improve usability by placing relevant actions near related information.",
+  "alternatives": [
+   "Keep Export Data in its own standalone section",
+   "Combine Privacy & Preferences and Other Settings into one card"
+  ],
+  "source_excerpt": "fix: reorder Profile page hierarchy, fold Export Data into Privacy & Preferences to fix orphaned grid cell",
+  "files_changed": [
+   "src/pages/ProfilePage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:0fbc9b7ae23197a5a80558be65a2bcccf1b8f10a",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "0fbc9b7ae23197a5a80558be65a2bcccf1b8f10a",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-02T20:15:12+05:30",
+  "title": "fix: require min time gap for subscription detection and use proportional leak-detection floor",
+  "decision": "Implement minimum time gap for subscription detection and use proportional leak-detection floor.",
+  "rationale": "To avoid misidentifying same-day or near-duplicate entries as subscriptions, a minimal span of days was set to filter out such patterns. Additionally, the absolute floor value now scales with each category's average spend instead of being flat, enabling low-budget categories still have meaningful leak detection even if their spending is below this new proportional threshold.",
+  "alternatives": [
+   "Maintain current subscription pattern identification without a minimum time gap",
+   "Keep fixed \u20b9500 as an absolute lower limit for all categories"
+  ],
+  "source_excerpt": "fix: require min time gap for subscription detection and use proportional leak-detection floor",
+  "files_changed": [
+   "src/lib/analysis.js"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:1e2bcb582ac6f407bcd3d4ac37529db446dabbc7",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "1e2bcb582ac6f407bcd3d4ac37529db446dabbc7",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T14:05:07+05:30",
+  "title": "fix: consolidate duplicate Sign Out into Profile page's account actions, sidebar card now links to Profile",
+  "decision": "Consolidate the Sign Out button into Profile page's account actions.",
+  "rationale": "The original commit aimed to improve usability by removing duplicate sign-out options and making it easier for users not in a quick-access context (like on mobile) to find their way back home. It also reduced potential confusion from having two separate ways of ending the session, which could lead to less frequent use or accidental logouts.",
+  "alternatives": [
+   "Keep Sign Out as an independent button outside Profile page",
+   "Add a link instead of making it standalone for mobile users"
+  ],
+  "source_excerpt": "fix: consolidate duplicate Sign Out into Profile page's account actions, sidebar card now links to Profile",
+  "files_changed": [
+   "src/components/Navigation.jsx",
+   "src/pages/ProfilePage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:1ff9ada829246ec42f013130d86accd2564a242d",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "1ff9ada829246ec42f013130d86accd2564a242d",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-26T13:42:23+05:30",
+  "title": "docs: add SECURITY.md pointing to private vulnerability reporting",
+  "decision": "Add SECURITY.md pointing to private vulnerability reporting",
+  "rationale": "The maintainer decided that any reported security vulnerabilities should be handled privately for privacy and safety reasons. This approach prevents public disclosure of sensitive issues, which could potentially lead others on the internet into insecure situations.",
+  "alternatives": [
+   "Allow open issue tracking for all types of vulnerability reports",
+   "Use a generic or less specific reporting guideline that doesn't emphasize private vs public disclosures"
+  ],
+  "source_excerpt": "docs: add SECURITY.md pointing to private vulnerability reporting",
+  "files_changed": [
+   "SECURITY.md"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:2573f203d9340e138eb6259e272d0d4262629691",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "2573f203d9340e138eb6259e272d0d4262629691",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2025-11-23T19:49:06+05:30",
+  "title": "fix: add goal creation and impulse control features, and enhance jar visualization with detailed progress, projections, and direct management actions.",
+  "decision": "To simplify the component structure and improve readability in JarVisualization.jsx",
+  "rationale": "The original file was quite lengthy due to multiple functions being included within a single React component. Splitting these into smaller components not only reduces complexity but also makes it easier for other developers (or even future you) to understand, maintain, or update the code.",
+  "alternatives": [
+   "Keeping all logic in one large function would have kept things simpler initially; however, this approach can lead quickly to a bloated and hard-to-maintain component."
+  ],
+  "source_excerpt": "fix: add goal creation and impulse control features, and enhance jar visualization with detailed progress, projections, and direct management actions.",
+  "files_changed": [
+   "src/components/ImpulseControl.jsx",
+   "src/components/JarCreationForm.jsx",
+   "src/components/JarVisualization.jsx",
+   "src/context/FinancialContext.jsx",
+   "src/pages/GoalsPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:299ab0aa0563299d86f14180d2d706d40f29a95a",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "299ab0aa0563299d86f14180d2d706d40f29a95a",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T14:14:12+05:30",
+  "title": "feat: reorder Insights by actionability - Needs Attention (leaks/subscriptions) before Trends (forecast/comparison)",
+  "decision": "Reordered Insights by actionability and prioritized 'Needs Attention' before trends.",
+  "rationale": "To emphasize actionable insights related to leaks/subscriptions that need immediate attention, followed by non-actionable trend predictions for informational purposes.",
+  "alternatives": [
+   "Maintaining the original order of Trends first, with Leaks/Subscriptions as a secondary category."
+  ],
+  "source_excerpt": "feat: reorder Insights by actionability - Needs Attention (leaks/subscriptions) before Trends (forecast/comparison)",
+  "files_changed": [
+   "src/components/InsightsDashboard.jsx",
+   "src/pages/InsightsPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:2b6c2b0a13e584628090a8aff3abf39d7e413086",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "2b6c2b0a13e584628090a8aff3abf39d7e413086",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2025-11-23T14:54:07+05:30",
+  "title": "fix: implement global 401 API error handling, extend JWT expiration, and refine natural language input UI.",
+  "decision": "Implement global handling of HTTP 401 errors in API responses to improve user experience by redirecting users to a login page when their session expires.",
+  "rationale": "Sessions expiring can disrupt workflow; providing immediate feedback and prompt redirection helps maintain context for the end-user, reducing confusion or loss of progress. Extending JWT expiration from one day reduces frequent re-login requirements without significantly compromising security in controlled environments like development servers.",
+  "alternatives": [
+   "No global error handling which would require users to manually refresh tokens when encountering a 401",
+   "Keeping the original access token lifetime (30 minutes) for stricter session duration controls"
+  ],
+  "source_excerpt": "fix: implement global 401 API error handling, extend JWT expiration, and refine natural language input UI.",
+  "files_changed": [
+   "backend/auth_utils.py",
+   "src/lib/api.js"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:2b7fdcc3663ca0ffcce0b6406f27f3d769d4771a",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "2b7fdcc3663ca0ffcce0b6406f27f3d769d4771a",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2025-11-23T15:09:24+05:30",
+  "title": "feat: Filter out future transactions from the dashboard display",
+  "decision": "To filter out future transactions from the dashboard display.",
+  "rationale": "Ensuring that only past and current transactions are displayed to users for a more accurate representation of their financial activity at any given time in history. This change improves user experience by preventing confusion with unrealized or pending transaction data.",
+  "alternatives": [
+   "Display all incoming, outgoing, and future transactions without filtering",
+   "Filter out only past transactions while leaving potential ones unfiltered"
+  ],
+  "source_excerpt": "feat: Filter out future transactions from the dashboard display",
+  "files_changed": [
+   "src/components/Dashboard.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:2e768a708cb5892fa8918ccd79673c90490232c9",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "2e768a708cb5892fa8918ccd79673c90490232c9",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-02T20:14:18+05:30",
+  "title": "fix: link debt-repayment transactions to their debt so deleting the transaction reverts debt status",
+  "decision": "Link debt-repayment transactions to their associated debts.",
+  "rationale": "To ensure that deleting an auto-created repayment transaction for repaying a specific debt will revert the status of such debt back to 'active', instead of leaving it silently marked as 'repaid' without any corresponding active loan or expense in records. This change provides better clarity and accuracy in financial tracking.",
+  "alternatives": [
+   "Not linking transactions with debts, potentially causing confusion if a repayment record is deleted but the associated original debt isn't automatically reverted back to an active state."
+  ],
+  "source_excerpt": "fix: link debt-repayment transactions to their debt so deleting the transaction reverts debt status",
+  "files_changed": [
+   "backend/migrate_db.py",
+   "backend/models.py",
+   "backend/schemas.py",
+   "src/context/FinancialContext.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:322261d8cb2fdf246b34d70a69207dc5625442b5",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "322261d8cb2fdf246b34d70a69207dc5625442b5",
+  "url": "",
+  "author": "aditik06",
+  "date": "2026-08-06T16:30:57+05:30",
+  "title": "feat: personalize the impulse-control cooldown by risk tolerance/literacy",
+  "decision": "Replace single hardcoded COOLDOWN_MS for ImpulseControl.jsx with getCooldownMs(user) based on risk_tolerance and financial_literacy fields.",
+  "rationale": "To personalize impulse-control cooldown by user's individual profile, which includes their willingness to take risks (risk_tolerance) as well as how comfortable they are managing finances without regret or impulsive decisions. This change provides a dynamic experience that adjusts according to the user's specific attributes rather than using an arbitrary fixed period for everyone.",
+  "alternatives": [
+   "Keep single hardcoded COOLDOWN_MS",
+   "Implement different static cooldown periods based on risk_tolerance and financial_literacy values manually"
+  ],
+  "source_excerpt": "feat: personalize the impulse-control cooldown by risk tolerance/literacy\n\nImpulseControl.jsx had a single hardcoded 48h COOLDOWN_MS for every\nuser. Replaced it with getCooldownMs(user), reading the risk_tolerance\nand financial_literacy fields already collected at onboarding (via\nuseAuth()) and computing a duration from them.\n\nMapping (product judgment call, documented in code):\n- Base hours by risk_tolerance: low=60, moderate=48, high=30 -\n  anchored so risk_tolerance='moderate' lands exactly on the original\n  fixed 48h, so the \"average\" profile's experience doesn't shift\n  just because this landed; only the extremes move. A more\n  risk-tolerant user needs less of a \"wait it out\" guardrail, a more\n  risk-averse one keeps (or gets more of) it.\n- Literacy nudges that base: beginner=+6h, intermediate=0,\n  advanced=-6h - smaller than the risk-tolerance spread, since\n  experience matters less than risk appetite for this guardrail.\n- Floored at 24h regardless of combination (high+advanced, the\n  shortest combo, lands exactly there) - even the most risk-tolerant,\n  most experienced user still gets a full day to reconsider, not none.\n\nFound and fixed a real bug while wiring this up: risk_tolerance's\nactual values are 'low'/'moderate'/'high' (confirmed via\nOnboardingPage.jsx and the live profile-edit form), not 'medium' as\nmodels.py's stale inline comment claims - that column is an\nunconstrained string, so nothing enforces the comment. Kept the\nmapping keyed on the real runtime values instead.\n\nExisting wishlist items aren't pinned to the old 48h - there's no\nper-item cooldown duration persisted anywhere (and the issue scoped\nthis as frontend-only, reading fields that already exist), so every\nitem's remaining time is recomputed live from the CURRENT profile on\nevery render, same as new items. A later profile edit shifts the\nremaining time on already-added items too - this is a deliberate\nchoice (\"how long you wait\" reflects who you are now), not an\noversight.\n\ngetTimeRemaining() and getElapsedPct() (the countdown ring, HH:MM:SS\ndisplay, and elapsed-percentage arc) now all read the per-render\ncooldownMs instead of the old constant, and the card's subtitle\nshows the actual computed hour count instead of a hardcoded \"48\".\n\nVerified end-to-end in-browser: default (low + beginner) profile\nshowed \"Wait 66 hours\"; switching to high + advanced showed \"Wait 24\nhours\"; moderate + advanced showed \"Wait 42 hours\" (confirms the\n'moderate' key fix works, not just a lucky fallback); added a\nwishlist item under the 42h profile and confirmed the countdown ring\nstarted at 41:59, not 47:59.\n\nCloses #47",
+  "files_changed": [
+   "src/components/ImpulseControl.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:3528dc4ce2c4372dd8d8edba8c7e5d7fdc8b9210",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "3528dc4ce2c4372dd8d8edba8c7e5d7fdc8b9210",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T15:49:31+05:30",
+  "title": "feat: rebuild 8-Week Forecast as a themed Recharts bar chart with gridlines and zero reference line",
+  "decision": "Rebuild CashFlowForecast as an 8-week themed Recharts bar chart.",
+  "rationale": "The original component was a Card with Gridlines, which can be visually overwhelming and less engaging compared to the interactive BarChart provided by React-Chartjs-2. The new design allows users to hover over bars for detailed information using tooltips while maintaining an aesthetically pleasing look that aligns better with modern UI trends.",
+  "alternatives": [
+   "Keep the original CashFlowForecast component without changes",
+   "Convert the chart into a Pie Chart or Donut Chart instead of BarChart"
+  ],
+  "source_excerpt": "feat: rebuild 8-Week Forecast as a themed Recharts bar chart with gridlines and zero reference line",
+  "files_changed": [
+   "src/components/CashFlowForecast.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:35b3e02697c380960aafea8c61a2144358cc3e2e",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "35b3e02697c380960aafea8c61a2144358cc3e2e",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T01:44:20+05:30",
+  "title": "feat: add budget summary widget to Dashboard",
+  "decision": "Added Budget Summary widget to Dashboard",
+  "rationale": "To provide users with an overview of their budget status.",
+  "alternatives": [
+   "Show only financial summary",
+   "Remove the dashboard feature"
+  ],
+  "source_excerpt": "feat: add budget summary widget to Dashboard",
+  "files_changed": [
+   "src/components/Dashboard.jsx",
+   "src/pages/DashboardPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:375035d881ecb0a0b2af8104192dd0af4884f030",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "375035d881ecb0a0b2af8104192dd0af4884f030",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2025-11-23T14:46:36+05:30",
+  "title": "feat: Revamp UI/UX with a new navigation layout, updated card styles, and the addition of an Avatar component.",
+  "decision": "\"feat: Revamp UI/UX with a new navigation layout, updated card styles, and the addition of an Avatar component.\"",
+  "rationale": "The decision was made to enhance user experience by updating the UI and UX. This included introducing a more modern design for easier interaction (new navigation layout), improving visual elements such as cards, adding personalization through avatars.",
+  "alternatives": [
+   "\"feat: Incremental updates focusing on bug fixes only\"",
+   "\"Refactor existing components without significant new features additions\""
+  ],
+  "source_excerpt": "feat: Revamp UI/UX with a new navigation layout, updated card styles, and the addition of an Avatar component.",
+  "files_changed": [
+   "index.html",
+   "src/App.jsx",
+   "src/components/Dashboard.jsx",
+   "src/components/NaturalLanguageInput.jsx",
+   "src/components/Navigation.jsx",
+   "src/components/SpendingMonitor.jsx",
+   "src/components/ui/avatar.jsx",
+   "src/index.css"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:3a56498485cde786763424668f9e82d792c5e211",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "3a56498485cde786763424668f9e82d792c5e211",
+  "url": "",
+  "author": "AlvyRahman",
+  "date": "2026-08-08T00:43:35+06:00",
+  "title": "chore: drop unused className prop from StreakCounter",
+  "decision": "Remove unused className prop from StreakCounter component",
+  "rationale": "The className prop was not being used in the original code, thus removing it simplifies and cleans up the code without affecting functionality.",
+  "alternatives": [
+   "Retain the className prop as an optional argument for future use"
+  ],
+  "source_excerpt": "chore: drop unused className prop from StreakCounter",
+  "files_changed": [
+   "src/components/StreakCounter.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:3b0ae3c423b51b55411dad1cfe52b809afe8a06b",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "3b0ae3c423b51b55411dad1cfe52b809afe8a06b",
+  "url": "",
+  "author": "aditik06",
+  "date": "2026-08-04T23:42:48+05:30",
+  "title": "fix: guard against stranding a household when deleting an account",
+  "decision": "Implementing the same ownership check as in leave_household for account deletion",
+  "rationale": "To prevent stranding households when a sole owner deletes their own account. If there are other members, they must promote someone else before deleting.",
+  "alternatives": [
+   "Continue allowing all users to delete accounts regardless of household membership status."
+  ],
+  "source_excerpt": "fix: guard against stranding a household when deleting an account\n\ndelete_account cleaned up the caller's HouseholdMember rows without\nchecking sole-ownership, unlike leave_household - a sole owner could\ndelete their account and strand the household with no owner.\n\nNow mirrors leave_household's exact rule: if the caller is the only\nowner of a household that still has other members, account deletion\nis rejected (400, naming the household) until they promote someone\nelse first. If they're the sole owner AND the sole member, there's\nnothing to strand, so that household is deleted outright as part of\nthe account deletion (same resolution leave_household uses for that\ncase) instead of being left as an empty, ownerless row.\n\nVerified with a scripted scenario: blocked deletion while another\nmember remains (with the household correctly named in the error),\ndeletion succeeding after promoting another member to owner, and a\nsolo owner/solo member's account deletion cleanly removing both the\naccount and the now-fully-orphaned household.",
+  "files_changed": [
+   "backend/routers/auth.py"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:3ba03572e4227b3c9afe7d0cc3d9ad9a98bf004e",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "3ba03572e4227b3c9afe7d0cc3d9ad9a98bf004e",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-26T13:41:34+05:30",
+  "title": "docs: add MIT LICENSE",
+  "decision": "Added MIT License to the project",
+  "rationale": "The rationale behind adding an open-source license such as MIT is often that it provides legal clarity on how others can use and contribute to your software. It helps ensure proper attribution, allows for free usage under certain conditions (freeing up liability), encourages sharing by reducing barriers related to copyright laws.",
+  "alternatives": [
+   "GPL License",
+   "Apache License 2.0"
+  ],
+  "source_excerpt": "docs: add MIT LICENSE",
+  "files_changed": [
+   "LICENSE"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:3ea99fb322deb1a3e170d32761d25e8a6b9ee540",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "3ea99fb322deb1a3e170d32761d25e8a6b9ee540",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T14:07:39+05:30",
+  "title": "fix: remove blanket Card hover tint causing triple-shaded hover in Ledger rows",
+  "decision": "Remove the Card hover tint causing triple-shaded effect in Ledger rows",
+  "rationale": "The double border on top of an already tinted card caused a confusing and potentially undesirable visual appearance.",
+  "alternatives": [
+   "Keep single-layered shade for consistency with other components"
+  ],
+  "source_excerpt": "fix: remove blanket Card hover tint causing triple-shaded hover in Ledger rows",
+  "files_changed": [
+   "src/components/ui/card.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:416503575edb620e50ad8016e89fb5e172c853f6",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "416503575edb620e50ad8016e89fb5e172c853f6",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-08-05T03:18:17+05:30",
+  "title": "fix: correct last-working-day example in Quick Add prompt to match its own rule (#56)",
+  "decision": "Update the 'expectedDate' field in Quick Add prompt to match its own rule for calculating last working day.",
+  "rationale": "The existing example incorrectly uses \"last\" as a keyword which does not align with how other rules are implemented. Changing it to \"last-working\" standardizes this according to internal API conventions and ensures consistent behavior across different features.",
+  "alternatives": [
+   "Keep the 'expectedDate' field unchanged (using 'last')"
+  ],
+  "source_excerpt": "fix: correct last-working-day example in Quick Add prompt to match its own rule (#56)",
+  "files_changed": [
+   "backend/ai_service.py"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:43c6b74c3e57c56b5ecce5ad84bc28ab499709a6",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "43c6b74c3e57c56b5ecce5ad84bc28ab499709a6",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-08-07T21:53:07+05:30",
+  "title": "refactor: inline number-candidate extraction and check Gemini fallback amounts too",
+  "decision": "_extract_number_candidates and _amounts_plausible refactored to improve the accuracy of amount extraction",
+  "rationale": "The new implementation guards against incorrect rounding by Gemini model in single-action responses. It checks if a derived multi-action output (like split expenses) matches any literal number found or closely approximates it within $0.01.",
+  "alternatives": [
+   "Keeping previous _extract_number_candidates and _amounts_plausible functions without modifications"
+  ],
+  "source_excerpt": "refactor: inline number-candidate extraction and check Gemini fallback amounts too",
+  "files_changed": [
+   "backend/ai_service.py"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:44a03d4668d9a62c7e326e4186e27f0069c3fe6c",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "44a03d4668d9a62c7e326e4186e27f0069c3fe6c",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T13:08:02+05:30",
+  "title": "feat: compact segmented mode control and starter-prompt chips for Coach, more room for chat",
+  "decision": "Compact segmented mode control and starter-prompt chips for Coach",
+  "rationale": "To increase the room available on the page to accommodate chat.",
+  "alternatives": [
+   "Keeping existing segmentation controls",
+   "Adding more space at other parts of the interface"
+  ],
+  "source_excerpt": "feat: compact segmented mode control and starter-prompt chips for Coach, more room for chat",
+  "files_changed": [
+   "src/pages/CoachPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:44eecfdccda23b657d296d101c56313dfaae0602",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "44eecfdccda23b657d296d101c56313dfaae0602",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-26T13:43:38+05:30",
+  "title": "docs: fix README - stale license/version claims, inaccurate privacy claims, point Contributing at CONTRIBUTING.md",
+  "decision": "Update README documentation to reflect the new version and license claims.",
+  "rationale": "To provide accurate information about current software status for users visiting the project page.",
+  "alternatives": [
+   "Keep the old version claim in case it was supposed to be kept as a historical reference."
+  ],
+  "source_excerpt": "docs: fix README - stale license/version claims, inaccurate privacy claims, point Contributing at CONTRIBUTING.md",
+  "files_changed": [
+   "README.md"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:49eb2e7516cd014b65280805fe9da3f56441161e",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "49eb2e7516cd014b65280805fe9da3f56441161e",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T12:51:58+05:30",
+  "title": "fix: replace fabricated 'average BuFin user' benchmark with user's own historical average",
+  "decision": "Replace fabricated 'average BuFin user' benchmark with user's own historical average",
+  "rationale": "Presenting made-up numbers as data would be actively misleading. Comparing this month's spend per category against the user's OWN historical average provides a more accurate and meaningful insight into spending habits.",
+  "alternatives": [
+   "Continue using fabricated 'average BuFin user' benchmark"
+  ],
+  "source_excerpt": "fix: replace fabricated 'average BuFin user' benchmark with user's own historical average",
+  "files_changed": [
+   "src/components/InsightsWidgets.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:4bc3aeedabfd73c7ce9df670af38283b74e2d625",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "4bc3aeedabfd73c7ce9df670af38283b74e2d625",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T14:15:38+05:30",
+  "title": "feat: replace Coach SegmentedControl with a dropdown mode switcher showing persona descriptions",
+  "decision": "Replace CoachSegmentedControl with dropdown mode switcher",
+  "rationale": "To improve user interface and experience by replacing segmented control with a more modern, accessible dropdown menu for selecting different personas.",
+  "alternatives": [
+   "Keep using the original SegmentedControl component"
+  ],
+  "source_excerpt": "feat: replace Coach SegmentedControl with a dropdown mode switcher showing persona descriptions",
+  "files_changed": [
+   "src/pages/CoachPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:4be54b9e9a0d25853bc36f48b18db9949e270939",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "4be54b9e9a0d25853bc36f48b18db9949e270939",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T14:01:13+05:30",
+  "title": "fix: gauge track visible in light mode, darken light-mode success/warning/destructive tokens to pass WCAG contrast",
+  "decision": "Darken light-mode success/warning/destructive tokens to pass WCAG contrast",
+  "rationale": "The original colors for destructive, success, and warning did not meet enough of a minimum ratio against the background color in light mode (3:1), which would cause them to become unreadable. Changing these values improved readability while maintaining semantic meaning.",
+  "alternatives": [
+   "--destructive changed from #ef4444 to #dc2626",
+   "--success changed from #10b981 to #059669",
+   "--warning changed from #f59e0b to #d97706"
+  ],
+  "source_excerpt": "fix: gauge track visible in light mode, darken light-mode success/warning/destructive tokens to pass WCAG contrast",
+  "files_changed": [
+   "src/components/SafeToSpendGauge.jsx",
+   "src/index.css"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:508ffcc79b7fd44f38b93fab13a136decf3fefaa",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "508ffcc79b7fd44f38b93fab13a136decf3fefaa",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2025-11-24T03:36:56+05:30",
+  "title": "docs: Replace generic template README with comprehensive project documentation for BuFin.",
+  "decision": "Replaced the generic template README with comprehensive project documentation for BuFin.",
+  "rationale": "The original minimal setup was insufficient to guide new users through understanding and using an AI-powered personal finance management application. Comprehensive documentation is necessary as it includes detailed explanations of features, tech stack specifics, integration guides (including getting started steps), system architecture overview, security measures taken by the project, roadmap for future development, how one can contribute or get involved with the project, credits to contributors if any and contact information.",
+  "alternatives": [
+   "Maintaining a minimal template README",
+   "Adding supplementary documentation as an appendix instead of replacing it"
+  ],
+  "source_excerpt": "docs: Replace generic template README with comprehensive project documentation for BuFin.",
+  "files_changed": [
+   "README.md"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:5098897e6f37741a0728ca0fe332c51e0f9059b7",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "5098897e6f37741a0728ca0fe332c51e0f9059b7",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-08-18T18:32:53+05:30",
+  "title": "fix: bump react-router-dom, mdast-util-to-hast, requests, python-dotenv; drop unused uuid dep",
+  "decision": "Bump several dependencies in requirements.txt and package.json files",
+  "rationale": "To update the project to newer versions of its dependencies.",
+  "alternatives": [
+   "Stick with older, possibly outdated versions"
+  ],
+  "source_excerpt": "fix: bump react-router-dom, mdast-util-to-hast, requests, python-dotenv; drop unused uuid dep",
+  "files_changed": [
+   "backend/requirements.txt",
+   "package-lock.json",
+   "package.json"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:514ec32bef87930eff54e7d75dff76fa56383599",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "514ec32bef87930eff54e7d75dff76fa56383599",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T02:01:40+05:30",
+  "title": "feat: fix dark-mode semantic color visibility, add chart palette and motion tokens",
+  "decision": "Introduce chart palette colors and motion tokens for dark mode compatibility",
+  "rationale": "To ensure that charts are visible against a darker background in light/dark modes, distinct shades were chosen to maintain visibility without blending into UI elements.",
+  "alternatives": [
+   "Use grayscale values instead of color-coded palettes"
+  ],
+  "source_excerpt": "feat: fix dark-mode semantic color visibility, add chart palette and motion tokens",
+  "files_changed": [
+   "src/index.css"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:55d4f4d5d3c0c845fa019acdf2b45eb783333985",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "55d4f4d5d3c0c845fa019acdf2b45eb783333985",
+  "url": "",
+  "author": "aditik06",
+  "date": "2026-08-04T23:44:59+05:30",
+  "title": "fix: revert shared transactions/goals to personal on household deletion",
+  "decision": "Revert shared transactions/goals to personal instead of deleting them when a household is deleted.",
+  "rationale": "A household disappearing shouldn't take anyone's logged financial data with it; each row's own user_id already tells you whose personal view it lands back in. This change ensures that after deletion, the related rows for households and members are removed while transactions/goals associated still appear correctly under an individual's account.",
+  "alternatives": [
+   "Delete shared transactions/goals outright when a household is deleted."
+  ],
+  "source_excerpt": "fix: revert shared transactions/goals to personal on household deletion\n\n_delete_household predates Transaction/Goal gaining a household_id\n(that landed later in this same PR) and never got updated for it -\ndeleting a household left any transactions/goals tagged to it with a\ndangling household_id, invisible to everyone (no one could pass the\nnow-nonexistent household in X-Household-Id, and they wouldn't show\nin personal view either since household_id wasn't null).\n\nFound this while merging in #51's delete_account fix, which calls\n_delete_household from a new code path (account deletion) - without\nthis, that path would have started actively triggering the bug.\n\nNow nulls household_id on both instead of deleting the rows outright\n- a household disappearing shouldn't take anyone's logged financial\ndata with it, it just reverts to whoever's personal view it belongs\nto via the row's own user_id.\n\nVerified with a scripted scenario: a shared transaction and a shared\ngoal both survive household deletion with household_id reset to\nnull, correctly reappearing in the creator's personal view, while\nthe household itself and its members/invites are fully removed.",
+  "files_changed": [
+   "backend/routers/households.py"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:567052e9c106894cba7d4c92c9c5bbb26963393e",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "567052e9c106894cba7d4c92c9c5bbb26963393e",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T14:12:15+05:30",
+  "title": "feat: rotate AuthLayout brand panel through 4 feature highlights, force light theme on Login/Signup",
+  "decision": "Rotate through product's core surfaces instead of showing one widget at a time",
+  "rationale": "To communicate actual scope and not just focus on one feature, thus giving users an impression that it's all about the same thing.",
+  "alternatives": [
+   "\"Show one feature per slide (e.g., Safe to Spend gauge)\""
+  ],
+  "source_excerpt": "feat: rotate AuthLayout brand panel through 4 feature highlights, force light theme on Login/Signup",
+  "files_changed": [
+   "src/components/AuthLayout.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:59b6414999c8ba863e8919056742c1154ba062fe",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "59b6414999c8ba863e8919056742c1154ba062fe",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2025-11-24T03:48:25+05:30",
+  "title": "style: standardize page headers with consistent styling and descriptive subtitles across all pages.",
+  "decision": "Standardize page headers across all pages",
+  "rationale": "To maintain a consistent look and feel throughout different sections of the application, making it easier for users to recognize navigation elements.",
+  "alternatives": [
+   "Use unique styling per section without consistency"
+  ],
+  "source_excerpt": "style: standardize page headers with consistent styling and descriptive subtitles across all pages.",
+  "files_changed": [
+   "src/pages/CoachPage.jsx",
+   "src/pages/DashboardPage.jsx",
+   "src/pages/GoalsPage.jsx",
+   "src/pages/InsightsPage.jsx",
+   "src/pages/LedgerPage.jsx",
+   "src/pages/PlannerPage.jsx",
+   "src/pages/ProfilePage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:5d18ce7dac28a88673be202c43c4715ee1c605c8",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "5d18ce7dac28a88673be202c43c4715ee1c605c8",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-02T20:10:12+05:30",
+  "title": "fix: use frontend local date as source of truth for backend spending alert to avoid timezone divergence",
+  "decision": "Use the client's local calendar date as source of truth for backend spending alert to avoid timezone divergence",
+  "rationale": "To ensure that frontend and backend agree on what 'today' is instead of each computing it independently, which can diverge near midnight or across timezones between browser and server.",
+  "alternatives": [
+   "Use the system's local calendar date",
+   "Compute today's date directly in Python"
+  ],
+  "source_excerpt": "fix: use frontend local date as source of truth for backend spending alert to avoid timezone divergence",
+  "files_changed": [
+   "backend/ai_service.py",
+   "backend/routers/ai.py",
+   "src/components/SpendingMonitor.jsx",
+   "src/lib/api.js",
+   "src/lib/gemini.js",
+   "src/lib/utils.js"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:60047f0ceab277332f6a00247f52a0d5a8e5b2f2",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "60047f0ceab277332f6a00247f52a0d5a8e5b2f2",
+  "url": "",
+  "author": "aditik06",
+  "date": "2026-08-04T01:07:39+05:30",
+  "title": "feat: household tagging for transactions and goals",
+  "decision": "_scope_filter function added to filter transactions based on active household ID",
+  "rationale": "To ensure that users can only access their own untagged and tagged transactions for a specific household.",
+  "alternatives": [
+   "Include all user's past linked housemates (if they had them)",
+   "Remove the filtering option entirely, leaving it up to front-end code"
+  ],
+  "source_excerpt": "feat: household tagging for transactions and goals\n\nPR 2 of 3 for #45 (household/shared accounts). Builds on PR 1's\nHousehold/HouseholdMember models (#51) to make Transaction and Goal\noptionally household-scoped - the only two tables the issue asks to\nbe shareable.\n\n- Nullable household_id on Transaction and Goal; existing rows land\n  as NULL (personal) with no behavior change for anyone not using\n  households.\n- New get_active_household_id dependency (auth.py): reads an\n  optional X-Household-Id request header, validates the caller is\n  actually a member, returns None otherwise. A header rather than a\n  JWT claim, since the JWT isn't reissued on persona switch.\n- Every transactions.py/goals.py query now scopes via a small\n  _scope_filter helper: household_id == the active household, or\n  (household_id IS NULL AND user_id == caller) when no header is\n  sent - never a mix of personal and shared rows in one view.\n- New GoalContribution model: every currentAmount change on PUT\n  /goals/{id} is diffed against the pre-update value and recorded as\n  a signed contribution (positive = deposit, negative = withdrawal)\n  tagged to whoever made it, rather than only keeping a single\n  running total. GoalResponse now includes the full contributions\n  list for the frontend to render a per-member breakdown.\n- household_id is always server-derived from the active-household\n  header, never client-writable in the request body - same rule\n  transactions.py already used for user_id.\n\nVerified with a scripted end-to-end scenario: personal vs.\nhousehold-scoped transactions stay non-overlapping for the same\nuser, a second household member sees the shared transactions/goals,\na non-member is rejected (403) for a household they're not in, and\nmulti-user goal contributions (including a withdrawal as a negative\ndelta) are attributed to the correct user.\n\nNo frontend changes yet - that's PR 3.\n\nRef #45",
+  "files_changed": [
+   "backend/alembic/versions/5111289400b2_add_household_tagging_to_transactions_.py",
+   "backend/models.py",
+   "backend/routers/auth.py",
+   "backend/routers/goals.py",
+   "backend/routers/transactions.py",
+   "backend/schemas.py"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:613481f0ae62a7786690368c287ca0ce3898d497",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "613481f0ae62a7786690368c287ca0ce3898d497",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2025-11-23T17:45:29+05:30",
+  "title": "feat: Implement Goals page with savings jar visualization, creation, and impulse control, updating app routing and navigation.",
+  "decision": "Export of 'JarCreationForm' component to './src/components/JarCreationForm.jsx'.",
+  "rationale": "To organize the newly created components in their respective files for better maintainability and clarity.",
+  "alternatives": [
+   "./src/components/new/other/component/path/JarCreationForm.js"
+  ],
+  "source_excerpt": "feat: Implement Goals page with savings jar visualization, creation, and impulse control, updating app routing and navigation.",
+  "files_changed": [
+   "src/App.jsx",
+   "src/components/ImpulseControl.jsx",
+   "src/components/JarCreationForm.jsx",
+   "src/components/JarVisualization.jsx",
+   "src/components/Navigation.jsx",
+   "src/context/FinancialContext.jsx",
+   "src/pages/GoalsPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:619f1a00713917628a68f4126d14285208cafb83",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "619f1a00713917628a68f4126d14285208cafb83",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T14:11:06+05:30",
+  "title": "feat: collapse Commitments per-person debt groups to a summary row, expandable on click",
+  "decision": "Collapse Commitments per-person debt groups to a summary row, expandable on click",
+  "rationale": "To prevent pushing everyone else off-screen when there are many split-bill debts for one person.",
+  "alternatives": [
+   "Maintain separate rows for each person's debts"
+  ],
+  "source_excerpt": "feat: collapse Commitments per-person debt groups to a summary row, expandable on click",
+  "files_changed": [
+   "src/components/DebtTracker.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:6234da75f13576c15df1becc90f7cf49e67002f0",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "6234da75f13576c15df1becc90f7cf49e67002f0",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-02T20:17:25+05:30",
+  "title": "chore: gitignore local CLAUDE.md project notes",
+  "decision": "Add CLAUDE.md to .gitignore",
+  "rationale": "To exclude local project notes for Claude from version control.",
+  "alternatives": [
+   "Exclude only specific files instead of adding a whole directory type."
+  ],
+  "source_excerpt": "chore: gitignore local CLAUDE.md project notes",
+  "files_changed": [
+   ".gitignore"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:62e7076312744db8b28c71ece0e5bd93bd2ee835",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "62e7076312744db8b28c71ece0e5bd93bd2ee835",
+  "url": "",
+  "author": "aditik06",
+  "date": "2026-08-04T00:59:59+05:30",
+  "title": "feat: household model, migration, invite + membership endpoints",
+  "decision": "Deleted an empty household after leaving as sole owner",
+  "rationale": "Preventing data from being left stranded in a database row with no users, ensuring consistent state and avoiding orphaned records.",
+  "alternatives": [
+   "Leave the user alone but keep them listed (not preferred)"
+  ],
+  "source_excerpt": "feat: household model, migration, invite + membership endpoints\n\nPR 1 of 3 for #45 (household/shared accounts). Adds the Household /\nHouseholdMember / HouseholdInvite models and migration, plus a\nhouseholds router covering create, list, invite generation, join,\nmember listing, role promotion, member removal, leave, and explicit\ndeletion.\n\n- Invites are short-lived 8-char codes (7-day expiry), not email -\n  there is no mail infrastructure anywhere in this backend, and a\n  code is the same zero-infra pattern Discord/Notion invites use.\n- Multiple owners are allowed per household, so \"the last owner\"\n  guard (leave/remove) just means \"the only remaining owner\" -\n  promoting another member to owner is how you hand off before\n  stepping down. A sole owner who is also the household's only\n  remaining member can still leave; that's treated as equivalent to\n  explicitly deleting the household rather than leaving it orphaned.\n- DELETE /me now also cleans up the caller's HouseholdMember rows,\n  extending the existing (pre-existing, not fully complete) cascade\n  in that endpoint.\n\nNo transactions/goals are household-aware yet - that's PR 2. This PR\nintroduces no behavior change for any existing single-user flow.\n\nRef #45",
+  "files_changed": [
+   "backend/alembic/versions/3272a7577bf0_add_household_tables.py",
+   "backend/main.py",
+   "backend/models.py",
+   "backend/routers/auth.py",
+   "backend/routers/households.py"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:63952ca25ecdd091753419574fb09f5befb1011a",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "63952ca25ecdd091753419574fb09f5befb1011a",
+  "url": "",
+  "author": "aditik06",
+  "date": "2026-08-05T19:56:16+05:30",
+  "title": "perf: stop paying the Ollama-unavailable tax on every AI call",
+  "decision": "_ollama_unavailable_until set to _ollama_ready() return value. Introduced OLLAMA_RECHECK_SECONDS.",
+  "rationale": "This change was introduced because Ollama's connection attempt, even after being refused by the OS/network-stack-level handling of a request.post(), takes several seconds (~4.1s). This time is paid for every call made to classify_transaction, generate_spending_alert, AND generate_financial_tips when OLLAMA is enabled but nothing else (the default) running on OLLAMA_HOST.",
+  "alternatives": [
+   "_ollama_unavailable_until set to a fixed retry interval instead of using _ollama_ready()."
+  ],
+  "source_excerpt": "perf: stop paying the Ollama-unavailable tax on every AI call\n\nProfiled the actual bottleneck instead of guessing (per the issue's\nsuggested approach): with OLLAMA_ENABLED on (the default) but no\nlocal Ollama daemon running, requests.post() to it doesn't fail fast\n- it takes ~4.1s to be refused on this platform, confirmed with a\nraw socket connect too (~2s, ruling out requests/urllib3 as the\ncause - this is OS/network-stack-level connection-refusal handling,\nwhich requests' own `timeout` parameter never gets a chance to\nshortcut since the connection *is* refused, not silently dropped).\nThat's dead time paid on classify_transaction, generate_spending_alert,\nAND generate_financial_tips - every single one, every single call.\n\nOnce a probe to Ollama fails, skip it entirely for 5 minutes instead\nof re-attempting (and re-paying the ~4s tax) on the very next call.\nA successful call resets the window immediately, so this only\naffects the \"Ollama enabled but not actually running\" case - users\nwho do have it configured see no change.\n\nAlso adds timing logs around both the Ollama and Gemini paths on all\nthree call sites, so the actual latency split is visible going\nforward instead of needing to re-profile blind next time.\n\nChecked the other two hypotheses from the issue:\n- NaturalLanguageInput.jsx already has a proper loading state\n  (spinner, disabled input) - not the bottleneck, no change needed.\n- Prompt-trimming / lighter local model for Quick Add's long prompt\n  is left as a follow-up, not implemented here - no live Gemini/Ollama\n  credentials available to validate an output-quality tradeoff, and\n  the fix above is already a confirmed, measured win on its own.\n\nVerified: a scripted before/after comparison shows the first Ollama\nattempt still pays ~4.1s (unavoidable - that's the actual probe), but\nevery attempt afterward returns in <1ms for the next 5 minutes\ninstead of repeating the full delay.\n\nCloses #12",
+  "files_changed": [
+   "backend/ai_service.py"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:643aecef7af4a5dd6e008a24abd374fbd1941e39",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "643aecef7af4a5dd6e008a24abd374fbd1941e39",
+  "url": "",
+  "author": "wized2",
+  "date": "2026-09-16T16:45:10Z",
+  "title": "refactor: drop last generate_spending_alert try/except around _try_ollama",
+  "decision": "Remove try/except block around _try_ollama call in generate_spending_alert function",
+  "rationale": "The exception handling within the 'generate_spending_alert' function is redundant because any exceptions are already logged and handled inside the '_try_ollama' helper function. Removing this additional layer simplifies error management by relying on a single centralized location for logging.",
+  "alternatives": [
+   "_comment option to suppress specific types of known exceptions",
+   "_option to log an alert instead, if 'generate_spending_alert' fails"
+  ],
+  "source_excerpt": "refactor: drop last generate_spending_alert try/except around _try_ollama",
+  "files_changed": [
+   "backend/ai_service.py"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:6a738c8561162d6d2835b0d7036d77cc4101b7ed",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "6a738c8561162d6d2835b0d7036d77cc4101b7ed",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-02T20:08:18+05:30",
+  "title": "fix: replace greedy JSON regex with balanced bracket parser in transaction classifier",
+  "decision": "_extract_json_array function was added to replace greedy JSON regex",
+  "rationale": "The previous implementation used regular expressions which could lead to incorrect extraction of nested or malformed JSON structures. A balanced bracket parser ensures accurate and robust parsing, even in complex cases.",
+  "alternatives": [
+   "Continuing with the greedy JSON regex",
+   "Using a different library for JSON parsing"
+  ],
+  "source_excerpt": "fix: replace greedy JSON regex with balanced bracket parser in transaction classifier",
+  "files_changed": [
+   "backend/ai_service.py"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:76261f2325f040a4ba3b0557060a3153d0cb5660",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "76261f2325f040a4ba3b0557060a3153d0cb5660",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2025-11-23T05:05:56+05:30",
+  "title": "feat: Add `current_balance` and `savings_goal` to user profiles, implement user data refresh, and secure financial API endpoints.",
+  "decision": "Add 'current_balance' and 'savings_goal' to user profiles.",
+  "rationale": "User feedback indicated that the current balance is an important metric for users. Including it in their profile would improve personalization of financial plans and goals, making them feel more relevant and motivating.",
+  "alternatives": [
+   "Do not add new fields",
+   "Add only 'savings_goal' to user profiles"
+  ],
+  "source_excerpt": "feat: Add `current_balance` and `savings_goal` to user profiles, implement user data refresh, and secure financial API endpoints.",
+  "files_changed": [
+   "backend/models.py",
+   "backend/schemas.py",
+   "src/context/AuthContext.jsx",
+   "src/context/FinancialContext.jsx",
+   "src/lib/api.js",
+   "src/pages/OnboardingPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:7cb75c538c6f113ff6b06ef4c2c24e2681164a27",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "7cb75c538c6f113ff6b06ef4c2c24e2681164a27",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T15:50:35+05:30",
+  "title": "fix: compact recurring-plan rows with click-to-view modal, tighten Planner height to remove page-level scroll",
+  "decision": "Compact recurring-plan rows into button click-to-view modal and adjust Planner height to remove page-level scroll",
+  "rationale": "Improves usability by allowing users to view details of a specific plan without navigating away from the list, while also addressing an issue where too tight spacing caused unwanted additional scrolling on top of each widget's internal scroll.",
+  "alternatives": [
+   "Keep recurring-plan rows expanded in full-view",
+   "Adjust Planner height manually for different devices and screen sizes"
+  ],
+  "source_excerpt": "fix: compact recurring-plan rows with click-to-view modal, tighten Planner height to remove page-level scroll",
+  "files_changed": [
+   "src/components/RecurringManager.jsx",
+   "src/pages/PlannerPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:7d6a7ce4bd529ef47af5f8bb496e31e7d1c57c62",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "7d6a7ce4bd529ef47af5f8bb496e31e7d1c57c62",
+  "url": "",
+  "author": "rajarshi1",
+  "date": "2026-07-14T16:09:31+05:30",
+  "title": "fix: remove duplicate deleteWishlistItem and deleteSavingsGoal keys",
+  "decision": "Remove duplicate keys for deleting wishlist items and savings goals",
+  "rationale": "To eliminate redundant code and potential confusion caused by having two separate functions with similar names that perform essentially identical operations.",
+  "alternatives": [
+   "Keep both deleteWishlistItem and deleteSavingsGoal but refactor one to avoid naming conflicts"
+  ],
+  "source_excerpt": "fix: remove duplicate deleteWishlistItem and deleteSavingsGoal keys",
+  "files_changed": [
+   "package-lock.json",
+   "src/context/FinancialContext.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:7e631a254b97f354ad5762b4ac82139ddfe244f6",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "7e631a254b97f354ad5762b4ac82139ddfe244f6",
+  "url": "",
+  "author": "Dipak Shedge",
+  "date": "2026-09-08T19:56:25+05:30",
+  "title": "feat: add category spending trend drilldown",
+  "decision": "Add category spending trend drilldown to the dashboard",
+  "rationale": "To provide users with insights into their monthly expenses categorized by different expense types.",
+  "alternatives": [
+   "Continue without a drilling down feature, relying only on overall financial summaries."
+  ],
+  "source_excerpt": "feat: add category spending trend drilldown",
+  "files_changed": [
+   "src/components/Dashboard.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:9570f0ff3581b1ebe98a2570a81b677f9407c29a",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "9570f0ff3581b1ebe98a2570a81b677f9407c29a",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2025-11-23T15:08:09+05:30",
+  "title": "feat: Add personalized user greeting using AuthContext and adjust dashboard layout height.",
+  "decision": "Implementing personalized user greeting and adjusting dashboard layout height.",
+  "rationale": "To improve the user's experience by providing a more engaging interface through personalization features such as customized greetings using AuthContext. Adjusted the dashboard's fixed-height to account for additional space used by new UI elements like 'Safe To Spend Widget'.",
+  "alternatives": [
+   "Keep original static greeting without personalisation.",
+   "Maintain current height of DashboardPage but consider alternative layout adjustments."
+  ],
+  "source_excerpt": "feat: Add personalized user greeting using AuthContext and adjust dashboard layout height.",
+  "files_changed": [
+   "src/pages/DashboardPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:95ce58b573b37168085a6bc3850fa547ef204da5",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "95ce58b573b37168085a6bc3850fa547ef204da5",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T12:58:49+05:30",
+  "title": "feat: add category icons and shared money formatter to Budgets cards",
+  "decision": "Added category icons and shared money formatter to Budgets cards",
+  "rationale": "To enhance visual differentiation of categories with color-coded icons based on metadata, improving user experience by making it easier for users to identify their spending patterns quickly.",
+  "alternatives": [
+   "Use text labels instead of colored icons"
+  ],
+  "source_excerpt": "feat: add category icons and shared money formatter to Budgets cards",
+  "files_changed": [
+   "src/pages/BudgetsPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:98814a17427f2906f6329c506f252ffad3893bd4",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "98814a17427f2906f6329c506f252ffad3893bd4",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T02:18:19+05:30",
+  "title": "chore: bump version to 1.3.0",
+  "decision": "Bump version to 1.3.0",
+  "rationale": "The change indicates an intentional update of the software's release identifier in alignment with semantic versioning practices for a new feature, bug fix, or improvement.",
+  "alternatives": [],
+  "source_excerpt": "chore: bump version to 1.3.0",
+  "files_changed": [
+   "backend/main.py",
+   "package.json"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:992a9685b218da2137b0ac98a3519f4b62ce1b7b",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "992a9685b218da2137b0ac98a3519f4b62ce1b7b",
+  "url": "",
+  "author": "AlvyRahman",
+  "date": "2026-08-07T21:05:45+06:00",
+  "title": "feat: add streak counter to dashboard and profile",
+  "decision": "Add streak counter to dashboard and profile",
+  "rationale": "To provide users with an overview of their financial consistency by showing the number of days they have made a transaction.",
+  "alternatives": [
+   "Display average spending over time instead of day-to-day transactions"
+  ],
+  "source_excerpt": "feat: add streak counter to dashboard and profile",
+  "files_changed": [
+   "src/components/StreakCounter.jsx",
+   "src/pages/DashboardPage.jsx",
+   "src/pages/ProfilePage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:998e03552338ffa2b75bd7f725ccad13655ba5bc",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "998e03552338ffa2b75bd7f725ccad13655ba5bc",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T13:10:21+05:30",
+  "title": "feat: split-screen Login/Signup brand panel and live safe-to-spend preview during Onboarding",
+  "decision": "Split-screen login/signup brand panel and live safe-to-spend preview during onboarding.",
+  "rationale": "The split-screen layout is designed to present a strong visual impression of BuFin's core idea right at the start, enhancing user engagement by showing them what they can expect from using the product before even filling out any forms. This aligns with UX best practices for brand identity and immediate value proposition during onboarding.",
+  "alternatives": [
+   "Traditional full-page login/signup without live safe-to-spend preview",
+   "Single screen layout focusing solely on form inputs"
+  ],
+  "source_excerpt": "feat: split-screen Login/Signup brand panel and live safe-to-spend preview during Onboarding",
+  "files_changed": [
+   "src/components/AuthLayout.jsx",
+   "src/pages/LoginPage.jsx",
+   "src/pages/OnboardingPage.jsx",
+   "src/pages/SignupPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:9f003ea53bd124958856ca61d0172618c6911ca8",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "9f003ea53bd124958856ca61d0172618c6911ca8",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T01:44:46+05:30",
+  "title": "chore: bump version to 1.2.0",
+  "decision": "Bumped the version from 1.1.0 to 1.2.0",
+  "rationale": "Version bump likely indicates new features or changes that are significant enough for a minor update.",
+  "alternatives": [],
+  "source_excerpt": "chore: bump version to 1.2.0",
+  "files_changed": [
+   "backend/main.py",
+   "package.json"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:a2528cb36eda17db294085222b1f8c675a26539d",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "a2528cb36eda17db294085222b1f8c675a26539d",
+  "url": "",
+  "author": "aditik06",
+  "date": "2026-08-06T15:31:30+05:30",
+  "title": "feat: add update_recurring action so \"change X to Y\" updates, not creates",
+  "decision": "Added 'update_recurring' action to handle updates for existing plans instead of creating new ones.",
+  "rationale": "The model's current behavior was incorrectly emitting create actions when users intended to update an existing plan, leading to unnecessary duplication. The decision ensures that only the changed fields are merged into a pre-existing RecurringPlan shape without duplicating it.",
+  "alternatives": [
+   "Continue with 'recurring' action as is (incorrectly creating new plans instead of updating)",
+   "Implement additional checks before emitting create actions for recurring items"
+  ],
+  "source_excerpt": "feat: add update_recurring action so \"change X to Y\" updates, not creates\n\n\"Change Google AI Pro subscription value to 650\" was creating a brand\nnew \"Google AI Pro Subscription\" plan instead of updating the amount\non the existing \"Google AI Pro\" one - the prompt only had three action\nshapes (transaction/debt/recurring), and an update-phrased request is\nthe closest fit to \"recurring\", so the model reasonably (but wrongly)\nemitted a create action for it.\n\n- ai_service.py: new \"update_recurring\" action with a target_name\n  plus only the field(s) actually changing (amount/frequency/\n  expectedDate/endDate, all optional) - a few-shot example\n  distinguishes update phrasing (\"change X to Y\") from create\n  phrasing, and the \"recurring\" action's own doc note now says to use\n  it only for a plan that doesn't already exist.\n- NaturalLanguageInput.jsx: new findMatchingPlan() looks up the\n  target_name against the user's real recurringPlans - exact\n  case-insensitive match first, then a substring match in either\n  direction (the model may output a slightly longer/shorter name than\n  what's stored, e.g. \"...Subscription\" vs not). A genuinely ambiguous\n  multi-match is treated as no match rather than guessing which plan\n  was meant, since silently updating the wrong one would be worse than\n  the bug this fixes. On a match, calls the existing updateRecurringPlan\n  action (merging only the changed fields into the existing plan,\n  since the backend's PUT expects the full RecurringPlan shape). On no\n  match, shows a clear error instead of silently creating a new plan -\n  the exact behavior being fixed.\n\nVerified: a standalone test of findMatchingPlan's exact/substring/\ncase-insensitive/no-match/ambiguous-match logic, and a full in-browser\nrun against the real app (mocking only the /ai/classify network call,\nsince I don't have live Gemini/Ollama credentials in this environment)\n- created a \"Google AI Pro\" plan at 500, sent an update_recurring\naction targeting \"Google AI Pro Subscription\" for 650, and confirmed\nthe existing plan updated in place (no duplicate) both on the\nDashboard's Month Projection and the Planner's commitment list.\nAlso confirmed a genuinely unmatched target_name shows the error\nmessage and creates nothing.\n\nCloses #58",
+  "files_changed": [
+   "backend/ai_service.py",
+   "src/components/NaturalLanguageInput.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:a88480e615751744d1691c27f6c2ab21f8586715",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "a88480e615751744d1691c27f6c2ab21f8586715",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2025-11-23T14:54:23+05:30",
+  "title": "fix: Update `NaturalLanguageInput` card and input styling by adjusting borders, shadows, height, and rounded corners.",
+  "decision": "Update the styling of `NaturalLanguageInput` card and input.",
+  "rationale": "The changes were made to improve visual aesthetics by adjusting borders, shadows, height, and rounded corners for a more modern look. The use of larger shadow (shadow-lg) instead of sm gives depth; removing border on all sides simplifies design while maintaining the feel with primary color border used in focus state, which enhances user experience upon interaction.",
+  "alternatives": [
+   "Retain previous styling with consistent small shadows and borders",
+   "Introduce only height adjustment without altering shadow or rounded corner properties"
+  ],
+  "source_excerpt": "fix: Update `NaturalLanguageInput` card and input styling by adjusting borders, shadows, height, and rounded corners.",
+  "files_changed": [
+   "src/components/NaturalLanguageInput.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:a8d602e562ed536d3381a61a8d221fe8790ca920",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "a8d602e562ed536d3381a61a8d221fe8790ca920",
+  "url": "",
+  "author": "wized2",
+  "date": "2026-09-12T14:18:53Z",
+  "title": "chore: remove unused WishlistWidget.jsx dead code",
+  "decision": "Remove WishlistWidget.jsx",
+  "rationale": "The component was no longer used and its functionality had been superseded by ImpulseControl.jsx.",
+  "alternatives": [
+   "Refactor the code to use WishListWidget instead of reusing components."
+  ],
+  "source_excerpt": "chore: remove unused WishlistWidget.jsx dead code\n\nNot imported anywhere; superseded by ImpulseControl.jsx.\n\nCloses #32",
+  "files_changed": [
+   "src/components/WishlistWidget.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:ab289c2488bb0f42a7fad46976761fb8ea31bbda",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "ab289c2488bb0f42a7fad46976761fb8ea31bbda",
+  "url": "",
+  "author": "aditik06",
+  "date": "2026-08-04T11:22:34+05:30",
+  "title": "feat: household frontend - persona switcher, setup/join, member management",
+  "decision": "Refactor FinancialContext to manage household-related state and interactions separately.",
+  "rationale": "Separating households management into its own context/module improves code organization, enhances readability by isolating functionality related specifically to handling multiple users (households) in a shared financial account. This separation also aids future scalability as new features for managing households can be added independently without affecting the primary FinancialContext.",
+  "alternatives": [
+   "Keep household management within existing context",
+   "Merge with another relevant module instead of creating separate one"
+  ],
+  "source_excerpt": "feat: household frontend - persona switcher, setup/join, member management\n\nPR 3 of 3 for #45 (household/shared accounts). Builds on #51 and #52\n(the backend model/invite flow and transaction/goal tagging) to wire\nhouseholds into the actual UI.\n\n- api.js: household CRUD/invite/join/member endpoints, plus a\n  getScopeHeaders() helper (Authorization + X-Household-Id when a\n  persona is active) applied only to the transaction and goal calls\n  - the only two resources that are actually household-aware. The\n  other ~25 existing call sites are untouched.\n- FinancialContext: households list + activeHouseholdId (persisted\n  to localStorage under the same key api.js reads, so a refresh\n  keeps whichever persona was active), switchPersona() re-fetches\n  just transactions/goals for the new persona, plus\n  create/join/leave/delete household actions.\n- Navigation.jsx: a persona switcher (avatar-stack-style trigger in\n  the sidebar, a \"Switch View\" entry in the mobile More sheet) opens\n  a panel listing Personal + each household, reusing the existing\n  More-sheet backdrop/panel pattern rather than a new dropdown\n  primitive.\n- New HouseholdPage.jsx (route /household): inline create/join forms\n  (matching BudgetsPage's pattern, not a multi-step wizard - the\n  actual forms are one field each), plus per-household member\n  management (invite generation, promote to owner, remove, leave,\n  delete) for owners.\n- JarVisualization.jsx: additive-only per-member contribution\n  breakdown, shown only when goal.household_id is set. Personal\n  goals are completely unaffected.\n\nVerified end-to-end in-browser with two real accounts: created a\nhousehold as Alice, generated an invite, joined as Bob, added a\nhousehold-scoped transaction and goal deposit as Alice, confirmed\nBob sees the same shared transaction/goal with per-member\ncontributions correctly attributed (Alice +5000, Bob +2000 after his\nown deposit), and confirmed switching either user back to \"Personal\"\nshows a completely empty, isolated view with zero shared data\nleaking through.\n\nRef #45",
+  "files_changed": [
+   "src/App.jsx",
+   "src/components/JarVisualization.jsx",
+   "src/components/Navigation.jsx",
+   "src/context/FinancialContext.jsx",
+   "src/lib/api.js",
+   "src/pages/HouseholdPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:b0bcba0037f7da23f14d06256baf1837e45f74e6",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "b0bcba0037f7da23f14d06256baf1837e45f74e6",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2025-11-24T03:31:53+05:30",
+  "title": "feat: Implement savings goal withdrawals and add goal editing functionality with a unified dialog.",
+  "decision": "Implement savings goal withdrawals and add goal editing functionality using a unified dialog",
+  "rationale": "To enhance user experience by providing an intuitive way to manage their financial goals. The decision was made after considering the need for users to easily withdraw funds from or edit existing saving goals.",
+  "alternatives": [
+   "Separate dialogs for withdrawal and edits, but with shared UI elements"
+  ],
+  "source_excerpt": "feat: Implement savings goal withdrawals and add goal editing functionality with a unified dialog.",
+  "files_changed": [
+   "src/context/FinancialContext.jsx",
+   "src/pages/GoalsPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:b0f927d6e61538e0c5d2be847f38cfc56c4bab76",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "b0f927d6e61538e0c5d2be847f38cfc56c4bab76",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T02:16:21+05:30",
+  "title": "feat: extract shared PageHeader component, remove greeting emoji per design policy",
+  "decision": "Refactor repeated JSX blocks into reusable components.",
+  "rationale": "To reduce code duplication and improve maintainability by extracting common layout patterns such as headers, action buttons, etc., into their own component files which can then be imported where needed across the application.",
+  "alternatives": [
+   "Continue with inline JSX for brevity in small projects",
+   "Implement a utility function to generate header blocks"
+  ],
+  "source_excerpt": "feat: extract shared PageHeader component, remove greeting emoji per design policy",
+  "files_changed": [
+   "src/components/PageHeader.jsx",
+   "src/pages/BudgetsPage.jsx",
+   "src/pages/CoachPage.jsx",
+   "src/pages/DashboardPage.jsx",
+   "src/pages/GoalsPage.jsx",
+   "src/pages/InsightsPage.jsx",
+   "src/pages/LedgerPage.jsx",
+   "src/pages/PlannerPage.jsx",
+   "src/pages/ProfilePage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:b0fc816b25db768987067ea1ac7200fcc2d6681c",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "b0fc816b25db768987067ea1ac7200fcc2d6681c",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T01:41:48+05:30",
+  "title": "feat: add color-threshold ThresholdProgress variant for budget-vs-actual bars",
+  "decision": "Added ThresholdProgress variant to Progress component",
+  "rationale": "To provide visual indication of budget versus actual by shifting color from green (good) through amber (warning), and finally red (critical) as the value approaches or exceeds a certain threshold.",
+  "alternatives": [
+   "Continue with only basic progress bars without color thresholds, relying solely on percentage completion",
+   "Implement different shapes for ThresholdProgress to indicate budget status instead of using colors"
+  ],
+  "source_excerpt": "feat: add color-threshold ThresholdProgress variant for budget-vs-actual bars",
+  "files_changed": [
+   "src/components/ui/progress.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:b2cc725b7e964295fa16d02468a7d4e2f5e6a5a1",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "b2cc725b7e964295fa16d02468a7d4e2f5e6a5a1",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2025-11-23T04:22:02+05:30",
+  "title": "feat: Add markdown rendering for coach messages, insights, and spending alerts.",
+  "decision": "Added markdown rendering for coach messages using 'react-markdown' and 'remark-gfm'",
+  "rationale": "To improve readability of various content types like tips, spending alerts, etc., in a consistent format.",
+  "alternatives": [
+   "Using plain HTML tags",
+   "Plain text without formatting"
+  ],
+  "source_excerpt": "feat: Add markdown rendering for coach messages, insights, and spending alerts.",
+  "files_changed": [
+   "src/components/InsightsDashboard.jsx",
+   "src/components/SpendingMonitor.jsx",
+   "src/pages/CoachPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:b4cc4d153cd26ef04b272e4839aa7a8274e4a586",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "b4cc4d153cd26ef04b272e4839aa7a8274e4a586",
+  "url": "",
+  "author": "rajarshi1",
+  "date": "2026-07-14T16:28:48+05:30",
+  "title": "fix: preserve UTC timestamps for impulse cooldown",
+  "decision": "Preserve UTC timestamps for impulse cooldown",
+  "rationale": "An offset-less ISO timestamp is interpreted as local time by browsers, which made the client-side 48-hour cooldown start several hours early for wishlist items created by this endpoint.",
+  "alternatives": [
+   "Keep using an offset-less ISO timestamp"
+  ],
+  "source_excerpt": "fix: preserve UTC timestamps for impulse cooldown",
+  "files_changed": [
+   "backend/routers/goals.py",
+   "src/components/ImpulseControl.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:b608a3aa4d7e129e4aa466c91c1be66bd03cff1f",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "b608a3aa4d7e129e4aa466c91c1be66bd03cff1f",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-20T06:04:55+05:30",
+  "title": "docs: add CONTRIBUTING.md",
+  "decision": "Add CONTRIBUTING.md",
+  "rationale": "To provide guidelines for contributors on how to contribute code changes.",
+  "alternatives": [
+   "Skip adding a contribution guide"
+  ],
+  "source_excerpt": "docs: add CONTRIBUTING.md",
+  "files_changed": [
+   "CONTRIBUTING.md"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:bb32b626946170c9c6b62d2f7b0d9f2a2cb06d32",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "bb32b626946170c9c6b62d2f7b0d9f2a2cb06d32",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2025-11-24T00:29:39+05:30",
+  "title": "feat: add 8-week cash flow forecast component and improve currency display in debt and recurring managers.",
+  "decision": "Added an 8-week cash flow forecast component and improved the currency display in debt and recurring managers.",
+  "rationale": "The new feature will help users better visualize their financial situation over a longer period, making it easier to plan for future expenses. Improving how debts are displayed also makes them more transparent and understandable at a glance.",
+  "alternatives": [
+   "A shorter-term cash flow forecast (e.g., monthly)",
+   "Displaying the currency amount as integers without formatting"
+  ],
+  "source_excerpt": "feat: add 8-week cash flow forecast component and improve currency display in debt and recurring managers.",
+  "files_changed": [
+   "src/components/CashFlowForecast.jsx",
+   "src/components/DebtTracker.jsx",
+   "src/components/RecurringManager.jsx",
+   "src/pages/PlannerPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:bc791fba4d429c1d0af956ce7e726eb46899ccf0",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "bc791fba4d429c1d0af956ce7e726eb46899ccf0",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T15:53:41+05:30",
+  "title": "fix: let Goals page columns size to content instead of forcing full-viewport height with empty space",
+  "decision": "Adjust column sizes in Goals page to fit content instead of forcing full viewport height",
+  "rationale": "Reducing forced full-viewport heights improves layout and user experience by minimizing empty scrollable regions under single items like jars or a short wishlist.",
+  "alternatives": [
+   "Keeping the original styling with forced full-viewport height"
+  ],
+  "source_excerpt": "fix: let Goals page columns size to content instead of forcing full-viewport height with empty space",
+  "files_changed": [
+   "src/components/ImpulseControl.jsx",
+   "src/pages/GoalsPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:be638b7e173492d732f742eee8248936a6cfbe6d",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "be638b7e173492d732f742eee8248936a6cfbe6d",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-26T13:42:06+05:30",
+  "title": "docs: add PR template with build/verification checklist",
+  "decision": "Implementing a pull request template that includes build/verification checklists and guidelines for changes",
+  "rationale": "To ensure consistency in the review process of contributions to the codebase by specifying requirements such as passing builds, verifying backend integrations without existing test suites, updating database schema with migrations when necessary, limiting edits only to relevant files, and providing a section for notes on uncertainty or additional questions from reviewers.",
+  "alternatives": [
+   "Not including any structured template in pull requests",
+   "Including checklists but omitting guidelines such as touching related codebases like the frontend (React)",
+   "Forgetting about database changes not triggering Alembic migrations which could lead to data inconsistency"
+  ],
+  "source_excerpt": "docs: add PR template with build/verification checklist",
+  "files_changed": [
+   ".github/pull_request_template.md"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:bfd20cf4addc91094ac5461474e7970991eeaaf6",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "bfd20cf4addc91094ac5461474e7970991eeaaf6",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T02:53:03+05:30",
+  "title": "feat: add money formatter, category identity system, and hero-surface tokens",
+  "decision": "Added money formatter (formatMoney), category identity system using locale-based currency formatting to ensure consistency across components.",
+  "rationale": "To unify and standardize how monetary values are displayed throughout different parts of the application, avoiding ad-hoc calls that could lead to inconsistencies. Using Intl.NumberFormat ensures correct number grouping for Indian rupees as per local conventions (INR).",
+  "alternatives": [
+   "Continue using string concatenation with hardcoded currency symbols and formatting.",
+   "Use a third-party library specifically designed for international money formats."
+  ],
+  "source_excerpt": "feat: add money formatter, category identity system, and hero-surface tokens",
+  "files_changed": [
+   "src/index.css",
+   "src/lib/categoryMeta.js",
+   "src/lib/money.js"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:c3798d47945c343e7373365c8a15f56cfbdd68f6",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "c3798d47945c343e7373365c8a15f56cfbdd68f6",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-02T20:07:17+05:30",
+  "title": "fix: compute correct last-working-day (skip weekends) in backend spending alert",
+  "decision": "Compute the last-working day by skipping weekends",
+  "rationale": "To ensure accurate computation of spending alerts that align with business logic requiring working days only.",
+  "alternatives": [
+   "Assume 'last' as always being a non-weekend date for safety, ignoring specific weekdays (i.e., use 28th or any fixed day)"
+  ],
+  "source_excerpt": "fix: compute correct last-working-day (skip weekends) in backend spending alert",
+  "files_changed": [
+   "backend/ai_service.py"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:c7d032b7ecb94a4b254b0a50ed64d502224b5978",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "c7d032b7ecb94a4b254b0a50ed64d502224b5978",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2025-11-24T03:30:32+05:30",
+  "title": "feat: Add Achievements component",
+  "decision": "Add an Achievements component to the ProfilePage",
+  "rationale": "To visually represent user's financial milestones and progress towards certain goals like saving money or managing debts.",
+  "alternatives": [
+   "Implement a simple text-based list of achievements on the profile page instead."
+  ],
+  "source_excerpt": "feat: Add Achievements component",
+  "files_changed": [
+   "src/components/Achievements.jsx",
+   "src/pages/ProfilePage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:c903ea3963654346237d3a625d4377eea5d3d19b",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "c903ea3963654346237d3a625d4377eea5d3d19b",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T16:03:45+05:30",
+  "title": "fix: widen Impulse Control's Cost input and replace unclear icon-only Add button with a labeled one",
+  "decision": "The Impulse Control component's cost input field was widened and an icon-only add button replaced with a labeled one.",
+  "rationale": "To improve usability by making it easier for users to read, enter numerical values accurately in the 'Cost' input field without needing visual cues like icons. Also enhancing accessibility since some screen readers might not be able to interpret what kind of item is being added based on an icon alone.",
+  "alternatives": [
+   "Leave cost as a numeric value with no text label",
+   "Retain unclear, icon-only Add button for aesthetic consistency"
+  ],
+  "source_excerpt": "fix: widen Impulse Control's Cost input and replace unclear icon-only Add button with a labeled one",
+  "files_changed": [
+   "src/components/ImpulseControl.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:ca964834376eea64535c7174d00fceffd6f45cbe",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "ca964834376eea64535c7174d00fceffd6f45cbe",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-02T21:11:26+05:30",
+  "title": "chore: set app version to 1.0.0 and allow localhost:5174 in CORS",
+  "decision": "Change the app version to '1.0.0' and update CORS settings.",
+  "rationale": "Versioning indicates readiness for production or public release; updating CORS allows requests from localhost:5174, which might be useful if there's a new service running on that port needing access via API calls.",
+  "alternatives": [
+   "Keep the app version as '0.0.1' and restrict CORS to http://localhost:5173 only."
+  ],
+  "source_excerpt": "chore: set app version to 1.0.0 and allow localhost:5174 in CORS",
+  "files_changed": [
+   "backend/main.py",
+   "package.json"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:cdeafacc6fda4252a9764ebf4e3e7e07d40b95a0",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "cdeafacc6fda4252a9764ebf4e3e7e07d40b95a0",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T02:13:12+05:30",
+  "title": "feat: theme ExpenseBreakdown pie chart with CSS-var-based palette, replacing hardcoded hexes",
+  "decision": "Replaced hardcoded hex values for chart colors and tooltip styles in the ExpenseBreakdown pie chart component.",
+  "rationale": "The decision to use CSS variables allows for a consistent theme across different parts of the application, simplifies maintenance by centralizing color definitions (especially useful when considering light/dark mode), and ensures that updates can be made more easily since changing values only needs done in one place instead of multiple instances throughout the code.",
+  "alternatives": [
+   "Continue using hardcoded hex colors for each instance where they are used."
+  ],
+  "source_excerpt": "feat: theme ExpenseBreakdown pie chart with CSS-var-based palette, replacing hardcoded hexes",
+  "files_changed": [
+   "src/components/Dashboard.jsx",
+   "src/lib/chartTheme.js"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:ce8e9fb9e7394a3ccbe0310d6878bb140a9ac3c3",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "ce8e9fb9e7394a3ccbe0310d6878bb140a9ac3c3",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-08-05T02:58:01+05:30",
+  "title": "fix: resolve broken merge from PR #53's conflict resolution",
+  "decision": "Merged both sides' actual content instead of concatenating them.",
+  "rationale": "To resolve the conflicting imports and duplicate declarations caused by GitHub's 'accept both changes'.",
+  "alternatives": [
+   "Keep separate import statements for each side, causing potential conflicts with naming or ESM limitations."
+  ],
+  "source_excerpt": "fix: resolve broken merge from PR #53's conflict resolution\n\nGitHub's \"accept both changes\" on the Navigation.jsx / FinancialContext.jsx\nconflicts kept both sides' content verbatim and only stripped the\n<<<<<<</=======/>>>>>>> marker lines, leaving:\n\n- Navigation.jsx: two separate `import {...} from 'lucide-react'` lines\n  both binding the same names (LayoutDashboard, X, etc.) - a SyntaxError\n  under ESM, confirmed via `npm run build` failing with \"already been\n  declared\" on MoreHorizontal/X.\n- FinancialContext.jsx: a duplicate `const [...] = await Promise.all([`\n  declaration in the initial-fetch effect, and a missing comma after\n  `deleteHousehold` in the context value object.\n\nMerged both sides' actual content instead of concatenating them.\n\nVerified: npm run build succeeds, no new eslint errors (the 3 remaining\nare pre-existing on main, unrelated to this fix).",
+  "files_changed": [
+   "src/components/Navigation.jsx",
+   "src/context/FinancialContext.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:cec1f6e4ca16ffefa22f0775df12aaca3fceb221",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "cec1f6e4ca16ffefa22f0775df12aaca3fceb221",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T16:03:19+05:30",
+  "title": "fix: contain Upcoming Transactions overflow internally so it stops pushing the Planner page taller",
+  "decision": "Switch to flexbox layout for FutureTransactions component",
+  "rationale": "To ensure that upcoming transactions overflow internally doesn't push beyond planned height, enabling better control of overflowing content.",
+  "alternatives": [
+   "Continue with the existing non-flexbox grid system"
+  ],
+  "source_excerpt": "fix: contain Upcoming Transactions overflow internally so it stops pushing the Planner page taller",
+  "files_changed": [
+   "src/components/FutureTransactions.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:cee7a9361c38531020109844dcb5dc089c388aa1",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "cee7a9361c38531020109844dcb5dc089c388aa1",
+  "url": "",
+  "author": "Dipak Shedge",
+  "date": "2026-09-09T14:55:34+05:30",
+  "title": "feat: import XAxis from recharts",
+  "decision": "Import XAxis from recharts",
+  "rationale": "It may be necessary to access the x-axis configuration for customization or additional functionality within a PieChart.",
+  "alternatives": [
+   "Not importing XAxis, limiting customizations on pie chart's x-axis."
+  ],
+  "source_excerpt": "feat: import XAxis from recharts",
+  "files_changed": [
+   "src/components/Dashboard.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:d42579506783e9c45a17f0c36177ffc24f320996",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "d42579506783e9c45a17f0c36177ffc24f320996",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T14:00:20+05:30",
+  "title": "fix: forecast bar collapse, split-bill on income, ledger row hover, filter dropdown chevron",
+  "decision": "Replace HTML select element for filter dropdown",
+  "rationale": "To improve visual consistency and usability with a unified design language using custom Select component from './ui/select'. Allows better integration of styling, transitions, and accessibility features.",
+  "alternatives": [
+   "Continue using the existing HTML select element"
+  ],
+  "source_excerpt": "fix: forecast bar collapse, split-bill on income, ledger row hover, filter dropdown chevron",
+  "files_changed": [
+   "src/components/TransactionTable.jsx",
+   "src/pages/PlannerPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:d638b822460fef3604c75f0304b1f937ec9c7f8f",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "d638b822460fef3604c75f0304b1f937ec9c7f8f",
+  "url": "",
+  "author": "aditik06",
+  "date": "2026-08-03T22:30:37+05:30",
+  "title": "fix: respect Privacy Mode on the Net Worth page",
+  "decision": "To respect Privacy Mode on Net Worth page by masking real financial data when privacy mode is enabled.",
+  "rationale": "The 'NetWorthPage' was displaying sensitive information even in Private Mode, which should not be visible to the user. The decision ensures that users have control over their personal and private details being displayed publicly or shared with others on platforms like LinkedIn.",
+  "alternatives": [
+   "Not masking data when privacy mode is enabled",
+   "Showing different types of financial indicators instead"
+  ],
+  "source_excerpt": "fix: respect Privacy Mode on the Net Worth page\n\nNetWorthPage was the only financial page that ignored isPrivacyMode -\nstat cards, section totals, and card values all showed real numbers\nregardless of the toggle. Wires isPrivacyMode through from\nuseFinancial() and masks every amount (including the trend chart's\naxis/tooltip) with the same formatCurrency pattern BudgetsPage uses.",
+  "files_changed": [
+   "src/pages/NetWorthPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:d89ec767978513f99f889b976bcb262c77bd0d54",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "d89ec767978513f99f889b976bcb262c77bd0d54",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T16:02:26+05:30",
+  "title": "fix: replace Debts per-person expand/collapse with click-to-view modal, matching Recurring's pattern",
+  "decision": "Switch from in-place expand/collapse to click-to-view modal for DebtTracker component.",
+  "rationale": "The previous pattern of expanding rows on a person's name led to many entries pushing other people off-screen. A new approach was taken where clicking an individual's row opens their debts details, reducing the risk that long lists grow beyond what is viewable without scrolling.",
+  "alternatives": [
+   "Continue with in-place expand/collapse",
+   "Implement infinite scroll instead of expansion"
+  ],
+  "source_excerpt": "fix: replace Debts per-person expand/collapse with click-to-view modal, matching Recurring's pattern",
+  "files_changed": [
+   "src/components/DebtTracker.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:dbdf53fff789837d824e3985567644e5a05f3f40",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "dbdf53fff789837d824e3985567644e5a05f3f40",
+  "url": "",
+  "author": "wized2",
+  "date": "2026-09-17T10:31:45Z",
+  "title": "docs: note Ollama skip-cache process-local + stale-negative ceilings (#77)",
+  "decision": "Skip Ollama entirely for failed probes and disable it during the stale-negative window.",
+  "rationale": "To avoid re-paying multi-second refused-connect costs by skipping unnecessary calls when a probe fails or within a short period after failure before an external service is confirmed to be back up again. This decision balances cost efficiency with user experience, reducing latency for users due to failed attempts at accessing Ollama services.",
+  "alternatives": [
+   "Continue using the current system without changes",
+   "Implement cross-worker coordination which would require more complex infrastructure and could potentially increase costs"
+  ],
+  "source_excerpt": "docs: note Ollama skip-cache process-local + stale-negative ceilings (#77)",
+  "files_changed": [
+   "backend/ai_service.py"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:ddee26bcbb7a72d3656c2aa5bdb814c914ca0509",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "ddee26bcbb7a72d3656c2aa5bdb814c914ca0509",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T02:17:58+05:30",
+  "title": "feat: make Safe-to-Spend the single elevated hero card, normalize Dashboard spacing to gap-4",
+  "decision": "Normalize Dashboard spacing to gap-4",
+  "rationale": "To standardize the visual consistency and improve alignment of elements within different components.",
+  "alternatives": [
+   "Keep current variable gaps",
+   "Increase or decrease individual component margins"
+  ],
+  "source_excerpt": "feat: make Safe-to-Spend the single elevated hero card, normalize Dashboard spacing to gap-4",
+  "files_changed": [
+   "src/components/Dashboard.jsx",
+   "src/components/SafeToSpendWidget.jsx",
+   "src/pages/DashboardPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:e2312409dd231e477c36d5e3fb1070672e03aa57",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "e2312409dd231e477c36d5e3fb1070672e03aa57",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T13:01:59+05:30",
+  "title": "feat: hero-pattern empty states, jar category accents, and real countdown rings for impulse control",
+  "decision": "Use real countdown rings instead of static timers for empty states and impulse control features",
+  "rationale": "Realistic progress indicators provide a more accurate reflection of time spent, enhancing user engagement and satisfaction.",
+  "alternatives": [
+   "Continue using fake timer bars"
+  ],
+  "source_excerpt": "feat: hero-pattern empty states, jar category accents, and real countdown rings for impulse control",
+  "files_changed": [
+   "src/components/EmptyState.jsx",
+   "src/components/ImpulseControl.jsx",
+   "src/components/JarVisualization.jsx",
+   "src/components/SafeToSpendGauge.jsx",
+   "src/pages/GoalsPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:e610e445cc873f6593bb1b9e4063f50666441a5b",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "e610e445cc873f6593bb1b9e4063f50666441a5b",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T01:41:29+05:30",
+  "title": "feat: wire budgets CRUD into API client and FinancialContext",
+  "decision": "Wire budgets CRUD into API client and FinancialContext",
+  "rationale": "Enhancing financial context management by integrating budgeting functionalities directly within existing structures for improved user experience.",
+  "alternatives": [
+   "Keep the budget-related features separate from APIs to maintain modularity."
+  ],
+  "source_excerpt": "feat: wire budgets CRUD into API client and FinancialContext",
+  "files_changed": [
+   "src/context/FinancialContext.jsx",
+   "src/lib/api.js"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:e8b521033f9ea36e048a283c5bfbb1ba622bb6f6",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "e8b521033f9ea36e048a283c5bfbb1ba622bb6f6",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2025-11-23T21:23:22+05:30",
+  "title": "feat: Improve Goals page UI, update Impulse Control's 'Remove' action to 'Don't Buy (Savings Win)', and refine Jar Visualization card styling.",
+  "decision": "Change 'Remove' action to 'Don't Buy (Savings Win)' and refine Jar Visualization card styling",
+  "rationale": "Enhance user experience by making UI more intuitive for removing items from Impulse Control section.",
+  "alternatives": [
+   "Keep the existing text on button, no change in design"
+  ],
+  "source_excerpt": "feat: Improve Goals page UI, update Impulse Control's 'Remove' action to 'Don't Buy (Savings Win)', and refine Jar Visualization card styling.",
+  "files_changed": [
+   "src/components/ImpulseControl.jsx",
+   "src/components/JarVisualization.jsx",
+   "src/pages/GoalsPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:e98cb1b2f7d2429384e813ca950fc6e97cf6f985",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "e98cb1b2f7d2429384e813ca950fc6e97cf6f985",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T14:13:00+05:30",
+  "title": "feat: add Goals page summary row (Total Saved, Combined Target, Next Milestone)",
+  "decision": "Added summary row to Goals page displaying Total Saved, Combined Target and Next Milestone.",
+  "rationale": "To provide a quick overview of savings progress for users on the goals page.",
+  "alternatives": [
+   "No additional information displayed",
+   "Additional individual goal details instead"
+  ],
+  "source_excerpt": "feat: add Goals page summary row (Total Saved, Combined Target, Next Milestone)",
+  "files_changed": [
+   "src/pages/GoalsPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:f4301801e94b7c94e4237e3f6a9d111a3e92407e",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "f4301801e94b7c94e4237e3f6a9d111a3e92407e",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-02T20:12:43+05:30",
+  "title": "fix: guard repayDebt against duplicate repayment transactions from double-clicks/retries",
+  "decision": "Implementing a mechanism to guard against duplicate repayment transactions when users double-click or retry.",
+  "rationale": "To prevent creating unnecessary replication of payment records and reduce potential confusion for the user regarding their debt status, as well as minimizing erroneous interactions with external systems that might expect single occurrences per transaction ID.",
+  "alternatives": [
+   "Ignore duplicates without checking repaying status",
+   "Send duplicate transactions but mark them differently in UI"
+  ],
+  "source_excerpt": "fix: guard repayDebt against duplicate repayment transactions from double-clicks/retries",
+  "files_changed": [
+   "src/context/FinancialContext.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:f46e3c4a2f1e14e0259ac30f41ed7921366d2fab",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "f46e3c4a2f1e14e0259ac30f41ed7921366d2fab",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T13:12:00+05:30",
+  "title": "chore: bump version to 2.0.0 for the UI revamp",
+  "decision": "Bump the version of the UI to 2.0.0",
+  "rationale": "The commit indicates an intentional upgrade for a significant revamp in the user interface.",
+  "alternatives": [],
+  "source_excerpt": "chore: bump version to 2.0.0 for the UI revamp",
+  "files_changed": [
+   "backend/main.py",
+   "package.json"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:f575486c11ffe9e4f294089b562d99a05596a47e",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "f575486c11ffe9e4f294089b562d99a05596a47e",
+  "url": "",
+  "author": "Dipak Shedge",
+  "date": "2026-09-08T20:00:46+05:30",
+  "title": "feat: add back navigation icon",
+  "decision": "Added back navigation icon to the Dashboard component.",
+  "rationale": "To improve user experience by providing an intuitive way for users to navigate backward within a series of dashboard views or pages.",
+  "alternatives": [
+   "Include inline text instructions instead",
+   "Add separate buttons with labels 'Previous' and 'Back'",
+   "Leave as is without navigation icon"
+  ],
+  "source_excerpt": "feat: add back navigation icon",
+  "files_changed": [
+   "src/components/Dashboard.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:f7b291e8bd65129ac15aab9a28a9dbae2ba108c3",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "f7b291e8bd65129ac15aab9a28a9dbae2ba108c3",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T13:05:35+05:30",
+  "title": "feat: add Agenda/Month toggle to Planner (agenda default), move forecast above fold, group debts by person with net totals",
+  "decision": "Switch to using <CashFlowForecast /> instead of <FiscalCalendar /> in PlannerPage",
+  "rationale": "To provide a more comprehensive view that includes both forecast and calendar views for better financial planning.",
+  "alternatives": [
+   "<FinancialOverviewComponent>",
+   "<DashboardLayout>"
+  ],
+  "source_excerpt": "feat: add Agenda/Month toggle to Planner (agenda default), move forecast above fold, group debts by person with net totals",
+  "files_changed": [
+   "src/components/CommitmentsHub.jsx",
+   "src/components/DebtTracker.jsx",
+   "src/components/FiscalCalendar.jsx",
+   "src/pages/PlannerPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:f8c0f1ddd21b3446aa458b964bd8eb54f16ee8f4",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "f8c0f1ddd21b3446aa458b964bd8eb54f16ee8f4",
+  "url": "",
+  "author": "rajarshi1",
+  "date": "2026-07-14T16:12:43+05:30",
+  "title": "chore: making sure artifacts from package-lock.json remains unchanged",
+  "decision": "Avoid modifying the contents of package-lock.json to ensure reproducible builds and consistent dependency management.",
+  "rationale": "Changing artifacts from package-lock.json could lead to inconsistencies in dependencies across different environments, potentially causing unexpected behavior or conflicts. Sticking with unmodified lock files helps maintain stability and predictability in deployments.",
+  "alternatives": [
+   "Updating the contents of package-lock.json manually after each change",
+   "Ignoring changes made by npm that affect package-lock.json"
+  ],
+  "source_excerpt": "chore: making sure artifacts from package-lock.json remains unchanged",
+  "files_changed": [
+   "package-lock.json"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:f9ad6b509e266bc222903f4948d75733a67208b8",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "f9ad6b509e266bc222903f4948d75733a67208b8",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-08-05T03:19:58+05:30",
+  "title": "fix: validate Quick Add amounts against input text, fall back to Gemini on mismatch (#57)",
+  "decision": "_amounts_plausible() method was implemented to validate Quick Add amounts against input text and fall back to Gemini on mismatch.",
+  "rationale": "The rationale behind this decision is that the local model may silently round non-round amounts (e.g., 53200 -> 53000), which can lead to inaccuracies in amount validation. By implementing _amounts_plausible(), we ensure a more accurate and reliable comparison of Quick Add output with input text, thereby enhancing user experience by falling back on Gemini when discrepancies are detected.",
+  "alternatives": [
+   "_extract_number_candidates() function was considered as an alternative but wasn't sufficient alone due to potential inaccuracies in amount validation."
+  ],
+  "source_excerpt": "fix: validate Quick Add amounts against input text, fall back to Gemini on mismatch (#57)",
+  "files_changed": [
+   "backend/ai_service.py"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:fa3df76088dad31c91af8599b75f2c869c85095a",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "fa3df76088dad31c91af8599b75f2c869c85095a",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T12:58:01+05:30",
+  "title": "feat: rebuild Ledger as day-grouped list with search, category icons, and always-visible actions",
+  "decision": "Refactor transaction item rendering logic",
+  "rationale": "To make it easier to maintain and update individual elements of a transaction, such as icons or descriptions.",
+  "alternatives": [
+   "Keep current inline implementation",
+   "Move all components outside the render function"
+  ],
+  "source_excerpt": "feat: rebuild Ledger as day-grouped list with search, category icons, and always-visible actions",
+  "files_changed": [
+   "src/components/TransactionTable.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:fb7e9355a205fb8b07361ee11da7f05c14485053",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "fb7e9355a205fb8b07361ee11da7f05c14485053",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T13:11:13+05:30",
+  "title": "fix: add accessible label to impulse-control countdown ring",
+  "decision": "Added accessible label to impulse-control countdown ring",
+  "rationale": "To improve accessibility for users who rely on screen readers or have visual impairments.",
+  "alternatives": [
+   "Leave it as is, without an accessible label (not recommended due to potential exclusion of some users)"
+  ],
+  "source_excerpt": "fix: add accessible label to impulse-control countdown ring",
+  "files_changed": [
+   "src/components/ImpulseControl.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:fd15b0855ccea84ae50326abcbdd4e67a5517ea2",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "fd15b0855ccea84ae50326abcbdd4e67a5517ea2",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-02T20:15:55+05:30",
+  "title": "fix: base achievements on distinct-day activity instead of point-in-time totals to prevent gaming",
+  "decision": "Base achievements on distinct-day activity instead of point-in-time totals to prevent gaming.",
+  "rationale": "This change aims to discourage users from unlocking rewards through a single lump-sum transaction or by creating multiple transactions in rapid succession, which could lead to exploitation. By requiring the total amount saved across several separate deposits and ensuring these are spread over distinct days, it ensures that achievements reflect consistent savings behavior rather than opportunistic gaming of point-in-time totals.",
+  "alternatives": [
+   "Base achievements on raw transaction count",
+   "Require a single lump-sum transfer to unlock rewards"
+  ],
+  "source_excerpt": "fix: base achievements on distinct-day activity instead of point-in-time totals to prevent gaming",
+  "files_changed": [
+   "src/components/Achievements.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:fd6e1c3fb7a1d7797478cf5a36a997834459eac8",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "fd6e1c3fb7a1d7797478cf5a36a997834459eac8",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T12:43:45+05:30",
+  "title": "fix: mobile nav overflow at 8 tabs, replace with 5-slot bar + center Add FAB + More sheet",
+  "decision": "Fix: mobile nav overflow at 8 tabs and replace it with a 5-slot bar + center Add FAB (+ More sheet)",
+  "rationale": "To improve usability on smaller screens by ensuring that the navigation does not exceed its container, while maintaining all essential links accessible within one tap.",
+  "alternatives": [
+   "Keep original eight-tab layout for desktop compatibility but hide some tabs with a 'View more' button at mobile resolution."
+  ],
+  "source_excerpt": "fix: mobile nav overflow at 8 tabs, replace with 5-slot bar + center Add FAB + More sheet",
+  "files_changed": [
+   "src/App.jsx",
+   "src/components/Navigation.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:fdca6a32c203c51b2792a420bda6c19250d7200e",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "fdca6a32c203c51b2792a420bda6c19250d7200e",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T14:13:37+05:30",
+  "title": "feat: add Budgets summary row (Total Budgeted/Spent/Over Budget), widen grid to 3 columns on large screens",
+  "decision": "Added summary row for Total Budgeted/Spent/Over Budget and widened grid to 3 columns on large screens",
+  "rationale": "To provide a quick overview of budget status with total values, and improve readability by accommodating more items in the layout.",
+  "alternatives": [
+   "Keep only two-column wide grid regardless of screen size"
+  ],
+  "source_excerpt": "feat: add Budgets summary row (Total Budgeted/Spent/Over Budget), widen grid to 3 columns on large screens",
+  "files_changed": [
+   "src/pages/BudgetsPage.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/BuFin:commit:ff530cc88543adda91b659199418c3065c7d0e31",
+  "repo": "anubhab-m02/BuFin",
+  "kind": "commit",
+  "ref": "ff530cc88543adda91b659199418c3065c7d0e31",
+  "url": "",
+  "author": "anubhab-m02",
+  "date": "2026-07-03T12:50:41+05:30",
+  "title": "chore: remove SafeToSpendWidget/BudgetHealthBar/SpendingMonitor, superseded by hero + hooks",
+  "decision": "Removed the SafeToSpendWidget component from src/components/SafeToSpendWidget.jsx",
+  "rationale": "The developer removed this unused widget which was not necessary for any of their projects.",
+  "alternatives": [
+   "Leave it in as a utility or placeholder if needed in future."
+  ],
+  "source_excerpt": "chore: remove SafeToSpendWidget/BudgetHealthBar/SpendingMonitor, superseded by hero + hooks",
+  "files_changed": [
+   "src/components/BudgetHealthBar.jsx",
+   "src/components/Dashboard.jsx",
+   "src/components/SafeToSpendWidget.jsx",
+   "src/components/SpendingMonitor.jsx"
+  ]
+ },
+ {
+  "id": "anubhab-m02/adr-engine:commit:1cbaa440fc3547f355649bf584f938a3ea007af4",
+  "repo": "anubhab-m02/adr-engine",
+  "kind": "commit",
+  "ref": "1cbaa440fc3547f355649bf584f938a3ea007af4",
+  "url": "https://github.com/anubhab-m02/adr-engine/commit/1cbaa440fc3547f355649bf584f938a3ea007af4",
+  "author": "anubhab-m02",
+  "date": "2026-10-30T23:45:28Z",
+  "title": "docs: park the eval fixture / retrieval tuning work in ROADMAP (#108, #112)",
+  "decision": "Parked the eval fixture / retrieval tuning work in ROADMAP",
+  "rationale": "The task needs human intervention and currently depends on a live local Ollama which may not be readily available. It can wait until there is more progress with other tasks or resources become ready.",
+  "alternatives": [
+   "Proceeding immediately would require immediate availability of the necessary tools (live local Ollama) and possibly additional dependencies."
+  ],
+  "source_excerpt": "docs: park the eval fixture / retrieval tuning work in ROADMAP (#108, #112)",
+  "files_changed": [
+   "ROADMAP.md"
+  ]
+ },
+ {
+  "id": "anubhab-m02/adr-engine:commit:97df411f545796c87d94b4684b1af50214a46592",
+  "repo": "anubhab-m02/adr-engine",
+  "kind": "commit",
+  "ref": "97df411f545796c87d94b4684b1af50214a46592",
+  "url": "https://github.com/anubhab-m02/adr-engine/commit/97df411f545796c87d94b4684b1af50214a46592",
+  "author": "anubhab-m02",
+  "date": "2026-10-31T00:11:59Z",
+  "title": "docs: roadmap update, 2026-10-31",
+  "decision": "[#190 \u2014 bot-merge issue closing is unconfirmed. Close linked issues by hand after the next bot merge.] [no more automated action]",
+  "rationale": "The `Closes #N` keyword did not auto-close PRs merged by GitHub actions[bot], defaulting to silent backlog due to lack of reliable triggering.",
+  "alternatives": [
+   "[#190 \u2014 use GH API directly for closing linked issues automatically after bot-merge]"
+  ],
+  "source_excerpt": "docs: roadmap update, 2026-10-31",
+  "files_changed": [
+   "ROADMAP.md"
+  ]
+ },
+ {
+  "id": "anubhab-m02/adr-engine:pr:46",
+  "repo": "anubhab-m02/adr-engine",
+  "kind": "pr",
+  "ref": "46",
+  "url": "https://github.com/anubhab-m02/adr-engine/pull/46",
+  "author": "anubhab-m02",
+  "date": "2026-07-15T05:30:26Z",
+  "title": "Request timeouts + ingestion orchestrator + POST /ingest",
+  "decision": "Implemented configurable per-request timeouts and added ingestion orchestrator.",
+  "rationale": "To improve fault tolerance by skipping malformed output, counting non-decisions/malformed outputs for each item/run (skip + count), being able to abort when encountering GitHub/Ollama errors without advancing the cursor. Also addressed missing test fixture in existing codebase through refactoring tests into a single autouse fixture.",
+  "alternatives": [
+   "Skip implementing configurable per-request timeouts, leaving them unchanged as default values."
+  ],
+  "source_excerpt": "## Summary\n\n- Closes #45\n- Closes #22\n- Closes #23\n\n## Changelog\n\n- Add configurable per-request timeouts (`github_request_timeout_seconds`, `ollama_request_timeout_seconds`) to every outbound GitHub/Ollama HTTP call, translating a GitHub timeout into `GitHubError` instead of hanging.\n- Add the ingestion orchestrator (`ingestion/run.py`): `run_ingestion(repo)` ties `github_client` \u2192 `extract` \u2192 `embed` \u2192 `store` together, per-item fault-tolerant (skip + count non-decisions/malformed output) and per-run fail-loud (GitHub/Ollama errors abort without advancing the cursor).\n- Add `POST /ingest` (`routers/ingest.py`), wired into `main.py`: runs a single repo when given, or every configured repo on an empty/absent body.\n- Cleanup (found in ponytail review): moved the `REQUIRED_ENV`/`_settings_env` test fixture, copy-pasted across five test files, into one autouse fixture in `conftest.py`; dropped `sys.path.insert` boilerplate in two test files already covered by `conftest.py`; unified `_ingest_commits`/`_ingest_prs` in `run.py` into one generic `_ingest_items`. Also fixed a pre-existing bug this surfaced: `test_github_client.py`'s `fake_get` mocks didn't accept the `timeout` kwarg added earlier in this PR, silently breaking 5 `list_prs` tests until they were fixed here.",
+  "files_changed": []
+ },
+ {
+  "id": "anubhab-m02/adr-engine:pr:47",
+  "repo": "anubhab-m02/adr-engine",
+  "kind": "pr",
+  "ref": "47",
+  "url": "https://github.com/anubhab-m02/adr-engine/pull/47",
+  "author": "anubhab-m02",
+  "date": "2026-07-15T21:58:56Z",
+  "title": "Retrieval: search with relevance floor + /retrieve and /repos endpoints",
+  "decision": "Implement search functionality in retrieval module and add endpoints for retrieving data.",
+  "rationale": "To improve search capabilities by embedding queries, configuring Chroma collection with cosine similarity scoring, filtering results based on relevance floor (0.3), adding a POST endpoint to retrieve specific items using 'RetrieveRequest', and providing an endpoint that lists all configured repositories along with their indexed-unit count while still showing repos without any units.",
+  "alternatives": [
+   "Continue searching for alternative libraries or frameworks instead of Chroma collection",
+   "Skip the relevance floor filter as it may reduce performance"
+  ],
+  "source_excerpt": "## Summary\n\n- Closes #24\n- Closes #25\n- Closes #26\n\n## Changelog\n\n- Add `retrieval/search.py`: `search(query, k, repos)` embeds the query via `embed.embed_text`, retrieves top-k via a new `store.query_units` (Chroma collection now configured for cosine similarity, score = 1 - distance), and drops results below `RELEVANCE_FLOOR` (0.3).\n- Add `POST /retrieve` (`routers/retrieve.py`), wired into `main.py`: thin wiring from `RetrieveRequest` to `search()` and back to `RetrieveResponse`.\n- Add `GET /repos` (`routers/repos.py`), wired into `main.py`: lists each configured repo with its indexed-unit count via a new `store.count_units(repo)` helper (Chroma metadata `where` filter); repos with zero indexed units still appear.\n- Cleanup (found in ponytail review): the `make_unit()` DecisionUnit-factory helper had been copy-pasted into three test files (including `test_store.py`, left over from before the conftest consolidation two PRs ago). Centralized into one `make_unit` fixture in `conftest.py`, following the same pattern as the existing `load_fixture` fixture. Also dropped a `REQUIRED_ENV`/manual-env-loop reintroduced in `test_search.py` that duplicated conftest's autouse fixture \u2014 matched it to `test_repos_router.py`'s existing minimal-override pattern instead.",
+  "files_changed": []
+ }
+]

@@ -32,10 +32,15 @@ def main(argv: list[str] | None = None) -> int:
         default=[],
         help="local clone for the Nth --repo (repeatable; repos beyond the last path use the GitHub API)",
     )
+    parser.add_argument("--data-dir", help="reuse a scratch dir to resume an interrupted build (the ingest cursor picks up where it stopped)")
     args = parser.parse_args(argv)
 
-    scratch = tempfile.mkdtemp(prefix="adr-fixture-")
+    scratch = args.data_dir or tempfile.mkdtemp(prefix="adr-fixture-")
+    print(f"scratch dir: {scratch}", flush=True)
     os.environ["CHROMA_DATA_DIR"] = scratch
+    # Large diffs routinely exceed the 60s default on a laptop-sized model.
+    os.environ.setdefault("OLLAMA_REQUEST_TIMEOUT_SECONDS", "300")
+    os.environ.setdefault("GITHUB_REQUEST_TIMEOUT_SECONDS", "60")
 
     # Imported after CHROMA_DATA_DIR is set: settings are cached on first use.
     import config_store
@@ -46,9 +51,21 @@ def main(argv: list[str] | None = None) -> int:
     for repo, path in zip(args.repo, args.local_path):
         config_store.set_local_repo_path(repo, str(Path(path).expanduser().resolve()))
 
+    from ingestion.extract import ExtractionError
+    from ingestion.github_client import GitHubError
+
     for repo in args.repo:
         print(f"ingesting {repo} ...", flush=True)
-        print(f"  {run.run_ingestion(repo)}", flush=True)
+        for attempt in range(1, 6):
+            try:
+                print(f"  {run.run_ingestion(repo)}", flush=True)
+                break
+            except (ExtractionError, GitHubError) as exc:
+                # The cursor advances per item, so a retry resumes after the last good one.
+                print(f"  attempt {attempt} hit {exc}; retrying", flush=True)
+        else:
+            print(f"ERROR: gave up on {repo}", file=sys.stderr)
+            return 1
 
     got = store.get_collection().get(include=["metadatas", "embeddings"])
     rows = sorted(zip(got["ids"], got["metadatas"], got["embeddings"]), key=lambda r: r[0])
