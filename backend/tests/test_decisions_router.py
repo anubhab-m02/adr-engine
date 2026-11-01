@@ -112,6 +112,13 @@ def test_decisions_paginates_without_duplicates_or_gaps(make_unit):
     assert [len(page["units"]) for page in pages] == [2, 2, 1]
 
 
+@pytest.mark.parametrize("params", [{"page": 0}, {"page": -1}, {"limit": 0}, {"limit": 101}])
+def test_decisions_rejects_out_of_range_page_and_limit(params):
+    response = client.get("/decisions", params={"repo": "owner/repo", **params})
+
+    assert response.status_code == 422
+
+
 def test_decisions_by_path_counts_overlapping_files_changed(make_unit):
     store.upsert_units(
         [
