@@ -104,3 +104,13 @@ def test_repos_response_round_trips():
     restored = ReposResponse.model_validate_json(response.model_dump_json())
 
     assert restored == response
+
+
+@pytest.mark.parametrize("question", ["", "  ", "\n"])
+def test_query_request_rejects_blank_question(question):
+    with pytest.raises(ValidationError):
+        QueryRequest(question=question)
+
+
+def test_query_request_strips_question():
+    assert QueryRequest(question="  why redis?  ").question == "why redis?"

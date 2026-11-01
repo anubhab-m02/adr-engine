@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+import pytest
 from fastapi.testclient import TestClient
 
 import config
@@ -214,3 +215,13 @@ def test_query_synthesizes_when_scoped_only_to_allowed_repos(monkeypatch, tmp_pa
     assert response.status_code == 200
     synthesize.assert_called_once()
     assert response.json()["mode"] == "synthesized"
+
+
+@pytest.mark.parametrize("question", ["", "   ", "\n\t "])
+def test_query_rejects_blank_question_without_searching(question):
+    with patch("routers.query.search") as search, patch("routers.query.synthesize") as synthesize:
+        response = client.post("/query", json={"question": question})
+
+    assert response.status_code == 422
+    search.assert_not_called()
+    synthesize.assert_not_called()
