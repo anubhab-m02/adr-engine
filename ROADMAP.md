@@ -91,25 +91,18 @@ and is represented by the gate-independent items below.
 The wave/track structure in
 [docs/superpowers/specs/2026-08-04-v2-design.md](docs/superpowers/specs/2026-08-04-v2-design.md)
 is the source of truth: 23 tracks across 7 waves, gated behind recall@5
->= 70% after Wave 0. Track A (core proving) is built except the two
-human-run steps below.
+>= 70% after Wave 0. Track A (core proving) is complete and the gate is
+cleared (recall@5 75.0% vs the 70% floor); Waves 1-6 are unlocked.
 
 ## Next up (critical path first, then gate-independent work)
 
 Each item is one PR, ≤150 lines, checkable in CI with no network/Ollama.
 The Issue Generator files these as `daily-task` issues.
 
-Critical path — needs a human (both `needs-input`):
+Critical path: the recall@5 gate is cleared (see Evaluation); no
+human-blocked items remain.
 
-1. **#108 — build the frozen eval fixture.** A human runs
-   `backend/eval/build_fixture.py` (per
-   `docs/superpowers/plans/2026-08-04-track-a-core-proving.md` Task 11)
-   against a live local Ollama and commits `backend/eval/fixtures/`.
-   Activates the recall@5 CI gate. Top human action.
-2. **#112 — sweep k and RELEVANCE_FLOOR** against the harness. Blocked
-   on #108. (`backend/retrieval/search.py` is sensitive-path: human merge.)
-
-Gate-independent (unstarted, all test/a11y/doc work found by reading code):
+Unstarted (all test/a11y/doc work found by reading code):
 
 3. **Test `parseAnswer`** — new `frontend/src/ask/parseAnswer.test.js`.
    Citation-marker parsing is load-bearing. Cover: unknown ids stay
@@ -156,8 +149,8 @@ Gate-independent (unstarted, all test/a11y/doc work found by reading code):
     module, largest ingestion file): multi-page fetch, empty repo,
     403 rate-limit response.
 
-When the gate clears (#108 then #112 done), the next unstarted work is
-Track B (reading surfaces) in the v2 design doc.
+With the gate cleared, the next unstarted work beyond the items above is
+the remainder of Track B (reading surfaces) in the v2 design doc.
 
 ## Known gaps
 
@@ -187,26 +180,21 @@ Track B (reading surfaces) in the v2 design doc.
 - **Phase J+ sources: Jira, then Slack (opt-in per channel)** — pushed
   until GitHub is fully proven; same DecisionUnit model, new `kind`s.
 - **Golden-set growth (10 → ~40 questions)** across both repos, needing
-  real expected SHAs; human-assisted, do after #108.
+  real expected SHAs; human-assisted, now unblocked.
 
 ## Evaluation
 
 Harness (`backend/eval/harness.py`), golden questions
 (`docs/eval-questions.md`), and the recall@5 gate design (70% floor, 50%
 broken, 5-point ratchet) are in place, and `.github/workflows/backend-tests.yml`
-runs `pytest` plus a recall@5 step that is a no-op until the frozen
-fixture exists. `.github/workflows/frontend-tests.yml` runs frontend
-lint/test/build.
+runs `pytest` plus the recall@5 step. `.github/workflows/frontend-tests.yml`
+runs frontend lint/test/build.
 
-The one blocker: the frozen fixture
-(`backend/eval/fixtures/decision_units.json`, `embeddings.json`,
-`golden_question_embeddings.json`) is not checked in and
-`backend/eval/build_fixture.py` does not exist (#108, expanded by #171).
-Generating it needs real ingestion against a live local Ollama, which no
-unattended automation can do. Until it lands, UI work ships without the
-recall@5 quality bar the v2 design calls for. Fallback: run each
-question in `docs/eval-questions.md` through `/query` after retrieval or
-extraction changes and watch for drift.
+The frozen fixture (`backend/eval/fixtures/`, built by
+`backend/eval/build_fixture.py`, #108) is checked in: 105 units, recall@5
+75.0%, above the 70% floor, so the CI gate is live. Misses are extraction
+coverage, not ranking, so the k/RELEVANCE_FLOOR sweep (#112) was closed
+as unneeded; reopen only for headroom.
 
 ## Non-goals (still)
 
@@ -222,11 +210,11 @@ Decided 2026-10-31 by the owner; settled, do not re-raise.
 - **chromadb 0.6.3 (3 CVEs: 1 critical, 2 high; no patched version exists).** Chroma runs in-process via `PersistentClient` — no HTTP server, no multi-tenant RBAC surface, no `trust_remote_code` use. Not reachable in this deployment. Revisit only if a networked/shared Chroma server is ever introduced.
 - **Dev-only npm findings (vite dev server / launch-editor, @vitest/mocker, source-map-js).** Build and test tooling only, never shipped to users; `launch-editor` is absent from the lockfile. Apply fixes only when a clean Dependabot PR appears.
 
-## Latest update — 2026-10-31
+## Latest update — 2026-11-01
 
-- No steering issues; no new review report (latest 2026-10-21). Dependabot
-  API succeeded: 12 open alerts (6 chromadb, 6 vite/@vitest/mocker), all
-  covered by Accepted risks, so none roadmapped.
-- Eligible backlog was 0 (the cause of #215). Added items 3-14 to "Next
-  up" and condensed this file from 570 to ~270 lines (dated updates and
-  resolved history removed).
+- No steering or needs-input issues. Gate cleared: #108 fixture merged
+  (recall@5 75.0%), #112 closed as unneeded; critical path removed.
+- Dependabot API succeeded: 15 open alerts. New undici (7.30.1) alerts
+  are covered by the existing Dependabot undici PR (#180); chromadb and
+  vite/@vitest/mocker are under Accepted risks. None roadmapped.
+- Eligible backlog 12 (#217-#228); Next up has 12 items.
