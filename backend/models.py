@@ -6,7 +6,7 @@ See docs/SYSTEM-DESIGN.md's data model and API contracts sections.
 
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 from ingestion.github_client import RepoSummary
 
@@ -98,8 +98,16 @@ class DecisionsByPathResponse(BaseModel):
 
 
 class QueryRequest(BaseModel):
-    question: str
+    question: str = Field(min_length=1)
     repos: list[str] | None = None
+
+    @field_validator("question")
+    @classmethod
+    def _strip_question(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("question must not be blank")
+        return v
 
 
 class QueryResponse(BaseModel):
