@@ -128,10 +128,11 @@ Unstarted (all test/a11y/doc work found by reading code):
    honors `CHROMA_DATA_DIR` (use `tmp_path`), falls back to the default
    path, and `lru_cache` returns one shared instance
    (`get_chroma_client.cache_clear()` in setup/teardown).
-10. **Test `ollama_client`** — new
-    `backend/tests/test_ollama_client.py` with a mocked HTTP layer: happy
-    path, connection error and non-200 surface a clear exception,
-    timeout honored. No live Ollama.
+10. **Bump undici to 7.30.1** — `frontend/package-lock.json` only
+    (transitive dev dep; Dependabot alert #35, PR #180 only reached
+    7.29.1). Run `npm update undici`; acceptance: lockfile resolves
+    undici ≥7.30.1 and `npm test` / `npm run build` pass. If a Dependabot
+    PR appears first, close this as duplicate.
 11. **Ingestion idempotency regression test** — extend
     `backend/tests/test_ingestion_run.py`: run `run_ingestion` twice over
     the same fake commits/PRs and assert the Chroma collection count and
@@ -210,11 +211,11 @@ Decided 2026-10-31 by the owner; settled, do not re-raise.
 - **chromadb 0.6.3 (3 CVEs: 1 critical, 2 high; no patched version exists).** Chroma runs in-process via `PersistentClient` — no HTTP server, no multi-tenant RBAC surface, no `trust_remote_code` use. Not reachable in this deployment. Revisit only if a networked/shared Chroma server is ever introduced.
 - **Dev-only npm findings (vite dev server / launch-editor, @vitest/mocker, source-map-js).** Build and test tooling only, never shipped to users; `launch-editor` is absent from the lockfile. Apply fixes only when a clean Dependabot PR appears.
 
-## Latest update — 2026-11-01
+## Latest update — 2026-11-03
 
-- No steering or needs-input issues. Gate cleared: #108 fixture merged
-  (recall@5 75.0%), #112 closed as unneeded; critical path removed.
-- Dependabot API succeeded: 15 open alerts. New undici (7.30.1) alerts
-  are covered by the existing Dependabot undici PR (#180); chromadb and
-  vite/@vitest/mocker are under Accepted risks. None roadmapped.
-- Eligible backlog 12 (#217-#228); Next up has 12 items.
+- No steering or needs-input issues. #218 (ollama_client tests) merged;
+  removed from Next up.
+- Dependabot API succeeded. Alert #35 (undici, fixed in 7.30.1) is not
+  covered: the only undici PR (#180) reached 7.29.1. Added as Next-up
+  item 10; chromadb and vite/@vitest/mocker stay Accepted risks.
+- Eligible backlog 10 (#219-#228); Next up has 11 items.
