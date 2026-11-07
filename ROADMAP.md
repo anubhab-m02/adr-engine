@@ -104,51 +104,30 @@ human-blocked items remain.
 
 Unstarted (all test/a11y/doc work found by reading code):
 
-3. **Test `parseAnswer`** — new `frontend/src/ask/parseAnswer.test.js`.
-   Citation-marker parsing is load-bearing. Cover: unknown ids stay
-   literal text, numbering follows first appearance across paragraphs,
-   repeated ids reuse a number, blank paragraphs dropped, empty answer.
-4. **Test `sourceFormat`** — new `frontend/src/lib/sourceFormat.test.js`
-   covering each exported formatter's normal, empty, and malformed input.
-5. **Test `TopNav`** — new `frontend/src/shell/TopNav.test.jsx`: nav
-   landmark has an accessible name, active route sets `aria-current`,
-   every link reachable by keyboard.
-6. **Test `InlineConfirm`** — new
-   `frontend/src/components/InlineConfirm.test.jsx`: confirm/cancel
-   callbacks, Escape cancels, focus lands on the safe action first.
-7. **Test `useNewQuestion`** — new
-   `frontend/src/lib/useNewQuestion.test.jsx` (hook behavior, navigation
-   target, state reset).
-8. **Test `SourceCardList` and `RepoDecisionsPage`** — new
-   `frontend/src/ask/SourceCardList.test.jsx` and
-   `frontend/src/library/RepoDecisionsPage.test.jsx`: empty, loading,
-   error, and populated states; one card per citation, each linking to
-   its commit/PR URL.
-9. **Test `chroma_client`** — new `backend/tests/test_chroma_client.py`:
-   honors `CHROMA_DATA_DIR` (use `tmp_path`), falls back to the default
-   path, and `lru_cache` returns one shared instance
-   (`get_chroma_client.cache_clear()` in setup/teardown).
-10. **Bump undici to 7.30.1** — `frontend/package-lock.json` only
-    (transitive dev dep; Dependabot alert #35, PR #180 only reached
-    7.29.1). Run `npm update undici`; acceptance: lockfile resolves
-    undici ≥7.30.1 and `npm test` / `npm run build` pass. If a Dependabot
-    PR appears first, close this as duplicate.
-11. **Ingestion idempotency regression test** — extend
-    `backend/tests/test_ingestion_run.py`: run `run_ingestion` twice over
-    the same fake commits/PRs and assert the Chroma collection count and
-    ids are unchanged after the second run (CLAUDE.md convention).
-12. **Citation traceability test** — extend
-    `backend/tests/test_answer.py`: every id cited in a synthesized answer
-    maps back to a retrieved unit with a commit/PR URL, and ids not in the
-    retrieved set are not returned as citations.
-13. **Skip-to-content link and `<main>` landmark** — modify
-    `frontend/src/shell/AppShell.jsx` (+ `AppShell.test.jsx`) so keyboard
-    users can bypass the nav (WCAG 2.4.1). No existing skip link in the
-    frontend.
-14. **Test `ingestion/github_client.py` pagination and rate-limit
-    branches** — extend `backend/tests/test_github_client.py` (250-line
-    module, largest ingestion file): multi-page fetch, empty repo,
-    403 rate-limit response.
+1. **#222 `useRepoPicker` tests** — PR #239 approved; drops off on merge.
+2. **#224 Test `InlineConfirm`** — `frontend/src/components/InlineConfirm.test.jsx`.
+3. **#225 Test `TopNav` and `RepoDecisionsPage`**.
+4. **#226 Test `SourceCardList` and `RepoPickerList`**.
+5. **#227 Test `synthesis_available` and the Gemini prompt contents**.
+6. **#228 Skip-to-content link and `<main>` landmark** in
+   `frontend/src/shell/AppShell.jsx` (WCAG 2.4.1).
+7. **#232 Bump transitive undici to >=7.30.1** (alert #35; PR #180 only
+   reached 7.29.1). Close as duplicate if a Dependabot PR appears first.
+8. **#233 `github_client` pagination/rate-limit tests**.
+9. **#234 Citation traceability test** at `POST /query`.
+10. **#235 Ingestion idempotency regression test**.
+11. **`ErrorCard` announces errors** — add `role="alert"` to the wrapper in
+    `frontend/src/components/ErrorCard.jsx` (it has none; `LoadingCard`
+    uses `role="status"`, `RetryCard` uses `alert`) and assert it in
+    `ErrorCard.test.jsx`.
+12. **Shared card base class test** — extend `LoadingCard.test.jsx` and
+    `ErrorCard.test.jsx` to assert both render `MESSAGE_CARD_BASE`
+    (guards the shared-style refactor).
+13. **Test `ingestion/run.py` failure isolation** — extend
+    `backend/tests/test_ingestion_run.py`: one commit whose extraction
+    raises must not abort the run or write a partial unit; remaining
+    commits are still indexed. Read `run.py` first and match its actual
+    error handling.
 
 With the gate cleared, the next unstarted work beyond the items above is
 the remainder of Track B (reading surfaces) in the v2 design doc.
@@ -211,11 +190,12 @@ Decided 2026-10-31 by the owner; settled, do not re-raise.
 - **chromadb 0.6.3 (3 CVEs: 1 critical, 2 high; no patched version exists).** Chroma runs in-process via `PersistentClient` — no HTTP server, no multi-tenant RBAC surface, no `trust_remote_code` use. Not reachable in this deployment. Revisit only if a networked/shared Chroma server is ever introduced.
 - **Dev-only npm findings (vite dev server / launch-editor, @vitest/mocker, source-map-js).** Build and test tooling only, never shipped to users; `launch-editor` is absent from the lockfile. Apply fixes only when a clean Dependabot PR appears.
 
-## Latest update — 2026-11-03
+## Latest update — 2026-11-07
 
-- No steering or needs-input issues. #218 (ollama_client tests) merged;
-  removed from Next up.
-- Dependabot API succeeded. Alert #35 (undici, fixed in 7.30.1) is not
-  covered: the only undici PR (#180) reached 7.29.1. Added as Next-up
-  item 10; chromadb and vite/@vitest/mocker stay Accepted risks.
-- Eligible backlog 10 (#219-#228); Next up has 11 items.
+- No steering or needs-input issues. #219-#221, #223 merged (PRs
+  #236-#238, #240); #239 approved.
+- Dependabot API succeeded. Only open alert is #35 (undici), covered by
+  daily-task #232 (PR #180 only reached 7.29.1); chromadb and dev-only
+  npm findings stay Accepted risks.
+- Eligible backlog 10 (#222, #224-#228, #232-#235); Next up lists 13
+  items (11-13 new, awaiting issue filing).
