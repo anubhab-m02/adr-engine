@@ -172,7 +172,7 @@ function AskPage() {
         <RepoFilter repos={repos} selected={selectedRepos} onChange={setSelectedRepos} />
       </header>
 
-      <main className="flex-1 px-4 lg:px-6 py-4">
+      <div className="flex-1 px-4 lg:px-6 py-4">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center gap-4 text-center">
             <p className="text-base text-ink-muted">
@@ -201,7 +201,7 @@ function AskPage() {
             />
           </div>
         )}
-      </main>
+      </div>
 
       <div className="shrink-0 bg-panel px-4 lg:px-6 py-4">
         <div className="max-w-3xl mx-auto">

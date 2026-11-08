@@ -241,7 +241,7 @@ describe('AskPage', () => {
     await user.click(screen.getByRole('button', { name: 'Ask' }))
     const answer = await screen.findByText('We use OAuth2 for auth.')
 
-    const thread = answer.closest('main > div')
+    const thread = answer.closest('.flex-1.px-4 > div')
     expect(thread).toHaveClass('max-w-3xl', 'min-[900px]:max-w-[68rem]')
 
     const inputWrapper = screen.getByLabelText('Ask a question').closest('form').parentElement
