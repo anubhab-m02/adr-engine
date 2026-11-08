@@ -105,29 +105,25 @@ human-blocked items remain.
 Unstarted (all test/a11y/doc work found by reading code):
 
 1. **#222 `useRepoPicker` tests** — PR #239 approved; drops off on merge.
-2. **#224 Test `InlineConfirm`** — `frontend/src/components/InlineConfirm.test.jsx`.
-3. **#225 Test `TopNav` and `RepoDecisionsPage`**.
-4. **#226 Test `SourceCardList` and `RepoPickerList`**.
-5. **#227 Test `synthesis_available` and the Gemini prompt contents**.
-6. **#228 Skip-to-content link and `<main>` landmark** in
+2. **#227 `synthesis_available`/Gemini prompt tests** — PR #247 approved;
+   drops off on merge.
+3. **#228 Skip-to-content link and `<main>` landmark** in
    `frontend/src/shell/AppShell.jsx` (WCAG 2.4.1).
-7. **#232 Bump transitive undici to >=7.30.1** (alert #35; PR #180 only
+4. **#232 Bump transitive undici to >=7.30.1** (alert #35; PR #180 only
    reached 7.29.1). Close as duplicate if a Dependabot PR appears first.
-8. **#233 `github_client` pagination/rate-limit tests**.
-9. **#234 Citation traceability test** at `POST /query`.
-10. **#235 Ingestion idempotency regression test**.
-11. **`ErrorCard` announces errors** — add `role="alert"` to the wrapper in
-    `frontend/src/components/ErrorCard.jsx` (it has none; `LoadingCard`
-    uses `role="status"`, `RetryCard` uses `alert`) and assert it in
-    `ErrorCard.test.jsx`.
-12. **Shared card base class test** — extend `LoadingCard.test.jsx` and
-    `ErrorCard.test.jsx` to assert both render `MESSAGE_CARD_BASE`
-    (guards the shared-style refactor).
-13. **Test `ingestion/run.py` failure isolation** — extend
-    `backend/tests/test_ingestion_run.py`: one commit whose extraction
-    raises must not abort the run or write a partial unit; remaining
-    commits are still indexed. Read `run.py` first and match its actual
-    error handling.
+5. **#233 `github_client` pagination/rate-limit tests**.
+6. **#234 Citation traceability test** at `POST /query`.
+7. **#235 Ingestion idempotency regression test**.
+8. **#241 `ErrorCard` announces errors** with `role="alert"`.
+9. **#242 Shared card base class test** (`LoadingCard`/`ErrorCard`).
+10. **#243 `ingestion/run.py` failure isolation test**.
+11. **Per-route `document.title`** (WCAG 2.4.2; not yet filed) — no page
+    sets one. Add `frontend/src/lib/useDocumentTitle.js` and call it from
+    `AskPage`, `LibraryPage`, `SettingsPage`; test it sets and restores
+    the title.
+12. **Focus `<main>` on route change** (not yet filed; after #228) — in
+    `frontend/src/shell/AppShell.jsx`, focus `<main tabIndex={-1}>` on
+    location change; test in `AppShell.test.jsx`.
 
 With the gate cleared, the next unstarted work beyond the items above is
 the remainder of Track B (reading surfaces) in the v2 design doc.
@@ -145,10 +141,6 @@ the remainder of Track B (reading surfaces) in the v2 design doc.
   and nothing makes the Coder rebase. Worth fixing in automation-kit (skip
   or flag dirty PRs; have the Coder rebase conflicted branches). Not an
   adr-engine daily-task.
-- **Automation health (#215, watchdog).** No code PR merged in 7 days
-  because the eligible backlog hit 0 (only #108/#112 remain, both
-  human-blocked). The 14 items above restore supply; the Coder should
-  resume once the Issue Generator files them.
 - **PR #206 is a superseded duplicate** of the work merged in #209;
   close it if still open.
 
@@ -190,12 +182,12 @@ Decided 2026-10-31 by the owner; settled, do not re-raise.
 - **chromadb 0.6.3 (3 CVEs: 1 critical, 2 high; no patched version exists).** Chroma runs in-process via `PersistentClient` — no HTTP server, no multi-tenant RBAC surface, no `trust_remote_code` use. Not reachable in this deployment. Revisit only if a networked/shared Chroma server is ever introduced.
 - **Dev-only npm findings (vite dev server / launch-editor, @vitest/mocker, source-map-js).** Build and test tooling only, never shipped to users; `launch-editor` is absent from the lockfile. Apply fixes only when a clean Dependabot PR appears.
 
-## Latest update — 2026-11-07
+## Latest update — 2026-11-08
 
-- No steering or needs-input issues. #219-#221, #223 merged (PRs
-  #236-#238, #240); #239 approved.
+- No steering or needs-input issues. #224-#226 merged (PRs #244-#246);
+  #239 and #247 approved, awaiting merge.
 - Dependabot API succeeded. Only open alert is #35 (undici), covered by
-  daily-task #232 (PR #180 only reached 7.29.1); chromadb and dev-only
-  npm findings stay Accepted risks.
-- Eligible backlog 10 (#222, #224-#228, #232-#235); Next up lists 13
-  items (11-13 new, awaiting issue filing).
+  daily-task #232; chromadb and dev-only npm findings stay Accepted
+  risks.
+- Eligible backlog 10 (#222, #227, #228, #232-#235, #241-#243); items
+  11-12 are new, awaiting issue filing.
