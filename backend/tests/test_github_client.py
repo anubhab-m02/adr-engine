@@ -10,6 +10,8 @@ from ingestion.github_client import (
     GitHubError,
     GitHubRateLimitError,
     PullRequestRef,
+    _estimate_commit_count,
+    get_commit_diff,
     list_commits,
     list_prs,
 )
@@ -244,3 +246,84 @@ def test_list_commits_waits_and_continues_when_wait_is_within_ceiling(load_fixtu
 
     assert len(commits) == 2
     mock_sleep.assert_called_once()
+
+
+def test_list_prs_follows_pagination_link_header(load_fixture):
+    pr = load_fixture("github_pr.json")
+    base_url = "https://api.github.com/repos/octocat/Hello-World/pulls"
+    page2_url = f"{base_url}?page=2"
+    pr2 = {**_pr_list_payload(pr), "number": pr["number"] + 1}
+
+    def fake_get(url, headers=None, params=None, timeout=None):
+        if url.endswith("/comments"):
+            return httpx.Response(200, json=[])
+        if url == page2_url:
+            return httpx.Response(200, json=[pr2])
+        return httpx.Response(
+            200, json=[_pr_list_payload(pr)], headers={"Link": f'<{page2_url}>; rel="next"'}
+        )
+
+    with patch("ingestion.github_client.httpx.get", side_effect=fake_get):
+        prs = list_prs("octocat/Hello-World")
+
+    assert [p.number for p in prs] == [pr["number"], pr["number"] + 1]
+
+
+def test_list_commits_on_empty_repo_returns_empty_list():
+    with patch("ingestion.github_client.httpx.get", return_value=httpx.Response(200, json=[])):
+        assert list_commits("octocat/Hello-World") == []
+
+
+def test_list_prs_on_empty_repo_returns_empty_list():
+    with patch("ingestion.github_client.httpx.get", return_value=httpx.Response(200, json=[])):
+        assert list_prs("octocat/Hello-World") == []
+
+
+def test_get_commit_diff_returns_diff_text_with_diff_accept_header():
+    diff = "diff --git a/f.py b/f.py\n+print('hi')\n"
+    response = httpx.Response(200, text=diff)
+
+    with patch("ingestion.github_client.httpx.get", return_value=response) as mock_get:
+        result = get_commit_diff("octocat/Hello-World", "abc123")
+
+    assert result == diff
+    args, kwargs = mock_get.call_args
+    assert args[0].endswith("/repos/octocat/Hello-World/commits/abc123")
+    assert kwargs["headers"]["Accept"] == "application/vnd.github.v3.diff"
+
+
+def test_get_commit_diff_raises_github_error_on_non_2xx():
+    response = httpx.Response(404, json={"message": "Not Found"})
+
+    with patch("ingestion.github_client.httpx.get", return_value=response):
+        with pytest.raises(GitHubError) as exc_info:
+            get_commit_diff("octocat/Hello-World", "abc123")
+
+    assert exc_info.value.status_code == 404
+
+
+def test_estimate_commit_count_parses_last_page_from_link_header():
+    last_url = "https://api.github.com/repositories/1/commits?per_page=1&page=42"
+    response = httpx.Response(200, json=[{"sha": "a"}], headers={"Link": f'<{last_url}>; rel="last"'})
+
+    with patch("ingestion.github_client.httpx.get", return_value=response) as mock_get:
+        assert _estimate_commit_count("octocat/Hello-World") == 42
+
+    assert mock_get.call_args.kwargs["params"] == {"per_page": 1}
+
+
+def test_estimate_commit_count_without_link_header_counts_single_page():
+    one = httpx.Response(200, json=[{"sha": "a"}])
+    with patch("ingestion.github_client.httpx.get", return_value=one):
+        assert _estimate_commit_count("octocat/Hello-World") == 1
+
+    empty = httpx.Response(200, json=[])
+    with patch("ingestion.github_client.httpx.get", return_value=empty):
+        assert _estimate_commit_count("octocat/Hello-World") == 0
+
+
+def test_estimate_commit_count_returns_zero_on_github_error():
+    response = httpx.Response(500, json={"message": "boom"})
+
+    with patch("ingestion.github_client.httpx.get", return_value=response):
+        assert _estimate_commit_count("octocat/Hello-World") == 0
