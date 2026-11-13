@@ -9,6 +9,11 @@ describe('ErrorCard', () => {
     expect(screen.getByText('Backend unreachable')).toBeInTheDocument()
   })
 
+  it('announces the error as an alert', () => {
+    render(<ErrorCard message="Backend unreachable" onRetry={() => {}} />)
+    expect(screen.getByRole('alert')).toHaveTextContent('Backend unreachable')
+  })
+
   it('calls onRetry exactly once per click', async () => {
     const user = userEvent.setup()
     const onRetry = vi.fn()
