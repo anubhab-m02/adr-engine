@@ -266,3 +266,43 @@ def test_run_ingestion_does_not_duplicate_stored_units_on_repeat_run(tmp_path, m
     assert store.get_collection().count() == 1
 
     chroma_client.get_chroma_client.cache_clear()
+
+
+def test_run_ingestion_repeat_run_over_commits_and_prs_keeps_same_ids_and_count(tmp_path, monkeypatch):
+    monkeypatch.setenv("CHROMA_DATA_DIR", str(tmp_path))
+    config.get_settings.cache_clear()
+    chroma_client.get_chroma_client.cache_clear()
+
+    from ingestion import store
+
+    try:
+        with patch("ingestion.run.github_client.list_commits") as list_commits, \
+                patch("ingestion.run.github_client.list_prs") as list_prs, \
+                patch("ingestion.run.github_client.get_commit_diff") as get_commit_diff, \
+                patch("ingestion.run.extract.extract_decision") as extract_decision, \
+                patch("ingestion.run.embed.embed_text") as embed_text, \
+                patch("ingestion.run.store.get_cursor") as get_cursor:
+            list_commits.return_value = [_commit(sha="a1"), _commit(sha="b2")]
+            list_prs.return_value = [_pr(number=1), _pr(number=2)]
+            get_commit_diff.return_value = ""
+            extract_decision.return_value = DECISION
+            embed_text.return_value = [0.1, 0.2]
+            # Same items re-processed both times, as if the cursor were reset.
+            get_cursor.return_value = {}
+
+            run_ingestion("owner/repo")
+            first = store.get_collection().get(include=[])["ids"]
+            run_ingestion("owner/repo")
+            second = store.get_collection().get(include=[])["ids"]
+
+        assert len(first) == 4
+        assert len(second) == len(first)
+        assert set(second) == set(first)
+        assert set(first) == {
+            "owner/repo:commit:a1",
+            "owner/repo:commit:b2",
+            "owner/repo:pr:1",
+            "owner/repo:pr:2",
+        }
+    finally:
+        chroma_client.get_chroma_client.cache_clear()
