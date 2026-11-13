@@ -102,28 +102,26 @@ The Issue Generator files these as `daily-task` issues.
 Critical path: the recall@5 gate is cleared (see Evaluation); no
 human-blocked items remain.
 
-Unstarted (all test/a11y/doc work found by reading code):
+Unstarted (test/a11y work found by reading code; #222, #227, #228, #232,
+#233 merged):
 
-1. **#222 `useRepoPicker` tests** — PR #239 approved; drops off on merge.
-2. **#227 `synthesis_available`/Gemini prompt tests** — PR #247 approved;
-   drops off on merge.
-3. **#228 Skip-to-content link and `<main>` landmark** in
-   `frontend/src/shell/AppShell.jsx` (WCAG 2.4.1).
-4. **#232 Bump transitive undici to >=7.30.1** (alert #35; PR #180 only
-   reached 7.29.1). Close as duplicate if a Dependabot PR appears first.
-5. **#233 `github_client` pagination/rate-limit tests**.
-6. **#234 Citation traceability test** at `POST /query`.
-7. **#235 Ingestion idempotency regression test**.
-8. **#241 `ErrorCard` announces errors** with `role="alert"`.
-9. **#242 Shared card base class test** (`LoadingCard`/`ErrorCard`).
-10. **#243 `ingestion/run.py` failure isolation test**.
-11. **Per-route `document.title`** (WCAG 2.4.2; not yet filed) — no page
-    sets one. Add `frontend/src/lib/useDocumentTitle.js` and call it from
-    `AskPage`, `LibraryPage`, `SettingsPage`; test it sets and restores
-    the title.
-12. **Focus `<main>` on route change** (not yet filed; after #228) — in
-    `frontend/src/shell/AppShell.jsx`, focus `<main tabIndex={-1}>` on
-    location change; test in `AppShell.test.jsx`.
+1. **#234 Citation traceability test** at `POST /query`.
+2. **#235 Ingestion idempotency regression test**.
+3. **#241 `ErrorCard` announces errors** with `role="alert"`.
+4. **#242 Shared card base class test** (`LoadingCard`/`ErrorCard`).
+5. **#243 `ingestion/run.py` failure isolation test**.
+6. **#248 Per-route `document.title`** (WCAG 2.4.2) via
+   `frontend/src/lib/useDocumentTitle.js`.
+7. **#249 Focus `<main>` on route change** in `AppShell.jsx`.
+8. **IndexProgress bar semantics** (not yet filed) — in
+   `frontend/src/library/IndexProgress.jsx` give the bar
+   `role="progressbar"` with `aria-valuenow/min/max` and an accessible
+   name; test in `IndexProgress.test.jsx`.
+9. **IndexProgress error uses `role="alert"`** (not yet filed) — line ~40
+   is `role="status"`; update and test.
+10. **CommandPalette dialog semantics test** (not yet filed) — assert
+    `role="dialog"`, `aria-modal`, Escape closes, focus restored; fix
+    gaps in `frontend/src/components/CommandPalette.jsx`.
 
 With the gate cleared, the next unstarted work beyond the items above is
 the remainder of Track B (reading surfaces) in the v2 design doc.
@@ -143,6 +141,11 @@ the remainder of Track B (reading surfaces) in the v2 design doc.
   adr-engine daily-task.
 - **PR #206 is a superseded duplicate** of the work merged in #209;
   close it if still open.
+
+- **#253 — automation health alert (needs-input).** Watchdog reports Daily
+  Agent, Brainstormer and Issue Generator had no successful run between
+  2026-11-09 and 2026-11-13; likely expired `CLAUDE_CODE_OAUTH_TOKEN` or
+  `GH_PAT`. Needs a human to rotate secrets; not a daily-task.
 
 ## Later / parking lot
 
@@ -182,12 +185,11 @@ Decided 2026-10-31 by the owner; settled, do not re-raise.
 - **chromadb 0.6.3 (3 CVEs: 1 critical, 2 high; no patched version exists).** Chroma runs in-process via `PersistentClient` — no HTTP server, no multi-tenant RBAC surface, no `trust_remote_code` use. Not reachable in this deployment. Revisit only if a networked/shared Chroma server is ever introduced.
 - **Dev-only npm findings (vite dev server / launch-editor, @vitest/mocker, source-map-js).** Build and test tooling only, never shipped to users; `launch-editor` is absent from the lockfile. Apply fixes only when a clean Dependabot PR appears.
 
-## Latest update — 2026-11-08
+## Latest update — 2026-11-13
 
-- No steering or needs-input issues. #224-#226 merged (PRs #244-#246);
-  #239 and #247 approved, awaiting merge.
-- Dependabot API succeeded. Only open alert is #35 (undici), covered by
-  daily-task #232; chromadb and dev-only npm findings stay Accepted
-  risks.
-- Eligible backlog 10 (#222, #227, #228, #232-#235, #241-#243); items
-  11-12 are new, awaiting issue filing.
+- No steering issues. #222, #227, #228, #232, #233 merged. Needs-input:
+  #253 (watchdog: automations stalled since 2026-11-09).
+- Dependabot API succeeded. Undici #35 is fixed; chromadb and dev-only
+  npm alerts remain Accepted risks.
+- Eligible backlog 7 (#234, #235, #241-#243, #248, #249); items 8-10 are
+  new, awaiting issue filing.
