@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
@@ -215,6 +216,58 @@ def test_query_synthesizes_when_scoped_only_to_allowed_repos(monkeypatch, tmp_pa
     assert response.status_code == 200
     synthesize.assert_called_once()
     assert response.json()["mode"] == "synthesized"
+
+
+def _gemini_response(text: str) -> httpx.Response:
+    body = {"candidates": [{"content": {"parts": [{"text": text}]}}]}
+    return httpx.Response(200, json=body)
+
+
+def _query_with_gemini_text(monkeypatch, results, text: str):
+    # Mock only search + the Gemini HTTP call so the real synthesize() /
+    # _resolve_citations path runs behind the router.
+    monkeypatch.setenv("GEMINI_API_KEY", "key")
+    config.get_settings.cache_clear()
+    with patch("routers.query.search") as search, patch("synthesis.answer.httpx.post") as post:
+        search.return_value = results
+        post.return_value = _gemini_response(text)
+        return client.post("/query", json={"question": "why redis?"})
+
+
+def test_query_citations_map_to_retrieved_units_with_matching_urls(monkeypatch, make_unit):
+    results = [_result(make_unit, "1"), _result(make_unit, "2"), _result(make_unit, "3")]
+    retrieved = {r.unit.id: r.unit.url for r in results}
+
+    response = _query_with_gemini_text(
+        monkeypatch, results, "Per [owner/repo:pr:1] and [owner/repo:pr:3]."
+    )
+
+    citations = response.json()["citations"]
+    assert [c["id"] for c in citations] == ["owner/repo:pr:1", "owner/repo:pr:3"]
+    for citation in citations:
+        assert citation["id"] in retrieved
+        assert citation["url"]
+        assert citation["url"] == retrieved[citation["id"]]
+
+
+def test_query_drops_cited_id_absent_from_retrieved_set(monkeypatch, make_unit):
+    results = [_result(make_unit, "1")]
+
+    response = _query_with_gemini_text(
+        monkeypatch, results, "Per [owner/repo:pr:1] and [owner/repo:pr:99]."
+    )
+
+    assert [c["id"] for c in response.json()["citations"]] == ["owner/repo:pr:1"]
+
+
+def test_query_dedupes_repeated_citations(monkeypatch, make_unit):
+    results = [_result(make_unit, "1")]
+
+    response = _query_with_gemini_text(
+        monkeypatch, results, "Per [owner/repo:pr:1], again [owner/repo:pr:1]."
+    )
+
+    assert [c["id"] for c in response.json()["citations"]] == ["owner/repo:pr:1"]
 
 
 @pytest.mark.parametrize("question", ["", "   ", "\n\t "])
