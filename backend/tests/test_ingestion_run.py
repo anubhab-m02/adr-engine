@@ -5,7 +5,7 @@ import pytest
 import chroma_client
 import config
 from ingestion import diff_filter
-from ingestion.extract import ExtractionResult
+from ingestion.extract import ExtractionError, ExtractionResult
 from ingestion.github_client import CommitRef, GitHubError, PullRequestRef
 from ingestion.run import run_ingestion
 from models import IngestCounts, IngestResult
@@ -123,6 +123,46 @@ def test_run_ingestion_advances_cursor_to_newest_fetched_dates(mocks):
         "owner/repo",
         {"last_commit_date": "2026-01-05T00:00:00Z", "last_pr_updated_at": "2026-02-10T00:00:00Z"},
     )
+
+
+def _three_commits():
+    return [
+        _commit(sha="c1", date="2026-01-01T00:00:00Z"),
+        _commit(sha="c2", date="2026-01-02T00:00:00Z"),
+        _commit(sha="c3", date="2026-01-03T00:00:00Z"),
+    ]
+
+
+def test_run_ingestion_aborts_on_extraction_error_without_storing_or_advancing_past_failing_commit(mocks):
+    mocks["list_commits"].return_value = _three_commits()
+    mocks["list_prs"].return_value = []
+    mocks["extract_decision"].side_effect = [DECISION, ExtractionError("ollama down"), DECISION]
+
+    with pytest.raises(ExtractionError):
+        run_ingestion("owner/repo")
+
+    # Only the first commit was stored; the failing one has no partial unit
+    # and the third was never attempted.
+    assert mocks["extract_decision"].call_count == 2
+    assert mocks["upsert_units"].call_count == 1
+    stored_unit = mocks["upsert_units"].call_args.args[0][0]
+    assert stored_unit.ref == "c1"
+
+    cursors = [call.args[1] for call in mocks["set_cursor"].call_args_list]
+    assert cursors == [{"last_commit_date": "2026-01-01T00:00:00Z"}]
+
+
+def test_run_ingestion_skips_unparseable_middle_item_and_stores_the_rest(mocks):
+    mocks["list_commits"].return_value = _three_commits()
+    mocks["list_prs"].return_value = []
+    mocks["extract_decision"].side_effect = [DECISION, None, DECISION]
+
+    result = run_ingestion("owner/repo")
+
+    assert result.skipped == 1
+    assert result.stored == 2
+    stored_refs = [call.args[0][0].ref for call in mocks["upsert_units"].call_args_list]
+    assert stored_refs == ["c1", "c3"]
 
 
 def test_run_ingestion_passes_cursor_since_to_github_client(mocks):
