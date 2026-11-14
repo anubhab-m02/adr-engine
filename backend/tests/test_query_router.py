@@ -225,3 +225,38 @@ def test_query_rejects_blank_question_without_searching(question):
     assert response.status_code == 422
     search.assert_not_called()
     synthesize.assert_not_called()
+
+
+def test_query_citations_are_traceable_deduped_and_limited_to_retrieved_units(
+    monkeypatch, make_unit
+):
+    # Real synthesize() + citation resolution; only the Gemini HTTP call is mocked.
+    monkeypatch.setenv("GEMINI_API_KEY", "key")
+    config.get_settings.cache_clear()
+
+    results = [_result(make_unit, "1"), _result(make_unit, "2"), _result(make_unit, "3")]
+    gemini_answer = (
+        "Redis was chosen [owner/repo:pr:1], confirmed again [owner/repo:pr:1] "
+        "and extended later [owner/repo:pr:2]. See also [owner/repo:pr:999]."
+    )
+
+    with (
+        patch("routers.query.search") as search,
+        patch("synthesis.answer._call_gemini", return_value=gemini_answer),
+    ):
+        search.return_value = results
+
+        response = client.post("/query", json={"question": "why redis?"})
+
+    assert response.status_code == 200
+    citations = response.json()["citations"]
+
+    retrieved_urls = {r.unit.id: r.unit.url for r in results}
+    for citation in citations:
+        assert citation["id"] in retrieved_urls
+        assert citation["url"]
+        assert citation["url"] == retrieved_urls[citation["id"]]
+
+    ids = [c["id"] for c in citations]
+    assert ids == ["owner/repo:pr:1", "owner/repo:pr:2"]
+    assert "owner/repo:pr:999" not in ids
