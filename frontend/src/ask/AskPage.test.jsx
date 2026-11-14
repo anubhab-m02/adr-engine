@@ -43,6 +43,14 @@ function LocationProbe() {
 }
 
 describe('AskPage', () => {
+  it('sets the document title', () => {
+    getRepos.mockResolvedValue(REPOS)
+
+    renderAskPage()
+
+    expect(document.title).toBe('Ask — adr-engine')
+  })
+
   it('pre-fills the input from navigation state, then clears that state', async () => {
     getRepos.mockResolvedValue(REPOS)
     render(

@@ -4,6 +4,7 @@ import { getAuthStatus, getRepos, postQuery } from '../api.js'
 import ChatInput from '../components/ChatInput.jsx'
 import MessageList from '../components/MessageList.jsx'
 import RepoFilter from '../components/RepoFilter.jsx'
+import useDocumentTitle from '../lib/useDocumentTitle.js'
 import { useRegisterNewQuestionHandler } from '../lib/useNewQuestion.js'
 
 const EXAMPLE_QUESTIONS = [
@@ -31,6 +32,7 @@ function exampleQuestions(repos) {
 }
 
 function AskPage() {
+  useDocumentTitle('Ask — adr-engine')
   const location = useLocation()
   const navigate = useNavigate()
   const [repos, setRepos] = useState(undefined)

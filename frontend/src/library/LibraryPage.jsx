@@ -3,10 +3,12 @@
 // AddReposPanel) and per-row Remove (#80).
 import { useEffect, useState } from 'react'
 import { getRepos, patchConfig, postIngest } from '../api.js'
+import useDocumentTitle from '../lib/useDocumentTitle.js'
 import AddReposPanel from './AddReposPanel.jsx'
 import RepoRow from './RepoRow.jsx'
 
 function LibraryPage() {
+  useDocumentTitle('Library — adr-engine')
   const [repos, setRepos] = useState(undefined)
   const [showAddPanel, setShowAddPanel] = useState(false)
 
