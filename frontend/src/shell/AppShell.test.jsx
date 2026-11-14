@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getIngestStatus } from '../api.js'
 import { IngestStatusProvider } from '../lib/useIngestStatus.js'
@@ -82,6 +82,34 @@ describe('AppShell', () => {
     expect(link).toHaveFocus()
     expect(link).toHaveAttribute('href', '#main-content')
     expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content')
+  })
+
+  it('does not steal focus on initial render', () => {
+    renderShell()
+
+    expect(screen.getByRole('main')).not.toHaveFocus()
+  })
+
+  it('moves focus to the main landmark after a route change', async () => {
+    render(
+      <MemoryRouter>
+        <IngestStatusProvider>
+          <NewQuestionProvider>
+            <Routes>
+              <Route element={<AppShell />}>
+                <Route path="/" element={<Link to="/other">Go other</Link>} />
+                <Route path="/other" element={<div>Other content</div>} />
+              </Route>
+            </Routes>
+          </NewQuestionProvider>
+        </IngestStatusProvider>
+      </MemoryRouter>,
+    )
+
+    await userEvent.click(screen.getByRole('link', { name: 'Go other' }))
+
+    expect(await screen.findByText('Other content')).toBeInTheDocument()
+    expect(screen.getByRole('main')).toHaveFocus()
   })
 
   it('still renders the skip link in focus mode', () => {
