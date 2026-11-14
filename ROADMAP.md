@@ -108,20 +108,24 @@ Unstarted (test/a11y work found by reading code; #222, #227, #228, #232,
 1. **#234 Citation traceability test** at `POST /query`.
 2. **#235 Ingestion idempotency regression test**.
 3. **#241 `ErrorCard` announces errors** with `role="alert"`.
-4. **#242 Shared card base class test** (`LoadingCard`/`ErrorCard`).
-5. **#243 `ingestion/run.py` failure isolation test**.
-6. **#248 Per-route `document.title`** (WCAG 2.4.2) via
+4. **#248 Per-route `document.title`** (WCAG 2.4.2) via
    `frontend/src/lib/useDocumentTitle.js`.
-7. **#249 Focus `<main>` on route change** in `AppShell.jsx`.
-8. **IndexProgress bar semantics** (not yet filed) — in
-   `frontend/src/library/IndexProgress.jsx` give the bar
-   `role="progressbar"` with `aria-valuenow/min/max` and an accessible
-   name; test in `IndexProgress.test.jsx`.
-9. **IndexProgress error uses `role="alert"`** (not yet filed) — line ~40
-   is `role="status"`; update and test.
-10. **CommandPalette dialog semantics test** (not yet filed) — assert
-    `role="dialog"`, `aria-modal`, Escape closes, focus restored; fix
-    gaps in `frontend/src/components/CommandPalette.jsx`.
+5. **#249 Focus `<main>` on route change** in `AppShell.jsx`.
+6. **#254 IndexProgress bar** gets `role="progressbar"` + `aria-value*`.
+7. **#255 IndexProgress failure** uses `role="alert"`.
+8. **#256 LibraryPage load error** announces with `role="alert"`.
+9. **#257 Library view errors** (DecisionGraph, DecisionTimeline,
+   RepoFileTree) announce with `role="alert"`.
+10. **CommandPalette dialog test** (not yet filed) — the component already
+    has `role="dialog"`, `aria-modal`, labelled input and listbox; extend
+    `CommandPalette.test.jsx` to assert those, Escape closes, and focus
+    is restored to the opener. Fix gaps only if a test fails.
+11. **local_git error-path tests** (not yet filed) — in
+    `backend/tests/test_local_git.py`: `list_commits` on a non-repo path
+    and `get_commit_diff` on an unknown sha raise `LocalGitError`.
+12. **Unknown-route redirect test** (not yet filed) — in `App.test.jsx`
+    assert the `path="*"` routes in `App.jsx` redirect to `/` (onboarded)
+    and `/onboarding` (not onboarded).
 
 With the gate cleared, the next unstarted work beyond the items above is
 the remainder of Track B (reading surfaces) in the v2 design doc.
@@ -141,11 +145,6 @@ the remainder of Track B (reading surfaces) in the v2 design doc.
   adr-engine daily-task.
 - **PR #206 is a superseded duplicate** of the work merged in #209;
   close it if still open.
-
-- **#253 — automation health alert (needs-input).** Watchdog reports Daily
-  Agent, Brainstormer and Issue Generator had no successful run between
-  2026-11-09 and 2026-11-13; likely expired `CLAUDE_CODE_OAUTH_TOKEN` or
-  `GH_PAT`. Needs a human to rotate secrets; not a daily-task.
 
 ## Later / parking lot
 
@@ -185,11 +184,11 @@ Decided 2026-10-31 by the owner; settled, do not re-raise.
 - **chromadb 0.6.3 (3 CVEs: 1 critical, 2 high; no patched version exists).** Chroma runs in-process via `PersistentClient` — no HTTP server, no multi-tenant RBAC surface, no `trust_remote_code` use. Not reachable in this deployment. Revisit only if a networked/shared Chroma server is ever introduced.
 - **Dev-only npm findings (vite dev server / launch-editor, @vitest/mocker, source-map-js).** Build and test tooling only, never shipped to users; `launch-editor` is absent from the lockfile. Apply fixes only when a clean Dependabot PR appears.
 
-## Latest update — 2026-11-13
+## Latest update — 2026-11-14
 
-- No steering issues. #222, #227, #228, #232, #233 merged. Needs-input:
-  #253 (watchdog: automations stalled since 2026-11-09).
-- Dependabot API succeeded. Undici #35 is fixed; chromadb and dev-only
-  npm alerts remain Accepted risks.
-- Eligible backlog 7 (#234, #235, #241-#243, #248, #249); items 8-10 are
-  new, awaiting issue filing.
+- No steering issues; no open needs-input (#253 closed). #242, #243
+  merged; PRs #258-#260 approved, awaiting merge.
+- Dependabot API succeeded. Undici #35 fixed; remaining open alerts
+  (chromadb, vite, @vitest/mocker) are Accepted risks.
+- Eligible backlog 9 issues; roadmap has 12 unstarted items (10-12 await
+  issue filing).
