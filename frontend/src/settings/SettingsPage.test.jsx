@@ -22,6 +22,8 @@ describe('SettingsPage', () => {
 
     render(<SettingsPage />)
 
+    expect(document.title).toBe('Settings — adr-engine')
+
     expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument()
     expect(await screen.findByText('Connected as octocat')).toBeInTheDocument()
     expect(await screen.findByText('gk_1…cdef')).toBeInTheDocument()

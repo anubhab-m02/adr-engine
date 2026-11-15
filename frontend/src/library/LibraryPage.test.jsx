@@ -34,6 +34,7 @@ describe('LibraryPage', () => {
 
     renderLibraryPage()
 
+    expect(document.title).toBe('Library — adr-engine')
     expect(await screen.findByText('owner/repo-a')).toBeInTheDocument()
     expect(screen.getByText('12 decisions')).toBeInTheDocument()
     expect(screen.getByText('owner/repo-b')).toBeInTheDocument()
