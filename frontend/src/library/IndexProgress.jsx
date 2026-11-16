@@ -51,7 +51,14 @@ function IndexProgress({ repo, indexedAt = null }) {
         {PHASE_LABELS[repoState.phase](repoState.counts, indexedAt)}
       </p>
       {repoState.phase === 'extracting' && (
-        <div className="h-1 rounded bg-surface">
+        <div
+          className="h-1 rounded bg-surface"
+          role="progressbar"
+          aria-label={`Extraction progress for ${repo}`}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(extractProgressPercent(repoState.counts))}
+        >
           <div className="h-1 rounded bg-accent" style={{ width: `${extractProgressPercent(repoState.counts)}%` }} />
         </div>
       )}
