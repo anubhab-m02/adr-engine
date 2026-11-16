@@ -118,4 +118,25 @@ describe('IndexProgress', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Queued…')
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
+
+  it('exposes the extracting bar as a progressbar with a name and value', () => {
+    mockStatus({ repo: 'owner/repo', phase: 'extracting', counts: { fetched: 10, extracted: 5, skipped: 0, stored: 0 } })
+    render(<IndexProgress repo="owner/repo" />)
+    const bar = screen.getByRole('progressbar', { name: 'Extraction progress for owner/repo' })
+    expect(bar).toHaveAttribute('aria-valuemin', '0')
+    expect(bar).toHaveAttribute('aria-valuemax', '100')
+    expect(bar).toHaveAttribute('aria-valuenow', '50')
+  })
+
+  it('reports aria-valuenow 0 when nothing has been fetched', () => {
+    mockStatus({ repo: 'owner/repo', phase: 'extracting', counts: { fetched: 0, extracted: 0, skipped: 0, stored: 0 } })
+    render(<IndexProgress repo="owner/repo" />)
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0')
+  })
+
+  it.each(['queued', 'fetching', 'embedding', 'done', 'failed'])('has no progressbar in the %s phase', (phase) => {
+    mockStatus({ repo: 'owner/repo', phase, counts: { fetched: 10, extracted: 5, skipped: 0, stored: 5 }, error: 'x' })
+    render(<IndexProgress repo="owner/repo" />)
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+  })
 })
