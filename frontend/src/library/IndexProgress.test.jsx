@@ -108,6 +108,14 @@ describe('IndexProgress', () => {
       error: 'GitHub rate limited',
     })
     render(<IndexProgress repo="owner/repo" />)
-    expect(screen.getByText('GitHub rate limited')).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('GitHub rate limited')
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+
+  it('keeps role=status for non-failed phases', () => {
+    mockStatus({ repo: 'owner/repo', phase: 'queued', counts: { fetched: 0, extracted: 0, skipped: 0, stored: 0 } })
+    render(<IndexProgress repo="owner/repo" />)
+    expect(screen.getByRole('status')).toHaveTextContent('Queued…')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 })
