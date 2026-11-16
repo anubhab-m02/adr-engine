@@ -37,7 +37,7 @@ function IndexProgress({ repo, indexedAt = null }) {
   if (repoState.phase === 'failed') {
     return (
       <div>
-        <p className="text-sm text-danger" role="status">
+        <p className="text-sm text-danger" role="alert">
           {repoState.error}
         </p>
         <RetryButton repo={repo} onRetried={refetch} />
