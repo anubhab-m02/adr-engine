@@ -102,28 +102,33 @@ The Issue Generator files these as `daily-task` issues.
 Critical path: the recall@5 gate is cleared (see Evaluation); no
 human-blocked items remain.
 
-Unstarted (test/a11y work found by reading code; #234, #248, #249
-merged; #235 and #241 have open PRs awaiting merge):
+Unstarted (test/a11y work found by reading code; #235, #254, #255 merged;
+#241 and #256 have PRs awaiting merge):
 
-1. **#235 Ingestion idempotency regression test** (PR #259).
-2. **#241 `ErrorCard` announces errors** with `role="alert"` (PR #260).
-3. **#254 IndexProgress bar** gets `role="progressbar"` + `aria-value*`.
-4. **#255 IndexProgress failure** uses `role="alert"`.
-5. **#256 LibraryPage load error** announces with `role="alert"`.
-6. **#257 Library view errors** (DecisionGraph, DecisionTimeline,
+1. **#257 Library view errors** (DecisionGraph, DecisionTimeline,
    RepoFileTree) announce with `role="alert"`.
-7. **#264 CommandPalette dialog test** — assert role/aria-modal, Escape
+2. **#264 CommandPalette dialog test** — assert role/aria-modal, Escape
    closes, focus restored to opener.
-8. **#265 local_git error-path tests** — non-repo path / unknown sha
+3. **#265 local_git error-path tests** — non-repo path / unknown sha
    raise `LocalGitError`.
-9. **#266 Unknown-route redirect tests** in `App.test.jsx`.
-10. **RepoDecisionsPage document.title** (not yet filed) — call
-    `useDocumentTitle` in `frontend/src/library/RepoDecisionsPage.jsx`
-    (e.g. `"<repo> · Timeline"`); assert in `RepoDecisionsPage.test.jsx`.
-    Only Ask/Library/Settings set titles today (WCAG 2.4.2).
-11. **OnboardingPage document.title** (not yet filed) — same hook in
-    `frontend/src/onboarding/OnboardingPage.jsx`, title reflecting the
-    current step; assert in `OnboardingPage.test.jsx`.
+4. **#266 Unknown-route redirect tests** in `App.test.jsx`.
+5. **#269 RepoDecisionsPage document.title** (`"<repo> · Timeline"`).
+6. **#270 OnboardingPage document.title** per step.
+7. **#271 RepoDecisionsPage** must not crash on malformed percent.
+8. **#272 OnboardingPage loading state**.
+9. **#273 OnboardingPage progress dots** expose step position.
+10. **AnswerPage document.title** (not yet filed) — call
+    `useDocumentTitle` in `frontend/src/ask/AnswerPage.jsx` with the
+    question text (truncated ~60 chars); assert in `AnswerPage.test.jsx`.
+11. **`_resolve_citations` tests** (not yet filed) — in
+    `backend/tests/test_answer.py` assert: duplicate ids dedupe in
+    first-seen order; ids not in the retrieved units are dropped
+    (citations stay traceable); empty units returns the no-coverage
+    answer with `[]` and makes no Gemini call.
+12. **PrivacyPanel / AnswerPassage a11y** (not yet filed) — add
+    `aria-label`/landmark roles to `ask/PrivacyPanel.jsx` and
+    `ask/AnswerPassage.jsx` (zero aria attributes today); assert via
+    `getByRole` in their existing tests.
 
 With the gate cleared, the next unstarted work beyond the items above is
 the remainder of Track B (reading surfaces) in the v2 design doc.
@@ -182,11 +187,11 @@ Decided 2026-10-31 by the owner; settled, do not re-raise.
 - **chromadb 0.6.3 (3 CVEs: 1 critical, 2 high; no patched version exists).** Chroma runs in-process via `PersistentClient` — no HTTP server, no multi-tenant RBAC surface, no `trust_remote_code` use. Not reachable in this deployment. Revisit only if a networked/shared Chroma server is ever introduced.
 - **Dev-only npm findings (vite dev server / launch-editor, @vitest/mocker, source-map-js).** Build and test tooling only, never shipped to users; `launch-editor` is absent from the lockfile. Apply fixes only when a clean Dependabot PR appears.
 
-## Latest update — 2026-11-15
+## Latest update — 2026-11-16
 
-- No steering issues; no open needs-input. Review report 2026-11-15
-  approved #258-#260, #267, #268; #258, #267, #268 merged.
+- No steering issues; no open needs-input. Review report 2026-11-16
+  approved #259, #260, #274, #275, #276; #259, #274, #275 merged.
 - Dependabot API succeeded. Open alerts (chromadb, vite, @vitest/mocker)
   are all Accepted risks; nothing new.
-- Eligible backlog 9 issues; roadmap has 11 unstarted items (10-11 await
-  issue filing, bringing the backlog to 11).
+- Eligible backlog 11 issues; roadmap lists 12 unstarted items (10-12
+  await issue filing).
