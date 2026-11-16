@@ -69,7 +69,7 @@ function LibraryPage() {
 
       {repos === 'error' && (
         <div className="mt-4 flex items-center gap-3">
-          <p className="text-sm text-danger">Couldn't load the library.</p>
+          <p className="text-sm text-danger" role="alert">Couldn't load the library.</p>
           <button type="button" onClick={refresh} className="text-sm text-ink-muted underline">
             Retry
           </button>

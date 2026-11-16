@@ -56,7 +56,18 @@ describe('LibraryPage', () => {
 
     renderLibraryPage()
 
-    expect(await screen.findByText("Couldn't load the library.")).toBeInTheDocument()
+    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't load the library.")
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
+  })
+
+  it('does not render an alert when the repos load successfully', async () => {
+    getRepos.mockResolvedValue(REPOS)
+    useIngestStatus.mockReturnValue({ status: { active: false, repos: [] }, refetch: vi.fn() })
+
+    renderLibraryPage()
+
+    await screen.findByText('owner/repo-a')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
   it('retrying after an error re-fetches and renders the repos', async () => {
