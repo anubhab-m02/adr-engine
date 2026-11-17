@@ -54,7 +54,7 @@ function DecisionTimeline({ repo }) {
   if (units === undefined) {
     content = <p className="text-sm text-ink-muted">Loading timeline…</p>
   } else if (units === 'error') {
-    content = <p className="text-sm text-danger">Couldn't load the timeline.</p>
+    content = <p role="alert" className="text-sm text-danger">Couldn't load the timeline.</p>
   } else if (units.length === 0) {
     content = <p className="font-reading text-ink">No decisions indexed yet.</p>
   } else {

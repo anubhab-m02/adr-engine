@@ -28,11 +28,12 @@ describe('RepoFileTree', () => {
     getDecisionsByPath.mockResolvedValue({ paths: {} })
     renderTree()
     expect(await screen.findByText('No decisions indexed yet.')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
   it('shows an error when the request fails', async () => {
     getDecisionsByPath.mockRejectedValue(new Error('boom'))
     renderTree()
-    expect(await screen.findByText("Couldn't load the file tree.")).toBeInTheDocument()
+    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't load the file tree.")
   })
 })

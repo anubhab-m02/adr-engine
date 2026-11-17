@@ -50,6 +50,7 @@ describe('DecisionGraph', () => {
     renderDecisionGraph('owner/repo')
 
     expect(screen.getByText('Loading graph…')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
   it('shows an explicit empty state when there are no decisions', async () => {
@@ -57,13 +58,14 @@ describe('DecisionGraph', () => {
     renderDecisionGraph('owner/repo')
 
     expect(await screen.findByText('No decisions indexed yet.')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
   it('shows an error state when the fetch fails', async () => {
     getDecisions.mockRejectedValue(new Error('network error'))
     renderDecisionGraph('owner/repo')
 
-    expect(await screen.findByText("Couldn't load the graph.")).toBeInTheDocument()
+    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't load the graph.")
   })
 
   it('renders one node per decision, grouped by date', async () => {

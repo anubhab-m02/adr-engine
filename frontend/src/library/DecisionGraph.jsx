@@ -53,7 +53,7 @@ function DecisionGraph({ repo }) {
     return <p className="text-sm text-ink-muted">Loading graph…</p>
   }
   if (units === 'error') {
-    return <p className="text-sm text-danger">Couldn't load the graph.</p>
+    return <p role="alert" className="text-sm text-danger">Couldn't load the graph.</p>
   }
   if (units.length === 0) {
     return <p className="font-reading text-ink">No decisions indexed yet.</p>
