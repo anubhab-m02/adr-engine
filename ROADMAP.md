@@ -102,33 +102,21 @@ The Issue Generator files these as `daily-task` issues.
 Critical path: the recall@5 gate is cleared (see Evaluation); no
 human-blocked items remain.
 
-Unstarted (test/a11y work found by reading code; #235, #254, #255 merged;
-#241 and #256 have PRs awaiting merge):
+Unstarted (test/a11y work found by reading code; #257 and #265 merged;
+#241 has a PR awaiting merge). All filed as `daily-task` issues:
 
-1. **#257 Library view errors** (DecisionGraph, DecisionTimeline,
-   RepoFileTree) announce with `role="alert"`.
-2. **#264 CommandPalette dialog test** — assert role/aria-modal, Escape
+1. **#264 CommandPalette dialog test** — assert role/aria-modal, Escape
    closes, focus restored to opener.
-3. **#265 local_git error-path tests** — non-repo path / unknown sha
-   raise `LocalGitError`.
-4. **#266 Unknown-route redirect tests** in `App.test.jsx`.
-5. **#269 RepoDecisionsPage document.title** (`"<repo> · Timeline"`).
-6. **#270 OnboardingPage document.title** per step.
-7. **#271 RepoDecisionsPage** must not crash on malformed percent.
-8. **#272 OnboardingPage loading state**.
-9. **#273 OnboardingPage progress dots** expose step position.
-10. **AnswerPage document.title** (not yet filed) — call
-    `useDocumentTitle` in `frontend/src/ask/AnswerPage.jsx` with the
-    question text (truncated ~60 chars); assert in `AnswerPage.test.jsx`.
-11. **`_resolve_citations` tests** (not yet filed) — in
-    `backend/tests/test_answer.py` assert: duplicate ids dedupe in
-    first-seen order; ids not in the retrieved units are dropped
-    (citations stay traceable); empty units returns the no-coverage
-    answer with `[]` and makes no Gemini call.
-12. **PrivacyPanel / AnswerPassage a11y** (not yet filed) — add
-    `aria-label`/landmark roles to `ask/PrivacyPanel.jsx` and
-    `ask/AnswerPassage.jsx` (zero aria attributes today); assert via
-    `getByRole` in their existing tests.
+2. **#266 Unknown-route redirect tests** in `App.test.jsx`.
+3. **#269 RepoDecisionsPage document.title** (`"<repo> · Timeline"`).
+4. **#270 OnboardingPage document.title** per step.
+5. **#271 RepoDecisionsPage** must not crash on malformed percent.
+6. **#272 OnboardingPage loading state**.
+7. **#273 OnboardingPage progress dots** expose step position.
+8. **#277 AnswerPage document.title** from the question (~60 chars).
+9. **#278 `_resolve_citations` tests** — dedupe in first-seen order,
+   unknown ids dropped, empty units → no-coverage answer, no Gemini call.
+10. **#279 PrivacyPanel / AnswerPassage a11y** — aria labels/landmarks.
 
 With the gate cleared, the next unstarted work beyond the items above is
 the remainder of Track B (reading surfaces) in the v2 design doc.
@@ -187,11 +175,10 @@ Decided 2026-10-31 by the owner; settled, do not re-raise.
 - **chromadb 0.6.3 (3 CVEs: 1 critical, 2 high; no patched version exists).** Chroma runs in-process via `PersistentClient` — no HTTP server, no multi-tenant RBAC surface, no `trust_remote_code` use. Not reachable in this deployment. Revisit only if a networked/shared Chroma server is ever introduced.
 - **Dev-only npm findings (vite dev server / launch-editor, @vitest/mocker, source-map-js).** Build and test tooling only, never shipped to users; `launch-editor` is absent from the lockfile. Apply fixes only when a clean Dependabot PR appears.
 
-## Latest update — 2026-11-16
+## Latest update — 2026-11-17
 
-- No steering issues; no open needs-input. Review report 2026-11-16
-  approved #259, #260, #274, #275, #276; #259, #274, #275 merged.
+- No steering issues; no open needs-input. Review report 2026-11-17
+  approved #260, #276, #280, #281; #276, #280, #281 merged.
 - Dependabot API succeeded. Open alerts (chromadb, vite, @vitest/mocker)
   are all Accepted risks; nothing new.
-- Eligible backlog 11 issues; roadmap lists 12 unstarted items (10-12
-  await issue filing).
+- Eligible backlog 11 issues; roadmap lists 10 unstarted items, all filed.
