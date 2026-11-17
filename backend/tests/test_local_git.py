@@ -3,7 +3,7 @@ import subprocess
 
 import pytest
 
-from ingestion.local_git import get_commit_diff, list_commits
+from ingestion.local_git import LocalGitError, get_commit_diff, list_commits
 
 _AUTHOR_ENV = {
     "GIT_AUTHOR_NAME": "Tester",
@@ -94,3 +94,15 @@ def test_get_commit_diff_returns_unified_diff_text(repo):
 
     assert "diff --git a/a.txt b/a.txt" in diff
     assert "+one" in diff
+
+
+def test_list_commits_raises_for_a_non_repo_path(tmp_path):
+    with pytest.raises(LocalGitError):
+        list_commits(str(tmp_path))
+
+
+def test_get_commit_diff_raises_for_an_unknown_sha(repo):
+    _commit(repo, "a.txt", "one\n", "first commit", "2026-01-01T00:00:00")
+
+    with pytest.raises(LocalGitError):
+        get_commit_diff(str(repo), "0" * 40)
