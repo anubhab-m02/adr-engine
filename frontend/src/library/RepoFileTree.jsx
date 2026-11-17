@@ -23,7 +23,7 @@ function RepoFileTree({ repo }) {
   }, [repo])
 
   if (counts === undefined) return <p className="text-sm text-ink-muted">Loading files…</p>
-  if (counts === 'error') return <p className="text-sm text-danger">Couldn't load the file tree.</p>
+  if (counts === 'error') return <p role="alert" className="text-sm text-danger">Couldn't load the file tree.</p>
   if (Object.keys(counts).length === 0) {
     return <p className="font-reading text-ink">No decisions indexed yet.</p>
   }
