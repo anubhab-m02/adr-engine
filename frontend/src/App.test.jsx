@@ -88,6 +88,22 @@ describe('App', () => {
     expect(await screen.findByLabelText('Ask a question')).toBeInTheDocument()
   })
 
+  it('redirects an unknown path to / when setup is complete', async () => {
+    getSetupState.mockResolvedValue(COMPLETE_STATE)
+
+    renderAt('/nope')
+
+    expect(await screen.findByLabelText('Ask a question')).toBeInTheDocument()
+  })
+
+  it('redirects an unknown path to /onboarding when setup is incomplete', async () => {
+    getSetupState.mockResolvedValue(INCOMPLETE_STATE)
+
+    renderAt('/nope')
+
+    expect(await screen.findByText('Onboarding stub')).toBeInTheDocument()
+  })
+
   it('renders DecisionTimeline scoped to the repo at /library/:repo/timeline', async () => {
     getSetupState.mockResolvedValue(COMPLETE_STATE)
     getDecisions.mockResolvedValue({ units: [], total: 0, page: 1, limit: 20 })
