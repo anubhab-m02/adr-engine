@@ -28,6 +28,19 @@ describe('RepoDecisionsPage', () => {
     expect(screen.getByTestId('view')).toHaveTextContent(`${view}:owner/repo`)
   })
 
+  it.each([
+    ['timeline', 'Timeline'],
+    ['graph', 'Graph'],
+    ['files', 'Files'],
+  ])('sets document.title for the %s view and restores it on unmount', (view, label) => {
+    document.title = 'before'
+    const { unmount } = renderPage(view)
+    expect(document.title).toBe(`owner/repo · ${label}`)
+
+    unmount()
+    expect(document.title).toBe('before')
+  })
+
   it('links back to /library', () => {
     renderPage('timeline')
     expect(screen.getByRole('link', { name: 'Back to Library' })).toHaveAttribute('href', '/library')
