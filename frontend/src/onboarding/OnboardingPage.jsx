@@ -6,12 +6,21 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getConfig, getSetupState } from '../api.js'
+import useDocumentTitle from '../lib/useDocumentTitle.js'
 import ConnectStep from './ConnectStep.jsx'
 import GeminiKeyStep from './GeminiKeyStep.jsx'
 import IndexStep from './IndexStep.jsx'
 import RepoPickerStep from './RepoPickerStep.jsx'
 
 const DOT_STEPS = ['connect', 'repos', 'index']
+
+// WCAG 2.4.2: per-step page titles; 'Setup' is the neutral loading title.
+const STEP_TITLES = {
+  connect: 'Connect GitHub · Setup',
+  repos: 'Choose repos · Setup',
+  index: 'Index · Setup',
+  gemini: 'Gemini key · Setup',
+}
 
 function Dots({ step }) {
   const current = DOT_STEPS.indexOf(step)
@@ -75,6 +84,8 @@ function OnboardingPage() {
     setRepos(selected)
     setStep('index')
   }
+
+  useDocumentTitle(STEP_TITLES[step] ?? 'Setup')
 
   if (step === null) return null
 

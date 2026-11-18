@@ -40,6 +40,7 @@ describe('OnboardingPage', () => {
     renderPage()
 
     expect(await screen.findByText('Connect step')).toBeInTheDocument()
+    expect(document.title).toBe('Connect GitHub · Setup')
   })
 
   it('resumes at RepoPicker when connected but no repos selected', async () => {
@@ -53,6 +54,7 @@ describe('OnboardingPage', () => {
     renderPage()
 
     expect(await screen.findByText('Repo picker step')).toBeInTheDocument()
+    expect(document.title).toBe('Choose repos · Setup')
   })
 
   it('resumes at Index (with the configured repos) when repos are selected but not indexed', async () => {
@@ -67,6 +69,7 @@ describe('OnboardingPage', () => {
     renderPage()
 
     expect(await screen.findByText('Index step for owner/a,owner/b')).toBeInTheDocument()
+    expect(document.title).toBe('Index · Setup')
   })
 
   it('resumes at the optional Gemini step once indexing is done', async () => {
@@ -80,6 +83,7 @@ describe('OnboardingPage', () => {
     renderPage()
 
     expect(await screen.findByText('Gemini key step')).toBeInTheDocument()
+    expect(document.title).toBe('Gemini key · Setup')
   })
 
   it('navigates home immediately if setup is already fully complete', async () => {
