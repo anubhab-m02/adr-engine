@@ -102,21 +102,27 @@ The Issue Generator files these as `daily-task` issues.
 Critical path: the recall@5 gate is cleared (see Evaluation); no
 human-blocked items remain.
 
-Unstarted (test/a11y work found by reading code; #257 and #265 merged;
-#241 has a PR awaiting merge). All filed as `daily-task` issues:
+Unstarted (test/a11y work found by reading code; #266, #269, #270 merged;
+#241 and #264 have PRs awaiting merge). #1-6 are filed as `daily-task`
+issues; #7-11 are new and need filing:
 
-1. **#264 CommandPalette dialog test** — assert role/aria-modal, Escape
-   closes, focus restored to opener.
-2. **#266 Unknown-route redirect tests** in `App.test.jsx`.
-3. **#269 RepoDecisionsPage document.title** (`"<repo> · Timeline"`).
-4. **#270 OnboardingPage document.title** per step.
-5. **#271 RepoDecisionsPage** must not crash on malformed percent.
-6. **#272 OnboardingPage loading state**.
-7. **#273 OnboardingPage progress dots** expose step position.
-8. **#277 AnswerPage document.title** from the question (~60 chars).
-9. **#278 `_resolve_citations` tests** — dedupe in first-seen order,
+1. **#271 RepoDecisionsPage** must not crash on malformed percent.
+2. **#272 OnboardingPage loading state**.
+3. **#273 OnboardingPage progress dots** expose step position.
+4. **#277 AnswerPage document.title** from the question (~60 chars).
+5. **#278 `_resolve_citations` tests** — dedupe in first-seen order,
    unknown ids dropped, empty units → no-coverage answer, no Gemini call.
-10. **#279 PrivacyPanel / AnswerPassage a11y** — aria labels/landmarks.
+6. **#279 PrivacyPanel / AnswerPassage a11y** — aria labels/landmarks.
+7. **MessageList live region** — `frontend/src/components/MessageList.jsx`
+   (+test): `role="log"`/`aria-live="polite"` so new answers are announced.
+8. **SourceCardList list semantics** — `frontend/src/ask/SourceCardList.jsx`
+   (+test): labelled `Sources` list; test asserts role/label.
+9. **RepoPickerList a11y** — `frontend/src/onboarding/RepoPickerList.jsx`
+   (+test): labelled list/group for the repo checkboxes.
+10. **IndexStep progress announcement** — `frontend/src/onboarding/IndexStep.jsx`
+    (+test): progress exposed via `role="status"`/progressbar.
+11. **AppShell focus-on-route-change test** — `frontend/src/shell/AppShell.test.jsx`:
+    focus moves to `<main>` on navigation, not on initial mount.
 
 With the gate cleared, the next unstarted work beyond the items above is
 the remainder of Track B (reading surfaces) in the v2 design doc.
@@ -175,10 +181,10 @@ Decided 2026-10-31 by the owner; settled, do not re-raise.
 - **chromadb 0.6.3 (3 CVEs: 1 critical, 2 high; no patched version exists).** Chroma runs in-process via `PersistentClient` — no HTTP server, no multi-tenant RBAC surface, no `trust_remote_code` use. Not reachable in this deployment. Revisit only if a networked/shared Chroma server is ever introduced.
 - **Dev-only npm findings (vite dev server / launch-editor, @vitest/mocker, source-map-js).** Build and test tooling only, never shipped to users; `launch-editor` is absent from the lockfile. Apply fixes only when a clean Dependabot PR appears.
 
-## Latest update — 2026-11-17
+## Latest update — 2026-11-18
 
-- No steering issues; no open needs-input. Review report 2026-11-17
-  approved #260, #276, #280, #281; #276, #280, #281 merged.
+- No steering issues; no open needs-input. Review report 2026-11-18
+  approved #260, #282, #283, #284, #285; #283-#285 merged.
 - Dependabot API succeeded. Open alerts (chromadb, vite, @vitest/mocker)
-  are all Accepted risks; nothing new.
-- Eligible backlog 11 issues; roadmap lists 10 unstarted items, all filed.
+  are all Accepted risks; alert 35 (undici) already fixed.
+- Eligible backlog was 8; added 5 new unstarted items (#7-11) to reach 11.
