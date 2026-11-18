@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -177,6 +177,15 @@ describe('CommandPalette', () => {
       fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
 
       expect(screen.getByRole('dialog', { name: 'Command palette' })).toHaveAttribute('aria-modal', 'true')
+    })
+
+    it('exposes a labelled search input and a labelled listbox of options', () => {
+      renderPalette()
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+
+      expect(screen.getByRole('textbox', { name: 'Command palette search' })).toBeInTheDocument()
+      const listbox = screen.getByRole('listbox', { name: 'Commands' })
+      expect(within(listbox).getAllByRole('option')).toHaveLength(4)
     })
 
     it('returns focus to the element that had focus before opening, after Escape closes it', () => {
