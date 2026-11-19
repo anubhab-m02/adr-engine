@@ -102,27 +102,35 @@ The Issue Generator files these as `daily-task` issues.
 Critical path: the recall@5 gate is cleared (see Evaluation); no
 human-blocked items remain.
 
-Unstarted (test/a11y work found by reading code; #266, #269, #270 merged;
-#241 and #264 have PRs awaiting merge). #1-6 are filed as `daily-task`
-issues; #7-11 are new and need filing:
+Unstarted (test/a11y work found by reading code; #271, #272, #264
+merged; #241 and #273 have PRs awaiting merge). Items 1-6 are filed
+(#277, #278, #279, #286, #287, #288); 7-12 need filing:
 
-1. **#271 RepoDecisionsPage** must not crash on malformed percent.
-2. **#272 OnboardingPage loading state**.
-3. **#273 OnboardingPage progress dots** expose step position.
-4. **#277 AnswerPage document.title** from the question (~60 chars).
-5. **#278 `_resolve_citations` tests** — dedupe in first-seen order,
+1. **#277 AnswerPage document.title** from the question (~60 chars).
+2. **#278 `_resolve_citations` tests** — dedupe in first-seen order,
    unknown ids dropped, empty units → no-coverage answer, no Gemini call.
-6. **#279 PrivacyPanel / AnswerPassage a11y** — aria labels/landmarks.
-7. **MessageList live region** — `frontend/src/components/MessageList.jsx`
+3. **#279 PrivacyPanel / AnswerPassage a11y** — aria labels/landmarks.
+4. **#286 MessageList live region** — `frontend/src/components/MessageList.jsx`
    (+test): `role="log"`/`aria-live="polite"` so new answers are announced.
-8. **SourceCardList list semantics** — `frontend/src/ask/SourceCardList.jsx`
+5. **#287 SourceCardList list semantics** — `frontend/src/ask/SourceCardList.jsx`
    (+test): labelled `Sources` list; test asserts role/label.
-9. **RepoPickerList a11y** — `frontend/src/onboarding/RepoPickerList.jsx`
+6. **#288 RepoPickerList a11y** — `frontend/src/onboarding/RepoPickerList.jsx`
    (+test): labelled list/group for the repo checkboxes.
-10. **IndexStep progress announcement** — `frontend/src/onboarding/IndexStep.jsx`
+7. **IndexStep progress announcement** — `frontend/src/onboarding/IndexStep.jsx`
     (+test): progress exposed via `role="status"`/progressbar.
-11. **AppShell focus-on-route-change test** — `frontend/src/shell/AppShell.test.jsx`:
+8. **AppShell focus-on-route-change test** — `frontend/src/shell/AppShell.test.jsx`:
     focus moves to `<main>` on navigation, not on initial mount.
+9. **DecisionGraph svg semantics** — `frontend/src/library/DecisionGraph.jsx`
+    (+test): `<svg>` gets `role="group"` and `aria-label="Decision graph"`;
+    test asserts it by role/name.
+10. **DecisionTimeline list label** — `frontend/src/library/DecisionTimeline.jsx`
+    (+test): the `<ul>` gets `aria-label="Decision timeline"`; test asserts
+    `getByRole('list', {name})`.
+11. **LoadingCard decorative dots** — `frontend/src/components/LoadingCard.jsx`
+    (+test): dots wrapper `aria-hidden="true"`; the status text is the
+    only accessible content of `role="status"`.
+12. **Stale-doc fix** — `CLAUDE.md` says "No test suite exists yet"; both
+    suites exist. Point that line at `pytest`/`npm test` (docs only).
 
 With the gate cleared, the next unstarted work beyond the items above is
 the remainder of Track B (reading surfaces) in the v2 design doc.
@@ -181,10 +189,10 @@ Decided 2026-10-31 by the owner; settled, do not re-raise.
 - **chromadb 0.6.3 (3 CVEs: 1 critical, 2 high; no patched version exists).** Chroma runs in-process via `PersistentClient` — no HTTP server, no multi-tenant RBAC surface, no `trust_remote_code` use. Not reachable in this deployment. Revisit only if a networked/shared Chroma server is ever introduced.
 - **Dev-only npm findings (vite dev server / launch-editor, @vitest/mocker, source-map-js).** Build and test tooling only, never shipped to users; `launch-editor` is absent from the lockfile. Apply fixes only when a clean Dependabot PR appears.
 
-## Latest update — 2026-11-18
+## Latest update — 2026-11-19
 
-- No steering issues; no open needs-input. Review report 2026-11-18
-  approved #260, #282, #283, #284, #285; #283-#285 merged.
+- No steering issues; no open needs-input. Review report 2026-11-19
+  approved #260, #282, #289, #290, #291; #282/#289/#290 merged.
 - Dependabot API succeeded. Open alerts (chromadb, vite, @vitest/mocker)
   are all Accepted risks; alert 35 (undici) already fixed.
-- Eligible backlog was 8; added 5 new unstarted items (#7-11) to reach 11.
+- Eligible backlog was 8 (<10); added items 9-12 (unstarted total 12).
