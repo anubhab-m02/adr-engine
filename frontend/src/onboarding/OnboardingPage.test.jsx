@@ -29,6 +29,25 @@ afterEach(() => {
 })
 
 describe('OnboardingPage', () => {
+  it('announces a loading status while setup state is pending, then replaces it with the step', async () => {
+    let resolveState
+    getSetupState.mockReturnValue(new Promise((resolve) => { resolveState = resolve }))
+
+    renderPage()
+
+    expect(screen.getByRole('status')).toHaveTextContent('Loading setup…')
+
+    resolveState({
+      github_connected: false,
+      repos_selected: false,
+      first_index_done: false,
+      gemini_key_set: false,
+    })
+
+    expect(await screen.findByText('Connect step')).toBeInTheDocument()
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+
   it('resumes at Connect when github is not connected', async () => {
     getSetupState.mockResolvedValue({
       github_connected: false,
