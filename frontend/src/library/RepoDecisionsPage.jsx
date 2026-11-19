@@ -13,23 +13,41 @@ const VIEWS = {
   files: { label: 'Files', Component: RepoFileTree },
 }
 
+// A hand-edited or truncated URL can contain invalid percent-encoding, which
+// makes decodeURIComponent throw; return null so the page can degrade.
+function safeDecode(value) {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return null
+  }
+}
+
 function RepoDecisionsPage({ view }) {
   const { repo: encodedRepo } = useParams()
-  const repo = decodeURIComponent(encodedRepo)
+  const repo = safeDecode(encodedRepo)
   const { label, Component } = VIEWS[view]
-  useDocumentTitle(`${repo} · ${label}`)
+  useDocumentTitle(repo === null ? 'Invalid repo link' : `${repo} · ${label}`)
 
   return (
     <div className="max-w-5xl mx-auto px-4 lg:px-6 py-6">
       <Link to="/library" className="text-sm text-ink-muted underline">
         Back to Library
       </Link>
-      <h1 className="font-reading text-lg text-ink mt-2">
-        {repo} · {label}
-      </h1>
-      <div className="mt-4">
-        <Component repo={repo} />
-      </div>
+      {repo === null ? (
+        <p role="alert" className="text-base text-danger mt-2">
+          That repo link is malformed.
+        </p>
+      ) : (
+        <>
+          <h1 className="font-reading text-lg text-ink mt-2">
+            {repo} · {label}
+          </h1>
+          <div className="mt-4">
+            <Component repo={repo} />
+          </div>
+        </>
+      )}
     </div>
   )
 }

@@ -7,9 +7,9 @@ vi.mock('./DecisionTimeline.jsx', () => ({ default: ({ repo }) => <div data-test
 vi.mock('./DecisionGraph.jsx', () => ({ default: ({ repo }) => <div data-testid="view">graph:{repo}</div> }))
 vi.mock('./RepoFileTree.jsx', () => ({ default: ({ repo }) => <div data-testid="view">files:{repo}</div> }))
 
-function renderPage(view) {
+function renderPage(view, path = '/library/owner%2Frepo/x') {
   return render(
-    <MemoryRouter initialEntries={['/library/owner%2Frepo/x']}>
+    <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/library/:repo/x" element={<RepoDecisionsPage view={view} />} />
       </Routes>
@@ -44,5 +44,12 @@ describe('RepoDecisionsPage', () => {
   it('links back to /library', () => {
     renderPage('timeline')
     expect(screen.getByRole('link', { name: 'Back to Library' })).toHaveAttribute('href', '/library')
+  })
+
+  it('shows an alert and the Back link, without mounting the view, for a malformed repo param', () => {
+    renderPage('timeline', '/library/%E0%A4%A/x')
+    expect(screen.getByRole('alert')).toHaveTextContent('That repo link is malformed.')
+    expect(screen.getByRole('link', { name: 'Back to Library' })).toHaveAttribute('href', '/library')
+    expect(screen.queryByTestId('view')).not.toBeInTheDocument()
   })
 })
