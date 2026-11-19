@@ -87,11 +87,14 @@ function OnboardingPage() {
 
   useDocumentTitle(STEP_TITLES[step] ?? 'Setup')
 
-  if (step === null) return null
-
   return (
     <div className="min-h-svh bg-surface flex flex-col">
       <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
+        {step === null && (
+          <p role="status" className="text-base text-ink-muted">
+            Loading setup…
+          </p>
+        )}
         {step === 'connect' && <ConnectStep onAuthorized={() => setStep('repos')} />}
         {step === 'repos' && <RepoPickerStep onNext={handleRepoPickerNext} />}
         {step === 'index' && <IndexStep repos={repos} onComplete={() => setStep('gemini')} />}
