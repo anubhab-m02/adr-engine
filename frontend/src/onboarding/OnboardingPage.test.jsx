@@ -29,6 +29,33 @@ afterEach(() => {
 })
 
 describe('OnboardingPage', () => {
+  it.each([
+    ['connect', { github_connected: false, repos_selected: false, first_index_done: false, gemini_key_set: false }, 'Step 1 of 3'],
+    ['repos', { github_connected: true, repos_selected: false, first_index_done: false, gemini_key_set: false }, 'Step 2 of 3'],
+    ['index', { github_connected: true, repos_selected: true, first_index_done: false, gemini_key_set: false }, 'Step 3 of 3'],
+  ])('labels the progress dots on the %s step', async (_step, state, label) => {
+    getSetupState.mockResolvedValue(state)
+    getConfig.mockResolvedValue({ indexed_repos: ['a/b'] })
+
+    renderPage()
+
+    expect(await screen.findByRole('img', { name: label })).toBeInTheDocument()
+  })
+
+  it('renders no progress dots on the gemini step', async () => {
+    getSetupState.mockResolvedValue({
+      github_connected: true,
+      repos_selected: true,
+      first_index_done: true,
+      gemini_key_set: false,
+    })
+
+    renderPage()
+
+    expect(await screen.findByText('Gemini key step')).toBeInTheDocument()
+    expect(screen.queryByRole('img')).not.toBeInTheDocument()
+  })
+
   it('resumes at Connect when github is not connected', async () => {
     getSetupState.mockResolvedValue({
       github_connected: false,
