@@ -25,6 +25,15 @@ describe('PrivacyPanel', () => {
     expect(screen.queryByText('source_excerpt')).not.toBeInTheDocument()
   })
 
+  it('is a labelled region in both the not-sent and sent branches', () => {
+    const name = 'Privacy: what was sent to the cloud'
+    const { rerender } = render(<PrivacyPanel sentToCloud={false} cloudSynthesisFields={null} />)
+    expect(screen.getByRole('region', { name })).toBeInTheDocument()
+
+    rerender(<PrivacyPanel sentToCloud={true} cloudSynthesisFields={['id']} />)
+    expect(screen.getByRole('region', { name })).toBeInTheDocument()
+  })
+
   it('does not claim anything was sent when sentToCloud is false even if fields are present', () => {
     render(<PrivacyPanel sentToCloud={false} cloudSynthesisFields={['id']} />)
 

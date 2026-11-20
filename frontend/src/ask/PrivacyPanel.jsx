@@ -3,15 +3,19 @@
 // `cloudSynthesisFields` is read verbatim from QueryResponse rather than a
 // hardcoded guess, so it can never drift out of sync with what
 // synthesis/answer.py actually sends.
+const REGION_LABEL = 'Privacy: what was sent to the cloud'
+
 function PrivacyPanel({ sentToCloud, cloudSynthesisFields }) {
   if (!sentToCloud) {
     return (
-      <p className="text-sm text-ink-muted">Nothing left this machine for this answer.</p>
+      <section aria-label={REGION_LABEL}>
+        <p className="text-sm text-ink-muted">Nothing left this machine for this answer.</p>
+      </section>
     )
   }
 
   return (
-    <div>
+    <section aria-label={REGION_LABEL}>
       <p className="text-sm text-ink-muted">
         These fields were sent to the cloud model to synthesize this answer:
       </p>
@@ -22,7 +26,7 @@ function PrivacyPanel({ sentToCloud, cloudSynthesisFields }) {
           </li>
         ))}
       </ul>
-    </div>
+    </section>
   )
 }
 

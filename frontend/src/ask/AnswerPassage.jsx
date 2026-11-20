@@ -53,11 +53,11 @@ function AnswerPassage({ answer, citations }) {
   const reducedMotion = usePrefersReducedMotion()
 
   return (
-    <>
+    <div role="article" aria-label="Answer">
       {paragraphs.map((paragraph) => (
         <AnswerParagraph key={paragraph.key} paragraph={paragraph} reducedMotion={reducedMotion} />
       ))}
-    </>
+    </div>
   )
 }
 
