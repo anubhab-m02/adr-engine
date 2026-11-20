@@ -57,6 +57,25 @@ def test_synthesize_dedupes_repeated_citations(make_unit):
     assert citations == [units[0]]
 
 
+def test_synthesize_dedupes_citations_preserving_first_seen_order(make_unit):
+    units = [
+        make_unit(id="owner/repo:pr:1", ref="1"),
+        make_unit(id="owner/repo:pr:2", ref="2"),
+        make_unit(id="owner/repo:pr:3", ref="3"),
+    ]
+    answer_text = (
+        "First [owner/repo:pr:3], then [owner/repo:pr:1], "
+        "again [owner/repo:pr:3], and [owner/repo:pr:2] then [owner/repo:pr:1]."
+    )
+
+    with patch("synthesis.answer.httpx.post") as mock_post:
+        mock_post.return_value = _gemini_response(answer_text)
+
+        _, citations = synthesize("why redis?", units)
+
+    assert citations == [units[2], units[0], units[1]]
+
+
 def test_synthesize_empty_units_returns_fixed_answer_without_calling_gemini():
     with patch("synthesis.answer.httpx.post") as mock_post:
         answer, citations = synthesize("why redis?", [])
