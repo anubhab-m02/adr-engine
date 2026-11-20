@@ -27,6 +27,12 @@ describe('AnswerPassage', () => {
     expect(screen.getByText(/We use OAuth2 for auth/)).toBeInTheDocument()
   })
 
+  it('exposes the answer text as a named article', () => {
+    render(<AnswerPassage answer="We use OAuth2 for auth [unit-a]." citations={citations} />)
+
+    expect(screen.getByRole('article', { name: 'Answer' })).toHaveTextContent(/We use OAuth2/)
+  })
+
   it('fades up on arrival and staggers its markers ink-in by default', () => {
     stubMatchMedia(false)
     render(<AnswerPassage answer="Redis was chosen [unit-b]." citations={citations} />)
