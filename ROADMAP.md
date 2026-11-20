@@ -120,17 +120,21 @@ merged; #241 and #273 have PRs awaiting merge). Items 1-6 are filed
     (+test): progress exposed via `role="status"`/progressbar.
 8. **AppShell focus-on-route-change test** — `frontend/src/shell/AppShell.test.jsx`:
     focus moves to `<main>` on navigation, not on initial mount.
-9. **DecisionGraph svg semantics** — `frontend/src/library/DecisionGraph.jsx`
-    (+test): `<svg>` gets `role="group"` and `aria-label="Decision graph"`;
-    test asserts it by role/name.
-10. **DecisionTimeline list label** — `frontend/src/library/DecisionTimeline.jsx`
-    (+test): the `<ul>` gets `aria-label="Decision timeline"`; test asserts
-    `getByRole('list', {name})`.
-11. **LoadingCard decorative dots** — `frontend/src/components/LoadingCard.jsx`
-    (+test): dots wrapper `aria-hidden="true"`; the status text is the
-    only accessible content of `role="status"`.
-12. **Stale-doc fix** — `CLAUDE.md` says "No test suite exists yet"; both
-    suites exist. Point that line at `pytest`/`npm test` (docs only).
+9. **#292 DecisionGraph svg** (`role="group"`, `aria-label="Decision graph"`),
+   **#293 DecisionTimeline list label**, **#294 LoadingCard decorative
+   dots**, **#295 CLAUDE.md stale "no test suite" line** — all filed.
+10. **Track B bookmarks, part 1: `useBookmarks` hook** —
+    `frontend/src/lib/useBookmarks.js` (+test): localStorage-backed set
+    keyed by decision URL (`{url, title, savedAt}`); `toggle`,
+    `isBookmarked`, `list`; tolerates corrupt/missing JSON. No backend
+    (local-first). Test covers toggle, persistence, corruption.
+11. **Bookmarks part 2: SourceCard toggle** — `frontend/src/ask/SourceCard.jsx`
+    (+test): button with `aria-pressed` using `useBookmarks`; citation
+    link/URL rendering unchanged. Depends on 10.
+12. **Bookmarks part 3: saved list** — `frontend/src/library/BookmarksList.jsx`
+    (+test): saved decisions as links to their commit/PR URL, remove
+    button, empty state explaining how to save one; mounted as a section
+    in `LibraryPage.jsx`. Depends on 10.
 
 With the gate cleared, the next unstarted work beyond the items above is
 the remainder of Track B (reading surfaces) in the v2 design doc.
@@ -189,10 +193,11 @@ Decided 2026-10-31 by the owner; settled, do not re-raise.
 - **chromadb 0.6.3 (3 CVEs: 1 critical, 2 high; no patched version exists).** Chroma runs in-process via `PersistentClient` — no HTTP server, no multi-tenant RBAC surface, no `trust_remote_code` use. Not reachable in this deployment. Revisit only if a networked/shared Chroma server is ever introduced.
 - **Dev-only npm findings (vite dev server / launch-editor, @vitest/mocker, source-map-js).** Build and test tooling only, never shipped to users; `launch-editor` is absent from the lockfile. Apply fixes only when a clean Dependabot PR appears.
 
-## Latest update — 2026-11-19
+## Latest update — 2026-11-20
 
-- No steering issues; no open needs-input. Review report 2026-11-19
-  approved #260, #282, #289, #290, #291; #282/#289/#290 merged.
+- No steering issues; no open needs-input. Review report 2026-11-20
+  approved #260, #291, #296, #297, #298; #296-#298 merged.
 - Dependabot API succeeded. Open alerts (chromadb, vite, @vitest/mocker)
   are all Accepted risks; alert 35 (undici) already fixed.
-- Eligible backlog was 8 (<10); added items 9-12 (unstarted total 12).
+- Eligible backlog was 9 (<10); added Track B bookmarks items 10-12
+  (unstarted total 12; 8 and 9 not yet filed).
