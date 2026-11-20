@@ -34,6 +34,23 @@ describe('AnswerPage', () => {
     localStorage.clear()
   })
 
+  it('sets document.title from a short question', () => {
+    render(
+      <AnswerPage question="Why OAuth2?" answer="x" citations={[]} repos={repos} selectedRepos={['owner/repo']} />,
+    )
+    expect(document.title).toBe('Why OAuth2? — adr-engine')
+  })
+
+  it('truncates a long question with an ellipsis in document.title', () => {
+    const question = 'Why '.repeat(30).trim()
+    render(
+      <AnswerPage question={question} answer="x" citations={[]} repos={repos} selectedRepos={['owner/repo']} />,
+    )
+    expect(document.title).toContain('…')
+    expect(document.title).toMatch(/ — adr-engine$/)
+    expect(document.title.length).toBeLessThanOrEqual(60 + 1 + ' — adr-engine'.length)
+  })
+
   it('renders the question as a heading', () => {
     render(
       <AnswerPage

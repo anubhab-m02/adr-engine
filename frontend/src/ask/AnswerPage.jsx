@@ -10,6 +10,7 @@
 // margin track at all: each paragraph's source cards collapse inline,
 // directly after that paragraph, rather than batching every citation in
 // one list at the foot of the answer.
+import useDocumentTitle from '../lib/useDocumentTitle.js'
 import usePrefersReducedMotion from '../lib/usePrefersReducedMotion.js'
 import useReadingPreferences from '../lib/useReadingPreferences.js'
 import { AnswerParagraph } from './AnswerPassage.jsx'
@@ -30,6 +31,15 @@ const MEASURE_OPTIONS = [
 
 function preferenceToggleClassName(active) {
   return `rounded-md px-2 py-1 text-xs font-ui ${active ? 'bg-highlight text-ink' : 'text-ink-muted hover:text-ink'}`
+}
+
+const TITLE_QUESTION_MAX = 60
+
+function titleFor(question) {
+  const text = question.length > TITLE_QUESTION_MAX
+    ? `${question.slice(0, TITLE_QUESTION_MAX).trimEnd()}…`
+    : question
+  return `${text} — adr-engine`
 }
 
 function decisionCount(repos, selectedRepos) {
@@ -88,6 +98,7 @@ function AnswerPage({
   sentToCloud = false,
   cloudSynthesisFields = null,
 }) {
+  useDocumentTitle(titleFor(question))
   const repoCount = selectedRepos.length
   const decisions = decisionCount(repos, selectedRepos)
   const reducedMotion = usePrefersReducedMotion()
