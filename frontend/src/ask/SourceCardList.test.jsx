@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import SourceCardList from './SourceCardList.jsx'
 
@@ -30,6 +30,12 @@ const citations = [
 ]
 
 describe('SourceCardList', () => {
+  it('exposes a labelled Sources list with one listitem per citation', () => {
+    render(<SourceCardList citations={citations} />)
+    const list = screen.getByRole('list', { name: 'Sources' })
+    expect(within(list).getAllByRole('listitem')).toHaveLength(2)
+  })
+
   it('renders one card per citation, linking to its URL', () => {
     render(<SourceCardList citations={citations} />)
     const links = screen.getAllByRole('link')
