@@ -102,42 +102,43 @@ The Issue Generator files these as `daily-task` issues.
 Critical path: the recall@5 gate is cleared (see Evaluation); no
 human-blocked items remain.
 
-Unstarted (test/a11y work found by reading code; #271, #272, #264
-merged; #241 and #273 have PRs awaiting merge). Items 1-6 are filed
-(#277, #278, #279, #286, #287, #288); 7-12 need filing:
+Unstarted. Items 1-9 are filed as daily-task issues (#241 and #273 have
+PRs awaiting merge); 10-14 need filing:
 
-1. **#277 AnswerPage document.title** from the question (~60 chars).
-2. **#278 `_resolve_citations` tests** — dedupe in first-seen order,
-   unknown ids dropped, empty units → no-coverage answer, no Gemini call.
-3. **#279 PrivacyPanel / AnswerPassage a11y** — aria labels/landmarks.
-4. **#286 MessageList live region** — `frontend/src/components/MessageList.jsx`
-   (+test): `role="log"`/`aria-live="polite"` so new answers are announced.
-5. **#287 SourceCardList list semantics** — `frontend/src/ask/SourceCardList.jsx`
-   (+test): labelled `Sources` list; test asserts role/label.
-6. **#288 RepoPickerList a11y** — `frontend/src/onboarding/RepoPickerList.jsx`
-   (+test): labelled list/group for the repo checkboxes.
-7. **IndexStep progress announcement** — `frontend/src/onboarding/IndexStep.jsx`
-    (+test): progress exposed via `role="status"`/progressbar.
-8. **AppShell focus-on-route-change test** — `frontend/src/shell/AppShell.test.jsx`:
-    focus moves to `<main>` on navigation, not on initial mount.
-9. **#292 DecisionGraph svg** (`role="group"`, `aria-label="Decision graph"`),
-   **#293 DecisionTimeline list label**, **#294 LoadingCard decorative
-   dots**, **#295 CLAUDE.md stale "no test suite" line** — all filed.
-10. **Track B bookmarks, part 1: `useBookmarks` hook** —
-    `frontend/src/lib/useBookmarks.js` (+test): localStorage-backed set
-    keyed by decision URL (`{url, title, savedAt}`); `toggle`,
-    `isBookmarked`, `list`; tolerates corrupt/missing JSON. No backend
-    (local-first). Test covers toggle, persistence, corruption.
-11. **Bookmarks part 2: SourceCard toggle** — `frontend/src/ask/SourceCard.jsx`
-    (+test): button with `aria-pressed` using `useBookmarks`; citation
-    link/URL rendering unchanged. Depends on 10.
-12. **Bookmarks part 3: saved list** — `frontend/src/library/BookmarksList.jsx`
-    (+test): saved decisions as links to their commit/PR URL, remove
-    button, empty state explaining how to save one; mounted as a section
-    in `LibraryPage.jsx`. Depends on 10.
+1. **#299 IndexStep progress announcement** — `frontend/src/onboarding/IndexStep.jsx`
+   (+test): progress exposed via `role="status"`/progressbar.
+2. **#300 AppShell focus-on-route-change test** — `frontend/src/shell/AppShell.test.jsx`:
+   focus moves to `<main>` on navigation, not on initial mount.
+3. **#292 DecisionGraph svg** (`role="group"`, `aria-label="Decision graph"`).
+4. **#293 DecisionTimeline list label**.
+5. **#294 LoadingCard decorative dots**.
+6. **#295 CLAUDE.md stale "no test suite" line**.
+7. **#301 Bookmarks part 1: `useBookmarks` hook** —
+   `frontend/src/lib/useBookmarks.js` (+test): localStorage-backed set
+   keyed by decision URL; tolerates corrupt/missing JSON. No backend.
+8. **#302 Bookmarks part 2: SourceCard toggle** (`aria-pressed`); depends on 7.
+9. **#303 Bookmarks part 3: BookmarksList in LibraryPage**; depends on 7.
+10. **Copy citation link** — `frontend/src/ask/SourceCard.jsx` (+test):
+    "Copy link" button writes the commit/PR URL via `navigator.clipboard`,
+    shows "Copied" via `role="status"`, no-ops gracefully if clipboard is
+    unavailable. Link rendering unchanged.
+11. **Annotations part 1: `useAnnotations` hook** —
+    `frontend/src/lib/useAnnotations.js` (+test): localStorage notes keyed
+    by decision URL (`{url, note, updatedAt}`); `get`, `set`, `remove`;
+    empty note removes; tolerates corrupt JSON.
+12. **Annotations part 2: note field on SourceCard** — `SourceCard.jsx`
+    (+test): collapsible textarea labelled "Your note" bound to
+    `useAnnotations`; saved on blur. Depends on 11.
+13. **Focus mode part 1: `useFocusMode` hook** —
+    `frontend/src/lib/useFocusMode.js` (+test): boolean persisted in
+    localStorage, toggle, defaults false.
+14. **Focus mode part 2: hide chrome** — `frontend/src/shell/AppShell.jsx`
+    (+test): when focus mode is on, TopNav is not rendered and an
+    "Exit focus mode" button is shown; toggle also added to CommandPalette.
+    Depends on 13.
 
-With the gate cleared, the next unstarted work beyond the items above is
-the remainder of Track B (reading surfaces) in the v2 design doc.
+Beyond these, work continues with the remainder of Track B (reading
+surfaces) in the v2 design doc.
 
 ## Known gaps
 
@@ -193,11 +194,11 @@ Decided 2026-10-31 by the owner; settled, do not re-raise.
 - **chromadb 0.6.3 (3 CVEs: 1 critical, 2 high; no patched version exists).** Chroma runs in-process via `PersistentClient` — no HTTP server, no multi-tenant RBAC surface, no `trust_remote_code` use. Not reachable in this deployment. Revisit only if a networked/shared Chroma server is ever introduced.
 - **Dev-only npm findings (vite dev server / launch-editor, @vitest/mocker, source-map-js).** Build and test tooling only, never shipped to users; `launch-editor` is absent from the lockfile. Apply fixes only when a clean Dependabot PR appears.
 
-## Latest update — 2026-11-20
+## Latest update — 2026-11-21
 
-- No steering issues; no open needs-input. Review report 2026-11-20
-  approved #260, #291, #296, #297, #298; #296-#298 merged.
+- No steering issues; no open needs-input. Review report 2026-11-21
+  approved #304-#306 (all merged).
 - Dependabot API succeeded. Open alerts (chromadb, vite, @vitest/mocker)
   are all Accepted risks; alert 35 (undici) already fixed.
-- Eligible backlog was 9 (<10); added Track B bookmarks items 10-12
-  (unstarted total 12; 8 and 9 not yet filed).
+- Next up was thin after merges; removed merged items and added items
+  10-14 (copy citation link, annotations, focus mode) to Track B.
