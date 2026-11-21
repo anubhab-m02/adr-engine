@@ -46,7 +46,7 @@ function MessageList({ messages, repos = [], selectedRepos = [], disabled }) {
   }, [messages])
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4" role="log" aria-live="polite" aria-label="Conversation">
       {messages.map((message, index) =>
         message.role === 'user' ? (
           <div key={index} className="flex justify-end">
