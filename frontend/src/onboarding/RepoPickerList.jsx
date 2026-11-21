@@ -27,11 +27,13 @@ function RepoPickerList({ query, repos, selected, onToggle, onRetry, emptyMessag
         <p className="text-sm text-ink-muted">{query ? 'No repos match.' : emptyMessage}</p>
       )}
 
-      {Array.isArray(repos) &&
-        repos.length > 0 &&
-        repos.map((repo) => (
-          <RepoPickerRow key={repo.name} repo={repo} selected={selected.includes(repo.name)} onToggle={onToggle} />
-        ))}
+      {Array.isArray(repos) && repos.length > 0 && (
+        <div role="group" aria-label="Repositories">
+          {repos.map((repo) => (
+            <RepoPickerRow key={repo.name} repo={repo} selected={selected.includes(repo.name)} onToggle={onToggle} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
