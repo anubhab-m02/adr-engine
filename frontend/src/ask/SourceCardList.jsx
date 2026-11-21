@@ -6,9 +6,11 @@ import SourceCard from './SourceCard.jsx'
 // doesn't.
 function SourceCardList({ citations, className = 'flex flex-wrap gap-4', expanded = false }) {
   return (
-    <div className={className}>
+    <div className={className} role="list" aria-label="Sources">
       {citations.map((unit) => (
-        <SourceCard key={unit.url} unit={unit} expanded={expanded} />
+        <div key={unit.url} role="listitem">
+          <SourceCard unit={unit} expanded={expanded} />
+        </div>
       ))}
     </div>
   )
