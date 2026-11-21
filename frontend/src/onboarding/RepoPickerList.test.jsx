@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import RepoPickerList from './RepoPickerList.jsx'
@@ -10,6 +10,21 @@ function renderList(props) {
 }
 
 describe('RepoPickerList', () => {
+  it('groups the rows under a labelled Repositories group', () => {
+    renderList({ repos: [{ name: 'owner/a' }, { name: 'owner/b' }] })
+    const group = screen.getByRole('group', { name: 'Repositories' })
+    expect(within(group).getAllByRole('checkbox')).toHaveLength(2)
+  })
+
+  it.each([
+    ['loading', undefined],
+    ['error', 'error'],
+    ['empty', []],
+  ])('renders no Repositories group in the %s state', (_label, repos) => {
+    renderList({ repos })
+    expect(screen.queryByRole('group', { name: 'Repositories' })).not.toBeInTheDocument()
+  })
+
   it('shows 5 skeletons while repos is undefined', () => {
     const { container } = renderList({ repos: undefined })
     expect(container.querySelectorAll('.animate-pulse')).toHaveLength(5)
