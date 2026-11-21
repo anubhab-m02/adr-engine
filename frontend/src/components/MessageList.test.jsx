@@ -19,6 +19,19 @@ beforeEach(() => {
 })
 
 describe('MessageList', () => {
+  it('exposes a polite live region labelled Conversation', () => {
+    render(
+      <MessageList
+        messages={[
+          { role: 'user', content: 'Why OAuth2?' },
+          { role: 'assistant', type: 'loading' },
+        ]}
+      />,
+    )
+    const log = screen.getByRole('log', { name: 'Conversation' })
+    expect(log).toHaveAttribute('aria-live', 'polite')
+  })
+
   it('renders a right-aligned question bubble for user messages', () => {
     render(<MessageList messages={[{ role: 'user', content: 'Why OAuth2?' }]} />)
     expect(screen.getByText('Why OAuth2?')).toBeInTheDocument()
