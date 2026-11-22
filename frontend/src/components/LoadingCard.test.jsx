@@ -9,6 +9,13 @@ describe('LoadingCard', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Searching decision history…')
   })
 
+  it('hides the decorative dots from assistive tech', () => {
+    render(<LoadingCard />)
+    const dots = screen.getByRole('status').firstChild
+    expect(dots).toHaveAttribute('aria-hidden', 'true')
+    expect(screen.getByRole('status')).toHaveTextContent('Searching decision history…')
+  })
+
   it('renders the shared MESSAGE_CARD_BASE classes on its root', () => {
     render(<LoadingCard />)
     expect(screen.getByRole('status')).toHaveClass(...MESSAGE_CARD_BASE.split(' '))
