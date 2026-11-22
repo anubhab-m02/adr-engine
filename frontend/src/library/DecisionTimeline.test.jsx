@@ -96,6 +96,14 @@ describe('DecisionTimeline', () => {
     ])
   })
 
+  it('gives each date group list the accessible name "Decision timeline"', async () => {
+    getDecisions.mockResolvedValue({ units: UNITS, total: 3, page: 1, limit: 20 })
+    render(<DecisionTimeline repo="owner/repo" />)
+
+    const lists = await screen.findAllByRole('list', { name: 'Decision timeline' })
+    expect(lists).toHaveLength(2)
+  })
+
   it('fetches the given repo and re-fetches when the repo prop changes', async () => {
     getDecisions.mockResolvedValue({ units: [], total: 0, page: 1, limit: 20 })
     const { rerender } = render(<DecisionTimeline repo="owner/repo-a" />)

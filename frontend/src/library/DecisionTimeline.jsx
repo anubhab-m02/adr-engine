@@ -61,7 +61,7 @@ function DecisionTimeline({ repo }) {
     content = groupByDate(units).map((group) => (
       <div key={group.label}>
         <h2 className="font-ui text-xs uppercase tracking-wide text-ink-muted">{group.label}</h2>
-        <ul className="mt-2 flex flex-col gap-2">
+        <ul aria-label="Decision timeline" className="mt-2 flex flex-col gap-2">
           {group.units.map((unit) => (
             <li key={unit.id} id={`source-${unit.id}`} className="bg-panel rounded-xl p-4">
               <div className="flex items-center gap-2">
