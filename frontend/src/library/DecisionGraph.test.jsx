@@ -82,6 +82,14 @@ describe('DecisionGraph', () => {
     )
   })
 
+  it('exposes each date group svg as a group named "Decision graph"', async () => {
+    getDecisions.mockResolvedValue({ units: UNITS, total: 3, page: 1, limit: 20 })
+    renderDecisionGraph('owner/repo')
+
+    const groups = await screen.findAllByRole('group', { name: 'Decision graph' })
+    expect(groups).toHaveLength(2)
+  })
+
   it('renders a single node without crashing', async () => {
     getDecisions.mockResolvedValue({ units: [UNITS[0]], total: 1, page: 1, limit: 20 })
     renderDecisionGraph('owner/repo')

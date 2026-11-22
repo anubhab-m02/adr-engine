@@ -66,7 +66,13 @@ function DecisionGraph({ repo }) {
         return (
           <div key={group.label}>
             <h2 className="font-ui text-xs uppercase tracking-wide text-ink-muted">{group.label}</h2>
-            <svg width={COLUMNS * CELL} height={rows * CELL} className="mt-2">
+            <svg
+              role="group"
+              aria-label="Decision graph"
+              width={COLUMNS * CELL}
+              height={rows * CELL}
+              className="mt-2"
+            >
               {group.units.map((unit, index) => {
                 const { x, y } = nodePosition(index)
                 return (
