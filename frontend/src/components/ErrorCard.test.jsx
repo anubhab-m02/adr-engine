@@ -10,6 +10,11 @@ describe('ErrorCard', () => {
     expect(screen.getByText('Backend unreachable')).toBeInTheDocument()
   })
 
+  it('announces the error with role=alert', () => {
+    render(<ErrorCard message="Backend unreachable" onRetry={() => {}} />)
+    expect(screen.getByRole('alert')).toHaveTextContent('Backend unreachable')
+  })
+
   it('renders the shared MESSAGE_CARD_BASE classes on its root', () => {
     const { container } = render(<ErrorCard message="Backend unreachable" onRetry={() => {}} />)
     expect(container.firstChild).toHaveClass(...MESSAGE_CARD_BASE.split(' '))
