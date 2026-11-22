@@ -27,7 +27,11 @@ function Dots({ step }) {
   if (current === -1) return null
 
   return (
-    <div className="flex justify-center gap-2 pt-8">
+    <div
+      role="img"
+      aria-label={`Step ${current + 1} of ${DOT_STEPS.length}`}
+      className="flex justify-center gap-2 pt-8"
+    >
       {DOT_STEPS.map((name, index) => (
         <span
           key={name}
