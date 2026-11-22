@@ -9,7 +9,7 @@ const STATUS = 'Searching decision history…'
 function LoadingCard() {
   return (
     <div role="status" className={MESSAGE_CARD_BASE}>
-      <div className="flex gap-1">
+      <div aria-hidden="true" className="flex gap-1">
         <span className="h-2 w-2 rounded-full bg-ink-muted animate-pulse" />
         <span className="h-2 w-2 rounded-full bg-ink-muted animate-pulse [animation-delay:150ms]" />
         <span className="h-2 w-2 rounded-full bg-ink-muted animate-pulse [animation-delay:300ms]" />
