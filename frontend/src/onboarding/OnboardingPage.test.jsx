@@ -60,6 +60,7 @@ describe('OnboardingPage', () => {
 
     expect(await screen.findByText('Connect step')).toBeInTheDocument()
     expect(document.title).toBe('Connect GitHub · Setup')
+    expect(screen.getByRole('img', { name: 'Step 1 of 3' })).toBeInTheDocument()
   })
 
   it('resumes at RepoPicker when connected but no repos selected', async () => {
@@ -74,6 +75,7 @@ describe('OnboardingPage', () => {
 
     expect(await screen.findByText('Repo picker step')).toBeInTheDocument()
     expect(document.title).toBe('Choose repos · Setup')
+    expect(screen.getByRole('img', { name: 'Step 2 of 3' })).toBeInTheDocument()
   })
 
   it('resumes at Index (with the configured repos) when repos are selected but not indexed', async () => {
@@ -89,6 +91,7 @@ describe('OnboardingPage', () => {
 
     expect(await screen.findByText('Index step for owner/a,owner/b')).toBeInTheDocument()
     expect(document.title).toBe('Index · Setup')
+    expect(screen.getByRole('img', { name: 'Step 3 of 3' })).toBeInTheDocument()
   })
 
   it('resumes at the optional Gemini step once indexing is done', async () => {
@@ -103,6 +106,7 @@ describe('OnboardingPage', () => {
 
     expect(await screen.findByText('Gemini key step')).toBeInTheDocument()
     expect(document.title).toBe('Gemini key · Setup')
+    expect(screen.queryByRole('img')).not.toBeInTheDocument()
   })
 
   it('navigates home immediately if setup is already fully complete', async () => {
