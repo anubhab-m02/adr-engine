@@ -102,8 +102,7 @@ The Issue Generator files these as `daily-task` issues.
 Critical path: the recall@5 gate is cleared (see Evaluation); no
 human-blocked items remain.
 
-Unstarted. Items 1-9 are filed as daily-task issues (#241 and #273 have
-PRs awaiting merge); 10-14 need filing:
+Unstarted. Items 1-12 are filed as daily-task issues; 13-18 need filing:
 
 1. **#299 IndexStep progress announcement** — `frontend/src/onboarding/IndexStep.jsx`
    (+test): progress exposed via `role="status"`/progressbar.
@@ -136,6 +135,19 @@ PRs awaiting merge); 10-14 need filing:
     (+test): when focus mode is on, TopNav is not rendered and an
     "Exit focus mode" button is shown; toggle also added to CommandPalette.
     Depends on 13.
+
+15. **Recent questions hook** — `frontend/src/lib/useRecentQuestions.js`
+    (+test): last 10 distinct questions in localStorage, newest first,
+    `add`/`clear`, tolerates corrupt JSON. No backend.
+16. **Recent questions list on AskPage** — `frontend/src/ask/AskPage.jsx`
+    (+test): clickable chips re-submit a past question; "Clear" button;
+    hidden when empty. Depends on 15.
+17. **Copy answer as Markdown** — `frontend/src/ask/AnswerPage.jsx`
+    (+test): button copies answer text with citation URLs as markdown
+    links; "Copied" via `role="status"`; graceful no-op without clipboard.
+18. **Keyboard shortcuts help** — `frontend/src/components/CommandPalette.jsx`
+    (+test): "Keyboard shortcuts" entry opens a dialog listing existing
+    shortcuts; Escape closes and restores focus.
 
 Beyond these, work continues with the remainder of Track B (reading
 surfaces) in the v2 design doc.
@@ -194,11 +206,11 @@ Decided 2026-10-31 by the owner; settled, do not re-raise.
 - **chromadb 0.6.3 (3 CVEs: 1 critical, 2 high; no patched version exists).** Chroma runs in-process via `PersistentClient` — no HTTP server, no multi-tenant RBAC surface, no `trust_remote_code` use. Not reachable in this deployment. Revisit only if a networked/shared Chroma server is ever introduced.
 - **Dev-only npm findings (vite dev server / launch-editor, @vitest/mocker, source-map-js).** Build and test tooling only, never shipped to users; `launch-editor` is absent from the lockfile. Apply fixes only when a clean Dependabot PR appears.
 
-## Latest update — 2026-11-21
+## Latest update — 2026-11-22
 
-- No steering issues; no open needs-input. Review report 2026-11-21
-  approved #304-#306 (all merged).
+- No steering issues; no open needs-input. Latest report is only the
+  template (no new findings).
 - Dependabot API succeeded. Open alerts (chromadb, vite, @vitest/mocker)
-  are all Accepted risks; alert 35 (undici) already fixed.
-- Next up was thin after merges; removed merged items and added items
-  10-14 (copy citation link, annotations, focus mode) to Track B.
+  are all Accepted risks; undici alert already fixed.
+- Eligible backlog was 9 (<10); added items 15-18 (recent questions,
+  copy answer, shortcuts help). Items 13-18 need filing.
