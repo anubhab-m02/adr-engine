@@ -36,7 +36,8 @@ stronger reasoning.
   already-indexed commits/PRs must not duplicate entries in Chroma.
 - Citations are load-bearing: any synthesis-endpoint change must preserve
   the ability to trace an answer back to a specific commit/PR URL.
-- No test suite exists yet — for money-math-equivalent logic here (i.e.
-  the extraction/citation pipeline), verify by reading the code path end
-  to end and, where practical, add tests as part of the issue rather than
-  assuming manual verification is enough.
+- Tests: backend with `pytest` (run from `backend/`), frontend with
+  `npm test`. For money-math-equivalent logic here (i.e. the
+  extraction/citation pipeline), verify by reading the code path end to
+  end, and add tests in the same PR rather than assuming manual
+  verification is enough.
