@@ -34,6 +34,22 @@ describe('IndexStep', () => {
     expect(screen.getByText('Reading commits — 10 examined')).toBeInTheDocument()
   })
 
+  it('exposes indexing progress to assistive tech while extracting', () => {
+    postIngest.mockResolvedValue({ job_id: 'abc' })
+    mockStatus({
+      active: true,
+      repos: [{ repo: 'owner/repo-a', phase: 'extracting', counts: { fetched: 10, extracted: 5, skipped: 0, stored: 0 } }],
+    })
+
+    render(<IndexStep repos={['owner/repo-a']} onComplete={vi.fn()} />)
+
+    expect(screen.getByRole('status')).toHaveTextContent('Extracting decisions — 5 recorded of 10')
+    const bar = screen.getByRole('progressbar', { name: 'Extraction progress for owner/repo-a' })
+    expect(bar).toHaveAttribute('aria-valuemin', '0')
+    expect(bar).toHaveAttribute('aria-valuemax', '100')
+    expect(bar).toHaveAttribute('aria-valuenow', '50')
+  })
+
   it('advances once the job finishes with no failures', () => {
     postIngest.mockResolvedValue({ job_id: 'abc' })
     const onComplete = vi.fn()
