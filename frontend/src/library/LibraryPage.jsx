@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { getRepos, patchConfig, postIngest } from '../api.js'
 import useDocumentTitle from '../lib/useDocumentTitle.js'
 import AddReposPanel from './AddReposPanel.jsx'
+import BookmarksList from './BookmarksList.jsx'
 import RepoRow from './RepoRow.jsx'
 
 function LibraryPage() {
@@ -94,6 +95,7 @@ function LibraryPage() {
           ))}
         </div>
       )}
+      <BookmarksList />
     </div>
   )
 }
