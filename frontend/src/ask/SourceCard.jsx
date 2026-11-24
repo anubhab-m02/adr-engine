@@ -1,6 +1,7 @@
 // The reading room's citation card — evolved from the Phase 1
 // CitationCard. Its `id` (`source-{unit.id}`) is the scroll target that
 // CitationMarker's `#source-{unitId}` href/click handler jumps to.
+import useBookmarks from '../lib/useBookmarks.js'
 import { badgeText, relativeDate } from '../lib/sourceFormat.js'
 
 // `widthClassName` defaults to a fixed card width for the stacked-list
@@ -26,8 +27,12 @@ function SourceCard({
   expanded = false,
 }) {
   const accessibleName = `Citation: ${unit.title}, ${unit.kind} in ${unit.repo}`
+  const { toggle, isBookmarked } = useBookmarks()
 
+  // The bookmark button is a sibling of the link, not a child: interactive
+  // content can't nest inside an <a>. The link keeps its id/href/label.
   return (
+    <div className={`relative ${widthClassName}`}>
     <a
       id={`source-${unit.id}`}
       href={unit.url}
@@ -58,6 +63,16 @@ function SourceCard({
         {unit.author} · {relativeDate(unit.date)} · {unit.repo}
       </p>
     </a>
+    <button
+      type="button"
+      aria-pressed={isBookmarked(unit.url)}
+      aria-label={`Bookmark: ${unit.title}`}
+      onClick={() => toggle({ url: unit.url, title: unit.title })}
+      className="absolute right-2 top-2 rounded px-2 py-1 font-ui text-xs text-ink-muted hover:text-ink"
+    >
+      {isBookmarked(unit.url) ? 'Saved' : 'Save'}
+    </button>
+    </div>
   )
 }
 
