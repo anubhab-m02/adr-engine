@@ -102,52 +102,42 @@ The Issue Generator files these as `daily-task` issues.
 Critical path: the recall@5 gate is cleared (see Evaluation); no
 human-blocked items remain.
 
-Unstarted. Items 1-12 are filed as daily-task issues; 13-18 need filing:
+Unstarted. Open daily-task issues are marked #N; unmarked items need filing.
+Cross-cutting rule for all localStorage hooks (bookmarks, annotations,
+recent questions, focus mode): several components mount the same hook at
+once, so state must be shared (module-level store / `useSyncExternalStore`
++ `storage` event) or re-read storage inside the updater; each hook's test
+must mount two instances and check neither write clobbers the other.
 
-1. **#299 IndexStep progress announcement** — `frontend/src/onboarding/IndexStep.jsx`
-   (+test): progress exposed via `role="status"`/progressbar.
-2. **#300 AppShell focus-on-route-change test** — `frontend/src/shell/AppShell.test.jsx`:
-   focus moves to `<main>` on navigation, not on initial mount.
-3. **#292 DecisionGraph svg** (`role="group"`, `aria-label="Decision graph"`).
-4. **#293 DecisionTimeline list label**.
-5. **#294 LoadingCard decorative dots**.
-6. **#295 CLAUDE.md stale "no test suite" line**.
-7. **#301 Bookmarks part 1: `useBookmarks` hook** —
-   `frontend/src/lib/useBookmarks.js` (+test): localStorage-backed set
-   keyed by decision URL; tolerates corrupt/missing JSON. No backend.
-8. **#302 Bookmarks part 2: SourceCard toggle** (`aria-pressed`); depends on 7.
-9. **#303 Bookmarks part 3: BookmarksList in LibraryPage**; depends on 7.
-10. **Copy citation link** — `frontend/src/ask/SourceCard.jsx` (+test):
-    "Copy link" button writes the commit/PR URL via `navigator.clipboard`,
-    shows "Copied" via `role="status"`, no-ops gracefully if clipboard is
-    unavailable. Link rendering unchanged.
-11. **Annotations part 1: `useAnnotations` hook** —
-    `frontend/src/lib/useAnnotations.js` (+test): localStorage notes keyed
-    by decision URL (`{url, note, updatedAt}`); `get`, `set`, `remove`;
-    empty note removes; tolerates corrupt JSON.
-12. **Annotations part 2: note field on SourceCard** — `SourceCard.jsx`
-    (+test): collapsible textarea labelled "Your note" bound to
-    `useAnnotations`; saved on blur. Depends on 11.
-13. **Focus mode part 1: `useFocusMode` hook** —
-    `frontend/src/lib/useFocusMode.js` (+test): boolean persisted in
-    localStorage, toggle, defaults false.
-14. **Focus mode part 2: hide chrome** — `frontend/src/shell/AppShell.jsx`
-    (+test): when focus mode is on, TopNav is not rendered and an
-    "Exit focus mode" button is shown; toggle also added to CommandPalette.
-    Depends on 13.
-
-15. **Recent questions hook** — `frontend/src/lib/useRecentQuestions.js`
-    (+test): last 10 distinct questions in localStorage, newest first,
-    `add`/`clear`, tolerates corrupt JSON. No backend.
-16. **Recent questions list on AskPage** — `frontend/src/ask/AskPage.jsx`
-    (+test): clickable chips re-submit a past question; "Clear" button;
-    hidden when empty. Depends on 15.
-17. **Copy answer as Markdown** — `frontend/src/ask/AnswerPage.jsx`
-    (+test): button copies answer text with citation URLs as markdown
-    links; "Copied" via `role="status"`; graceful no-op without clipboard.
-18. **Keyboard shortcuts help** — `frontend/src/components/CommandPalette.jsx`
-    (+test): "Keyboard shortcuts" entry opens a dialog listing existing
-    shortcuts; Escape closes and restores focus.
+1. **Fix `useBookmarks` multi-instance clobbering** (review of PR #323) —
+   `frontend/src/lib/useBookmarks.js` (+test): toggling bookmarks from two
+   SourceCards must keep both in storage and keep both UIs in sync. Needs
+   filing; blocks #302 landing safely.
+2. **#302 SourceCard bookmark toggle** (`aria-pressed`); PR #323 awaiting
+   the fix in 1. Label the button "Save" to match BookmarksList's empty state.
+3. **#300 AppShell focus-on-route-change test** — `AppShell.test.jsx`.
+4. **#307 SourceCard "Copy link"** — `SourceCard.jsx` (+test): writes the
+   commit/PR URL via `navigator.clipboard`, "Copied" via `role="status"`,
+   graceful no-op without clipboard.
+5. **#308 `useAnnotations` hook** — `frontend/src/lib/useAnnotations.js`
+   (+test): localStorage notes keyed by decision URL; empty note removes;
+   tolerates corrupt JSON; follows the cross-cutting rule above.
+6. **#309 SourceCard "Your note" field** bound to `useAnnotations`
+   (saved on blur). Depends on 5.
+7. **#315 `useRecentQuestions` hook** — last 10 distinct questions,
+   newest first, `add`/`clear`, tolerates corrupt JSON.
+8. **#316 Recent-question chips on AskPage** (re-submit, Clear, hidden
+   when empty). Depends on 7.
+9. **#317 AnswerPage "Copy as Markdown"** — citations as markdown links.
+10. **#318 CommandPalette "Keyboard shortcuts" dialog** — Escape closes
+    and restores focus.
+11. **`useFocusMode` hook** — `frontend/src/lib/useFocusMode.js` (+test):
+    boolean persisted in localStorage, toggle, defaults false. Needs filing.
+12. **#319 AppShell "Exit focus mode" button** — TopNav hidden while on;
+    toggle also in CommandPalette. Depends on 11.
+13. **Bookmarks export** — `BookmarksList.jsx` (+test): "Copy all as
+    Markdown" button listing saved decisions as links; hidden when empty.
+    Needs filing.
 
 Beyond these, work continues with the remainder of Track B (reading
 surfaces) in the v2 design doc.
@@ -206,11 +196,12 @@ Decided 2026-10-31 by the owner; settled, do not re-raise.
 - **chromadb 0.6.3 (3 CVEs: 1 critical, 2 high; no patched version exists).** Chroma runs in-process via `PersistentClient` — no HTTP server, no multi-tenant RBAC surface, no `trust_remote_code` use. Not reachable in this deployment. Revisit only if a networked/shared Chroma server is ever introduced.
 - **Dev-only npm findings (vite dev server / launch-editor, @vitest/mocker, source-map-js).** Build and test tooling only, never shipped to users; `launch-editor` is absent from the lockfile. Apply fixes only when a clean Dependabot PR appears.
 
-## Latest update — 2026-11-22
+## Latest update — 2026-11-24
 
-- No steering issues; no open needs-input. Latest report is only the
-  template (no new findings).
-- Dependabot API succeeded. Open alerts (chromadb, vite, @vitest/mocker)
-  are all Accepted risks; undici alert already fixed.
-- Eligible backlog was 9 (<10); added items 15-18 (recent questions,
-  copy answer, shortcuts help). Items 13-18 need filing.
+- No steering issues; no open needs-input. Dependabot API succeeded; open
+  alerts (chromadb, vite, @vitest/mocker) are all Accepted risks.
+- Review report 2026-11-24: PR #323 (bookmark toggle) got request_changes
+  for a multi-instance `useBookmarks` data-loss bug; added as item 1 plus
+  a cross-cutting rule for the other localStorage hooks. PR #324 approved.
+- Condensed finished items (#292-#295, #299, #301, #303) out of Next up;
+  added items 11 and 13 so the unstarted list stays above 10.
