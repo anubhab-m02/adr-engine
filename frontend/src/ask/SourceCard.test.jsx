@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import SourceCard from './SourceCard.jsx'
 
 const prUnit = {
@@ -110,5 +110,49 @@ describe('SourceCard', () => {
     render(<SourceCard unit={prUnit} />)
     expect(screen.getByText(prUnit.title)).toBeInTheDocument()
     expect(screen.queryByText(prUnit.decision)).not.toBeInTheDocument()
+  })
+
+  describe('Copy link', () => {
+    afterEach(() => {
+      vi.useRealTimers()
+      vi.unstubAllGlobals()
+    })
+
+    it('copies the unit URL and shows Copied in a status region, then clears it', async () => {
+      vi.useFakeTimers()
+      const writeText = vi.fn().mockResolvedValue()
+      vi.stubGlobal('navigator', { clipboard: { writeText } })
+      render(<SourceCard unit={prUnit} />)
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Copy link' }))
+      })
+
+      expect(writeText).toHaveBeenCalledWith(prUnit.url)
+      expect(screen.getByRole('status')).toHaveTextContent('Copied')
+
+      act(() => {
+        vi.advanceTimersByTime(2100)
+      })
+      expect(screen.getByRole('status')).toBeEmptyDOMElement()
+    })
+
+    it('does not throw or show Copied when the clipboard is unavailable', async () => {
+      vi.stubGlobal('navigator', {})
+      render(<SourceCard unit={prUnit} />)
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Copy link' }))
+      })
+
+      expect(screen.getByRole('status')).toBeEmptyDOMElement()
+    })
+
+    it('keeps the citation link intact and the button outside it', () => {
+      render(<SourceCard unit={prUnit} />)
+      const link = document.getElementById(`source-${prUnit.id}`)
+      expect(link).toHaveAttribute('href', prUnit.url)
+      expect(link).not.toContainElement(screen.getByRole('button', { name: 'Copy link' }))
+    })
   })
 })

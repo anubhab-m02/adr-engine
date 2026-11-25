@@ -1,6 +1,7 @@
 // The reading room's citation card — evolved from the Phase 1
 // CitationCard. Its `id` (`source-{unit.id}`) is the scroll target that
 // CitationMarker's `#source-{unitId}` href/click handler jumps to.
+import { useEffect, useState } from 'react'
 import { badgeText, relativeDate } from '../lib/sourceFormat.js'
 
 // `widthClassName` defaults to a fixed card width for the stacked-list
@@ -27,7 +28,26 @@ function SourceCard({
 }) {
   const accessibleName = `Citation: ${unit.title}, ${unit.kind} in ${unit.repo}`
 
+  const [copied, setCopied] = useState(false)
+
+  // Clear the "Copied" confirmation after ~2s (and on unmount).
+  useEffect(() => {
+    if (!copied) return undefined
+    const timer = setTimeout(() => setCopied(false), 2000)
+    return () => clearTimeout(timer)
+  }, [copied])
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(unit.url)
+      setCopied(true)
+    } catch {
+      // Clipboard unavailable or rejected: stay silent, show no confirmation.
+    }
+  }
+
   return (
+    <div className={widthClassName}>
     <a
       id={`source-${unit.id}`}
       href={unit.url}
@@ -58,6 +78,19 @@ function SourceCard({
         {unit.author} · {relativeDate(unit.date)} · {unit.repo}
       </p>
     </a>
+    <div className="mt-1 flex items-center gap-2">
+      <button
+        type="button"
+        onClick={copyLink}
+        className="font-ui text-xs text-ink-muted hover:text-ink underline"
+      >
+        Copy link
+      </button>
+      <span role="status" className="font-ui text-xs text-ink-muted">
+        {copied ? 'Copied' : ''}
+      </span>
+    </div>
+    </div>
   )
 }
 
