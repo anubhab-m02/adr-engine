@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import userEvent from '@testing-library/user-event'
+import { beforeEach, describe, expect, it } from 'vitest'
 import SourceCard from './SourceCard.jsx'
 
 const prUnit = {
@@ -27,6 +28,33 @@ const commitUnit = {
 }
 
 describe('SourceCard', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('toggles a persisted bookmark via an aria-pressed button', async () => {
+    render(<SourceCard unit={prUnit} />)
+    const button = screen.getByRole('button', { name: /^Bookmark:/ })
+    expect(button).toHaveAttribute('aria-pressed', 'false')
+    await userEvent.click(button)
+    expect(button).toHaveAttribute('aria-pressed', 'true')
+    expect(JSON.parse(localStorage.getItem('bookmarks'))[0].url).toBe(prUnit.url)
+    expect(screen.getByRole('link')).toHaveAttribute('href', prUnit.url)
+  })
+  it('keeps both bookmarks when two cards on screen are toggled', async () => {
+    render(
+      <>
+        <SourceCard unit={prUnit} />
+        <SourceCard unit={commitUnit} />
+      </>,
+    )
+    const [first, second] = screen.getAllByRole('button', { name: /^Bookmark:/ })
+    await userEvent.click(first)
+    await userEvent.click(second)
+    const urls = JSON.parse(localStorage.getItem('bookmarks')).map((b) => b.url)
+    expect(urls).toEqual([prUnit.url, commitUnit.url])
+    expect(first).toHaveAttribute('aria-pressed', 'true')
+    expect(second).toHaveAttribute('aria-pressed', 'true')
+  })
+
   it('renders a PR badge for kind: pr', () => {
     render(<SourceCard unit={prUnit} />)
     expect(screen.getByText('PR #42')).toBeInTheDocument()
