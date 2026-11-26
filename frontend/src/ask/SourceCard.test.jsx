@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import SourceCard from './SourceCard.jsx'
 
 const prUnit = {
@@ -153,6 +153,54 @@ describe('SourceCard', () => {
       const link = document.getElementById(`source-${prUnit.id}`)
       expect(link).toHaveAttribute('href', prUnit.url)
       expect(link).not.toContainElement(screen.getByRole('button', { name: 'Copy link' }))
+    })
+  })
+
+  describe('Your note', () => {
+    beforeEach(() => localStorage.clear())
+    afterEach(() => localStorage.clear())
+
+    function openNote() {
+      fireEvent.click(screen.getByRole('button', { name: 'Note' }))
+      return screen.getByRole('textbox', { name: 'Your note' })
+    }
+
+    it('expands to a textarea named "Your note", outside the card link', () => {
+      render(<SourceCard unit={prUnit} />)
+      const toggle = screen.getByRole('button', { name: 'Note' })
+      expect(toggle).toHaveAttribute('aria-expanded', 'false')
+      expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+
+      const textarea = openNote()
+
+      expect(toggle).toHaveAttribute('aria-expanded', 'true')
+      expect(document.getElementById(`source-${prUnit.id}`)).not.toContainElement(textarea)
+      expect(screen.getByRole('link')).toHaveAttribute('href', prUnit.url)
+    })
+
+    it('persists a typed note on blur and shows it on re-render', () => {
+      const { unmount } = render(<SourceCard unit={prUnit} />)
+      const textarea = openNote()
+      fireEvent.change(textarea, { target: { value: 'Ask Sam about this' } })
+      fireEvent.blur(textarea)
+      unmount()
+
+      render(<SourceCard unit={prUnit} />)
+      expect(openNote()).toHaveValue('Ask Sam about this')
+    })
+
+    it('removes the note when blurred after clearing', () => {
+      const { unmount } = render(<SourceCard unit={prUnit} />)
+      const textarea = openNote()
+      fireEvent.change(textarea, { target: { value: 'temp' } })
+      fireEvent.blur(textarea)
+      fireEvent.change(textarea, { target: { value: '' } })
+      fireEvent.blur(textarea)
+      unmount()
+
+      expect(JSON.parse(localStorage.getItem('annotations'))).toEqual([])
+      render(<SourceCard unit={prUnit} />)
+      expect(openNote()).toHaveValue('')
     })
   })
 })

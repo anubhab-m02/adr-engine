@@ -2,6 +2,7 @@
 // CitationCard. Its `id` (`source-{unit.id}`) is the scroll target that
 // CitationMarker's `#source-{unitId}` href/click handler jumps to.
 import { useEffect, useState } from 'react'
+import useAnnotations from '../lib/useAnnotations.js'
 import { badgeText, relativeDate } from '../lib/sourceFormat.js'
 
 // `widthClassName` defaults to a fixed card width for the stacked-list
@@ -29,6 +30,10 @@ function SourceCard({
   const accessibleName = `Citation: ${unit.title}, ${unit.kind} in ${unit.repo}`
 
   const [copied, setCopied] = useState(false)
+  const { get, set } = useAnnotations()
+  const [noteOpen, setNoteOpen] = useState(false)
+  const [draft, setDraft] = useState(() => get(unit.url)?.note ?? '')
+  const noteId = `note-${unit.id}`
 
   // Clear the "Copied" confirmation after ~2s (and on unmount).
   useEffect(() => {
@@ -89,7 +94,27 @@ function SourceCard({
       <span role="status" className="font-ui text-xs text-ink-muted">
         {copied ? 'Copied' : ''}
       </span>
+      <button
+        type="button"
+        aria-expanded={noteOpen}
+        aria-controls={noteId}
+        onClick={() => setNoteOpen((open) => !open)}
+        className="font-ui text-xs text-ink-muted hover:text-ink underline"
+      >
+        Note
+      </button>
     </div>
+    {noteOpen && (
+      <textarea
+        id={noteId}
+        aria-label="Your note"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={() => set(unit.url, draft)}
+        rows={3}
+        className="mt-1 w-full rounded border border-transparent bg-panel p-2 font-ui text-sm text-ink focus:border-accent"
+      />
+    )}
     </div>
   )
 }
