@@ -39,7 +39,7 @@ function SourceCard({
       target="_blank"
       rel="noreferrer"
       aria-label={accessibleName}
-      className={`block ${widthClassName} rounded-xl border border-transparent ${highlighted ? 'bg-highlight' : 'bg-panel'} p-4 transition-colors hover:border-accent`}
+      className={`block w-full rounded-xl border border-transparent ${highlighted ? 'bg-highlight' : 'bg-panel'} p-4 transition-colors hover:border-accent`}
     >
       <div className="flex items-center gap-2">
         {number != null && <span className="font-ui text-xs text-ink-muted">{number}</span>}

@@ -87,14 +87,14 @@ describe('SourceCard', () => {
 
   it('defaults to a fixed card width', () => {
     render(<SourceCard unit={prUnit} />)
-    expect(screen.getByRole('link')).toHaveClass('w-full', 'sm:w-64')
+    expect(screen.getByRole('link').parentElement).toHaveClass('w-full', 'sm:w-64')
   })
 
   it('accepts a widthClassName override, e.g. to fill a margin grid column', () => {
     render(<SourceCard unit={prUnit} widthClassName="w-full" />)
-    const link = screen.getByRole('link')
-    expect(link).toHaveClass('w-full')
-    expect(link).not.toHaveClass('sm:w-64')
+    const wrapper = screen.getByRole('link').parentElement
+    expect(wrapper).toHaveClass('w-full')
+    expect(wrapper).not.toHaveClass('sm:w-64')
   })
 
   it('defaults to the panel background, not highlighted', () => {
