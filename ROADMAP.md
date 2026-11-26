@@ -114,23 +114,26 @@ must mount two instances and check neither write clobbers the other.
    from two SourceCards must keep both in storage and keep both UIs in
    sync. Blocks #302 landing safely.
 2. **#302 SourceCard bookmark toggle** (`aria-pressed`); PR #323 awaiting
-   the fix in 1. Label the button "Save" to match BookmarksList's empty state.
+   the fix in 1. Label the button "Save" to match BookmarksList's empty
+   state; make `aria-label` reflect saved/unsaved state (review of #323).
 3. **#300 AppShell focus-on-route-change test** — `AppShell.test.jsx`.
-4. **#309 SourceCard "Your note" field** bound to `useAnnotations`
-   (saved on blur; hook merged in #329).
-5. **#315 `useRecentQuestions` hook** — last 10 distinct questions,
-   newest first, `add`/`clear`, tolerates corrupt JSON.
-6. **#316 Recent-question chips on AskPage** (re-submit, Clear, hidden
-   when empty). Depends on 5.
-7. **#317 AnswerPage "Copy as Markdown"** — citations as markdown links.
-8. **#318 CommandPalette "Keyboard shortcuts" dialog** — Escape closes
+4. **#316 Recent-question chips on AskPage** (re-submit, Clear, hidden
+   when empty). Hook merged in #331.
+5. **#317 AnswerPage "Copy as Markdown"** — citations as markdown links.
+6. **#318 CommandPalette "Keyboard shortcuts" dialog** — Escape closes
    and restores focus.
-9. **#326 `useFocusMode` hook** — `frontend/src/lib/useFocusMode.js`
+7. **#326 `useFocusMode` hook** — `frontend/src/lib/useFocusMode.js`
    (+test): boolean persisted in localStorage, toggle, defaults false.
-10. **#319 AppShell "Exit focus mode" button** — TopNav hidden while on;
-    toggle also in CommandPalette. Depends on 9.
-11. **#327 Bookmarks export** — `BookmarksList.jsx` (+test): "Copy all as
-    Markdown" button listing saved decisions as links; hidden when empty.
+8. **#319 AppShell "Exit focus mode" button** — TopNav hidden while on;
+   toggle also in CommandPalette. Depends on 7.
+9. **#327 Bookmarks export** — `BookmarksList.jsx` (+test): "Copy all as
+   Markdown" button listing saved decisions as links; hidden when empty.
+10. **`useRecentQuestions` shared state** (nit on PR #331) —
+    `frontend/src/lib/useRecentQuestions.js` (+test): move `persist()` out
+    of the setState updater; test two mounted instances stay in sync.
+11. **`useAnnotations` multi-instance + storage-failure test** —
+    `useAnnotations.js` (+test): two SourceCards saving notes must not
+    clobber each other; a throwing `localStorage.setItem` must not crash.
 
 Beyond these, work continues with the remainder of Track B (reading
 surfaces) in the v2 design doc.
@@ -189,10 +192,11 @@ Decided 2026-10-31 by the owner; settled, do not re-raise.
 - **chromadb 0.6.3 (3 CVEs: 1 critical, 2 high; no patched version exists).** Chroma runs in-process via `PersistentClient` — no HTTP server, no multi-tenant RBAC surface, no `trust_remote_code` use. Not reachable in this deployment. Revisit only if a networked/shared Chroma server is ever introduced.
 - **Dev-only npm findings (vite dev server / launch-editor, @vitest/mocker, source-map-js).** Build and test tooling only, never shipped to users; `launch-editor` is absent from the lockfile. Apply fixes only when a clean Dependabot PR appears.
 
-## Latest update — 2026-11-25
+## Latest update — 2026-11-26
 
 - No steering issues; no open needs-input. Dependabot API succeeded; open
   alerts (chromadb, vite, @vitest/mocker) are all Accepted risks.
-- Review report 2026-11-25: PRs #328 (Copy link) and #329 (useAnnotations)
-  approved and merged; #323 still awaiting #325. Removed finished items
-  (#307, #308); all remaining unstarted items are now filed as issues.
+- Review report 2026-11-26: #330 (note field) and #331 (recent-questions
+  hook) approved; #323 held for scope, split out as #325. Removed finished
+  items (#309, #315); added items 10-11 (shared-state follow-ups) to
+  restore queue depth. Items 10-11 need filing.
