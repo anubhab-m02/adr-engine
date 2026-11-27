@@ -621,4 +621,59 @@ describe('AnswerPage', () => {
       expect(wrappers[1].querySelector('.min-\\[900px\\]\\:hidden')).toBeInTheDocument()
     })
   })
+
+  describe('Copy as Markdown', () => {
+    function renderWithCitation() {
+      render(
+        <AnswerPage
+          question="Why OAuth2?"
+          answer={`We chose OAuth2 [${citation.id}] for third parties.`}
+          citations={[citation]}
+          repos={repos}
+          selectedRepos={['owner/repo']}
+        />,
+      )
+    }
+
+    function stubClipboard(writeText) {
+      Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+    }
+
+    afterEach(() => {
+      Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true })
+    })
+
+    it('writes markdown with each citation as a link to its URL, then shows Copied', async () => {
+      const writeText = vi.fn().mockResolvedValue(undefined)
+      stubClipboard(writeText)
+      renderWithCitation()
+
+      await userEvent.click(screen.getByRole('button', { name: 'Copy as Markdown' }))
+
+      expect(writeText).toHaveBeenCalledWith(
+        `We chose OAuth2 [1](${citation.url}) for third parties.`,
+      )
+      expect(await screen.findByText('Copied')).toBeInTheDocument()
+      expect(screen.getByText('Copied')).toHaveAttribute('role', 'status')
+    })
+
+    it('does not throw or show Copied when the clipboard is unavailable', async () => {
+      renderWithCitation()
+
+      await userEvent.click(screen.getByRole('button', { name: 'Copy as Markdown' }))
+
+      expect(screen.queryByText('Copied')).not.toBeInTheDocument()
+    })
+
+    it('does not show Copied when writeText rejects', async () => {
+      const writeText = vi.fn().mockRejectedValue(new Error('denied'))
+      stubClipboard(writeText)
+      renderWithCitation()
+
+      await userEvent.click(screen.getByRole('button', { name: 'Copy as Markdown' }))
+
+      expect(writeText).toHaveBeenCalled()
+      expect(screen.queryByText('Copied')).not.toBeInTheDocument()
+    })
+  })
 })
