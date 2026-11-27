@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -32,6 +32,7 @@ beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn()
   getAuthStatus.mockResolvedValue({ state: 'authorized', login: 'octocat' })
   sessionStorage.clear()
+  localStorage.clear()
 })
 
 afterEach(() => {
@@ -302,5 +303,63 @@ describe('AskPage', () => {
 
     await screen.findByLabelText('Ask a question')
     expect(screen.queryByText(/Your GitHub connection expired/)).not.toBeInTheDocument()
+  })
+
+  describe('recent questions', () => {
+    const ANSWER = { answer: 'We use OAuth2.', citations: [], retrieved_count: 0 }
+
+    async function ask(user, text) {
+      await user.type(screen.getByLabelText('Ask a question'), text)
+      await user.click(screen.getByRole('button', { name: 'Ask' }))
+      await screen.findByText(ANSWER.answer)
+    }
+
+    function recentRow() {
+      return screen.getByRole('region', { name: 'Recent questions' })
+    }
+
+    it('renders no recent-questions row on a fresh state', async () => {
+      getRepos.mockResolvedValue(REPOS)
+      renderAskPage()
+
+      await screen.findByLabelText('Ask a question')
+      expect(screen.queryByText('Recent questions')).not.toBeInTheDocument()
+    })
+
+    it('shows an asked question as a chip', async () => {
+      const user = userEvent.setup()
+      getRepos.mockResolvedValue(REPOS)
+      postQuery.mockResolvedValue(ANSWER)
+      renderAskPage()
+
+      await ask(user, 'Why OAuth2?')
+
+      expect(within(recentRow()).getByRole('button', { name: 'Why OAuth2?' })).toBeInTheDocument()
+    })
+
+    it('re-submits a question when its chip is clicked', async () => {
+      const user = userEvent.setup()
+      getRepos.mockResolvedValue(REPOS)
+      postQuery.mockResolvedValue(ANSWER)
+      renderAskPage()
+
+      await ask(user, 'Why OAuth2?')
+      await user.click(within(recentRow()).getByRole('button', { name: 'Why OAuth2?' }))
+
+      await waitFor(() => expect(postQuery).toHaveBeenCalledTimes(2))
+      expect(postQuery).toHaveBeenLastCalledWith({ question: 'Why OAuth2?', repos: ['owner/repo-a'] })
+    })
+
+    it('removes the row when Clear is clicked', async () => {
+      const user = userEvent.setup()
+      getRepos.mockResolvedValue(REPOS)
+      postQuery.mockResolvedValue(ANSWER)
+      renderAskPage()
+
+      await ask(user, 'Why OAuth2?')
+      await user.click(screen.getByRole('button', { name: 'Clear' }))
+
+      expect(screen.queryByRole('region', { name: 'Recent questions' })).not.toBeInTheDocument()
+    })
   })
 })
