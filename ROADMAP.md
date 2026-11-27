@@ -117,23 +117,30 @@ must mount two instances and check neither write clobbers the other.
    the fix in 1. Label the button "Save" to match BookmarksList's empty
    state; make `aria-label` reflect saved/unsaved state (review of #323).
 3. **#300 AppShell focus-on-route-change test** — `AppShell.test.jsx`.
-4. **#316 Recent-question chips on AskPage** (re-submit, Clear, hidden
-   when empty). Hook merged in #331.
-5. **#317 AnswerPage "Copy as Markdown"** — citations as markdown links.
-6. **#318 CommandPalette "Keyboard shortcuts" dialog** — Escape closes
+4. **#318 CommandPalette "Keyboard shortcuts" dialog** — Escape closes
    and restores focus.
-7. **#326 `useFocusMode` hook** — `frontend/src/lib/useFocusMode.js`
+5. **#326 `useFocusMode` hook** — `frontend/src/lib/useFocusMode.js`
    (+test): boolean persisted in localStorage, toggle, defaults false.
-8. **#319 AppShell "Exit focus mode" button** — TopNav hidden while on;
-   toggle also in CommandPalette. Depends on 7.
-9. **#327 Bookmarks export** — `BookmarksList.jsx` (+test): "Copy all as
+6. **#319 AppShell "Exit focus mode" button** — TopNav hidden while on;
+   toggle also in CommandPalette. Depends on 5.
+7. **#327 Bookmarks export** — `BookmarksList.jsx` (+test): "Copy all as
    Markdown" button listing saved decisions as links; hidden when empty.
-10. **`useRecentQuestions` shared state** (nit on PR #331) —
-    `frontend/src/lib/useRecentQuestions.js` (+test): move `persist()` out
-    of the setState updater; test two mounted instances stay in sync.
-11. **`useAnnotations` multi-instance + storage-failure test** —
-    `useAnnotations.js` (+test): two SourceCards saving notes must not
-    clobber each other; a throwing `localStorage.setItem` must not crash.
+8. **#332 `useRecentQuestions` shared state** — move `persist()` out of
+   the setState updater; test two mounted instances stay in sync.
+9. **#333 `useAnnotations` multi-instance + storage-failure test.**
+10. **AnswerPage "Copied" reset** (nit on PR #335) — `AnswerPage.jsx`
+    (+test): clear the "Copied" status after ~2s (clear timer on unmount)
+    so repeated copies re-announce; fake-timer test.
+11. **AskPage chip style dedupe** (nit on PR #334) — `AskPage.jsx`: one
+    shared chip class constant for example and recent-question chips;
+    existing tests stay green.
+12. **SourceCard wrapper re-indent** (nit on PR #323, after #302 merges)
+    — `SourceCard.jsx`; no behavior change.
+13. **`useRecentQuestions` cap + dedupe test** — `useRecentQuestions.test.jsx`:
+    re-asking moves the question to front without duplicating; list is
+    capped; blank questions ignored (fix if failing).
+14. **BookmarksList "Clear all"** — `BookmarksList.jsx` (+test): reuse
+    `components/InlineConfirm.jsx`; hidden when empty.
 
 Beyond these, work continues with the remainder of Track B (reading
 surfaces) in the v2 design doc.
@@ -192,11 +199,11 @@ Decided 2026-10-31 by the owner; settled, do not re-raise.
 - **chromadb 0.6.3 (3 CVEs: 1 critical, 2 high; no patched version exists).** Chroma runs in-process via `PersistentClient` — no HTTP server, no multi-tenant RBAC surface, no `trust_remote_code` use. Not reachable in this deployment. Revisit only if a networked/shared Chroma server is ever introduced.
 - **Dev-only npm findings (vite dev server / launch-editor, @vitest/mocker, source-map-js).** Build and test tooling only, never shipped to users; `launch-editor` is absent from the lockfile. Apply fixes only when a clean Dependabot PR appears.
 
-## Latest update — 2026-11-26
+## Latest update — 2026-11-27
 
 - No steering issues; no open needs-input. Dependabot API succeeded; open
   alerts (chromadb, vite, @vitest/mocker) are all Accepted risks.
-- Review report 2026-11-26: #330 (note field) and #331 (recent-questions
-  hook) approved; #323 held for scope, split out as #325. Removed finished
-  items (#309, #315); added items 10-11 (shared-state follow-ups) to
-  restore queue depth. Items 10-11 need filing.
+- Review report 2026-11-27: #323, #334, #335 approved (#334/#335 merged).
+  Removed finished items #316/#317; folded review nits into items 10-12
+  and added 13-14 to restore queue depth (9 eligible issues open; items
+  10-14 need filing).
