@@ -10,6 +10,7 @@
 // margin track at all: each paragraph's source cards collapse inline,
 // directly after that paragraph, rather than batching every citation in
 // one list at the foot of the answer.
+import { useState } from 'react'
 import useDocumentTitle from '../lib/useDocumentTitle.js'
 import usePrefersReducedMotion from '../lib/usePrefersReducedMotion.js'
 import useReadingPreferences from '../lib/useReadingPreferences.js'
@@ -89,6 +90,22 @@ function paragraphUnits(paragraph, citationsById) {
   return units
 }
 
+// Answer text with each citation marker as a markdown link to that unit's
+// real commit/PR URL, keeping the answer traceable once pasted elsewhere.
+function toMarkdown(paragraphs, citationsById) {
+  return paragraphs
+    .map((paragraph) =>
+      paragraph.parts
+        .map((part) =>
+          part.type === 'marker'
+            ? `[${part.number}](${citationsById.get(part.unitId).url})`
+            : part.value,
+        )
+        .join(''),
+    )
+    .join('\n\n')
+}
+
 function AnswerPage({
   question,
   answer,
@@ -106,6 +123,17 @@ function AnswerPage({
   const citationsById = new Map(citations.map((unit) => [unit.id, unit]))
   const { density, setDensity, measure, setMeasure } = useReadingPreferences()
   const coverage = citationCoverage(citations)
+  const [copied, setCopied] = useState(false)
+
+  async function copyMarkdown() {
+    try {
+      await navigator.clipboard.writeText(toMarkdown(paragraphs, citationsById))
+      setCopied(true)
+    } catch {
+      // Clipboard unavailable or write rejected: no-op, don't claim success.
+      setCopied(false)
+    }
+  }
 
   return (
     <article className="answer-page max-w-3xl min-[900px]:max-w-none">
@@ -138,6 +166,16 @@ function AnswerPage({
               </button>
             ))}
           </div>
+          <button
+            type="button"
+            onClick={copyMarkdown}
+            className="rounded-lg border border-transparent px-3 py-1.5 text-xs font-ui text-ink-muted hover:border-accent hover:text-ink"
+          >
+            Copy as Markdown
+          </button>
+          <span role="status" className="font-ui text-xs text-ink-muted">
+            {copied ? 'Copied' : ''}
+          </span>
           <button
             type="button"
             onClick={() => window.print()}
