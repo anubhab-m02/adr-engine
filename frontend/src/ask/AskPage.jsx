@@ -6,6 +6,7 @@ import MessageList from '../components/MessageList.jsx'
 import RepoFilter from '../components/RepoFilter.jsx'
 import useDocumentTitle from '../lib/useDocumentTitle.js'
 import { useRegisterNewQuestionHandler } from '../lib/useNewQuestion.js'
+import useRecentQuestions from '../lib/useRecentQuestions.js'
 
 const EXAMPLE_QUESTIONS = [
   'Why is authentication done this way?',
@@ -41,6 +42,11 @@ function AskPage() {
   const [loading, setLoading] = useState(false)
   const [chatKey, setChatKey] = useState(0)
   const [prefill, setPrefill] = useState(() => location.state?.prefillQuestion ?? '')
+  const {
+    questions: recentQuestions,
+    add: addRecentQuestion,
+    clear: clearRecentQuestions,
+  } = useRecentQuestions()
   const [authExpired, setAuthExpired] = useState(false)
   const [authBannerDismissed, setAuthBannerDismissed] = useState(
     () => sessionStorage.getItem(AUTH_BANNER_DISMISSED_KEY) === 'true',
@@ -134,6 +140,7 @@ function AskPage() {
   }
 
   function handleAsk(question) {
+    addRecentQuestion(question)
     setMessages((prev) => [
       ...prev,
       { role: 'user', content: question },
@@ -207,6 +214,33 @@ function AskPage() {
 
       <div className="shrink-0 bg-panel px-4 lg:px-6 py-4">
         <div className="max-w-3xl mx-auto">
+          {recentQuestions.length > 0 && (
+            <section aria-label="Recent questions" className="mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="font-ui text-xs text-ink-muted">Recent questions</h2>
+                <button
+                  type="button"
+                  onClick={clearRecentQuestions}
+                  className="font-ui text-xs text-ink-muted hover:text-ink"
+                >
+                  Clear
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {recentQuestions.map((question) => (
+                  <button
+                    key={question}
+                    type="button"
+                    disabled={loading}
+                    onClick={() => handleAsk(question)}
+                    className="rounded-lg border border-transparent bg-panel text-ink text-sm px-4 py-2 hover:border-accent disabled:opacity-50"
+                  >
+                    {question}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
           <ChatInput key={chatKey} initialValue={prefill} onSubmit={handleAsk} disabled={loading} />
         </div>
       </div>
