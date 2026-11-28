@@ -185,7 +185,7 @@ describe('CommandPalette', () => {
 
       expect(screen.getByRole('textbox', { name: 'Command palette search' })).toBeInTheDocument()
       const listbox = screen.getByRole('listbox', { name: 'Commands' })
-      expect(within(listbox).getAllByRole('option')).toHaveLength(4)
+      expect(within(listbox).getAllByRole('option')).toHaveLength(5)
     })
 
     it('returns focus to the element that had focus before opening, after Escape closes it', () => {
@@ -216,16 +216,16 @@ describe('CommandPalette', () => {
       const input = screen.getByRole('textbox', { name: 'Command palette search' })
       fireEvent.keyDown(input, { key: 'Tab', shiftKey: true })
 
-      expect(screen.getByRole('button', { name: 'New question' })).toHaveFocus()
+      expect(screen.getByRole('button', { name: 'Keyboard shortcuts' })).toHaveFocus()
     })
 
     it('wraps Tab focus from the last focusable element back to the input', () => {
       renderPalette()
       fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
 
-      const newQuestionButton = screen.getByRole('button', { name: 'New question' })
-      newQuestionButton.focus()
-      fireEvent.keyDown(newQuestionButton, { key: 'Tab' })
+      const lastButton = screen.getByRole('button', { name: 'Keyboard shortcuts' })
+      lastButton.focus()
+      fireEvent.keyDown(lastButton, { key: 'Tab' })
 
       expect(screen.getByRole('textbox', { name: 'Command palette search' })).toHaveFocus()
     })
@@ -234,7 +234,7 @@ describe('CommandPalette', () => {
       renderPalette()
       fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
 
-      expect(screen.getByText('4 matching commands')).toBeInTheDocument()
+      expect(screen.getByText('5 matching commands')).toBeInTheDocument()
 
       const input = screen.getByRole('textbox', { name: 'Command palette search' })
       fireEvent.change(input, { target: { value: 'library' } })
@@ -260,6 +260,56 @@ describe('CommandPalette', () => {
 
       getItemSpy.mockRestore()
       setItemSpy.mockRestore()
+    })
+  })
+
+  describe('"Keyboard shortcuts" action', () => {
+    it('is listed and filterable', () => {
+      renderPalette()
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+      expect(screen.getByRole('option', { name: 'Keyboard shortcuts' })).toBeInTheDocument()
+
+      fireEvent.change(screen.getByRole('textbox', { name: 'Command palette search' }), {
+        target: { value: 'shortcuts' },
+      })
+
+      expect(screen.getByRole('option', { name: 'Keyboard shortcuts' })).toBeInTheDocument()
+      expect(screen.queryByRole('option', { name: 'Go to Ask' })).not.toBeInTheDocument()
+    })
+
+    it('opens a labelled modal dialog listing the existing shortcuts', () => {
+      renderPalette()
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+
+      fireEvent.click(screen.getByRole('button', { name: 'Keyboard shortcuts' }))
+
+      const dialog = screen.getByRole('dialog', { name: 'Keyboard shortcuts' })
+      expect(dialog).toHaveAttribute('aria-modal', 'true')
+      expect(within(dialog).getByText('Cmd/Ctrl+K')).toBeInTheDocument()
+      expect(within(dialog).getByText('Escape')).toBeInTheDocument()
+      expect(within(dialog).getByText('Enter')).toBeInTheDocument()
+      expect(screen.queryByRole('dialog', { name: 'Command palette' })).not.toBeInTheDocument()
+    })
+
+    it('closes on Escape and returns focus to the previously focused element', () => {
+      render(
+        <MemoryRouter>
+          <NewQuestionProvider>
+            <button type="button">Trigger</button>
+            <CommandPalette />
+          </NewQuestionProvider>
+        </MemoryRouter>,
+      )
+      const trigger = screen.getByRole('button', { name: 'Trigger' })
+      trigger.focus()
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+      fireEvent.click(screen.getByRole('button', { name: 'Keyboard shortcuts' }))
+      expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus()
+
+      fireEvent.keyDown(window, { key: 'Escape' })
+
+      expect(screen.queryByRole('dialog', { name: 'Keyboard shortcuts' })).not.toBeInTheDocument()
+      expect(trigger).toHaveFocus()
     })
   })
 

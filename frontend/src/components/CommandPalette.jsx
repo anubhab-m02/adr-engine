@@ -22,6 +22,9 @@ function CommandPalette({ focusModeActive = false, onToggleFocusMode } = {}) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [highlightedIndex, setHighlightedIndex] = useState(0)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const shortcutsCloseRef = useRef(null)
+  const shortcutsPreviousFocusRef = useRef(null)
   const inputRef = useRef(null)
   const dialogRef = useRef(null)
   const previouslyFocusedRef = useRef(null)
@@ -34,6 +37,7 @@ function CommandPalette({ focusModeActive = false, onToggleFocusMode } = {}) {
       { id: 'go-library', label: 'Go to Library', run: () => navigate('/library') },
       { id: 'go-settings', label: 'Go to Settings', run: () => navigate('/settings') },
       { id: 'new-question', label: 'New question', run: () => requestNewQuestion() },
+      { id: 'keyboard-shortcuts', label: 'Keyboard shortcuts', run: () => setShortcutsOpen(true) },
     ]
     if (!onToggleFocusMode) return baseline
     return [
@@ -51,9 +55,11 @@ function CommandPalette({ focusModeActive = false, onToggleFocusMode } = {}) {
       const isToggle = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k'
       if (isToggle) {
         event.preventDefault()
+        setShortcutsOpen(false)
         setOpen((current) => !current)
       } else if (event.key === 'Escape') {
         setOpen(false)
+        setShortcutsOpen(false)
       }
     }
 
@@ -72,7 +78,57 @@ function CommandPalette({ focusModeActive = false, onToggleFocusMode } = {}) {
     }
   }, [open])
 
-  if (!open) return null
+  // Declared after the palette's focus effect so that, when an action closes
+  // the palette and opens this dialog in one commit, the palette's cleanup
+  // restores the original focus first and we capture that as the return target.
+  useEffect(() => {
+    if (!shortcutsOpen) return
+    shortcutsPreviousFocusRef.current = document.activeElement
+    shortcutsCloseRef.current?.focus()
+    return () => {
+      shortcutsPreviousFocusRef.current?.focus?.()
+    }
+  }, [shortcutsOpen])
+
+  const shortcutsDialog = shortcutsOpen && (
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center bg-ink/40 pt-[15vh]"
+      onClick={() => setShortcutsOpen(false)}
+    >
+      <div
+        role="dialog"
+        aria-label="Keyboard shortcuts"
+        aria-modal="true"
+        onKeyDown={(event) => {
+          // The Close button is the only focusable element: keep focus inside.
+          if (event.key === 'Tab') {
+            event.preventDefault()
+            shortcutsCloseRef.current?.focus()
+          }
+        }}
+        className="w-full max-w-lg mx-4 rounded-xl bg-panel shadow-lg p-4"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h2 className="font-ui text-base text-ink">Keyboard shortcuts</h2>
+        <ul className="mt-3 space-y-2 text-sm font-ui text-ink">
+          <li><kbd>Cmd/Ctrl+K</kbd> — open or close the command palette</li>
+          <li><kbd>Escape</kbd> — close the command palette or this dialog</li>
+          <li><kbd>↑</kbd> / <kbd>↓</kbd> — move through palette commands</li>
+          <li><kbd>Enter</kbd> — run the highlighted palette command</li>
+        </ul>
+        <button
+          ref={shortcutsCloseRef}
+          type="button"
+          onClick={() => setShortcutsOpen(false)}
+          className="mt-4 font-ui text-sm text-ink-muted hover:text-ink underline"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  )
+
+  if (!open) return shortcutsDialog || null
 
   const filtered = actions.filter((action) => action.label.toLowerCase().includes(query.toLowerCase()))
 
@@ -119,6 +175,7 @@ function CommandPalette({ focusModeActive = false, onToggleFocusMode } = {}) {
   }
 
   return (
+    <>
     <div
       className="fixed inset-0 z-50 flex items-start justify-center bg-ink/40 pt-[15vh]"
       onClick={() => setOpen(false)}
@@ -168,6 +225,8 @@ function CommandPalette({ focusModeActive = false, onToggleFocusMode } = {}) {
         </div>
       </div>
     </div>
+    {shortcutsDialog}
+    </>
   )
 }
 
