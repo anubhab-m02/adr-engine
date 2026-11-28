@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Link, MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -62,7 +62,7 @@ describe('AppShell', () => {
     openPalette()
     fireEvent.click(screen.getByRole('button', { name: 'Enter focus mode' }))
     openPalette()
-    fireEvent.click(screen.getByRole('button', { name: 'Exit focus mode' }))
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Exit focus mode' }))
 
     expect(screen.getByText('adr-engine')).toBeInTheDocument()
   })
@@ -110,6 +110,21 @@ describe('AppShell', () => {
 
     expect(await screen.findByText('Other content')).toBeInTheDocument()
     expect(screen.getByRole('main')).toHaveFocus()
+  })
+
+  it('shows an Exit focus mode button only while focus mode is on, and it restores TopNav', () => {
+    renderShell()
+    expect(screen.queryByRole('button', { name: 'Exit focus mode' })).not.toBeInTheDocument()
+
+    openPalette()
+    fireEvent.click(screen.getByRole('button', { name: 'Enter focus mode' }))
+    const exit = screen.getByRole('button', { name: 'Exit focus mode' })
+    expect(exit).toBeVisible()
+
+    fireEvent.click(exit)
+
+    expect(screen.getByText('adr-engine')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Exit focus mode' })).not.toBeInTheDocument()
   })
 
   it('still renders the skip link in focus mode', () => {

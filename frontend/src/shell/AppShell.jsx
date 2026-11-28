@@ -26,6 +26,15 @@ function AppShell() {
       >
         Skip to content
       </a>
+      {focusMode && (
+        <button
+          type="button"
+          onClick={toggleFocusMode}
+          className="fixed top-2 right-2 z-40 rounded bg-panel px-3 py-1 font-ui text-sm text-ink-muted hover:text-ink"
+        >
+          Exit focus mode
+        </button>
+      )}
       {!focusMode && <TopNav />}
       <main ref={mainRef} id="main-content" tabIndex={-1} className="flex-1 max-w-5xl mx-auto w-full">
         <Outlet />
