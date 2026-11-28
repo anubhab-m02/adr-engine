@@ -55,4 +55,32 @@ describe('useBookmarks', () => {
 
     expect(result.current.list()).toEqual([])
   })
+
+  describe('across instances', () => {
+    const other = { url: 'https://github.com/o/r/pull/2', title: 'Use FastAPI' }
+
+    it('keeps both bookmarks when two instances each toggle a different url', () => {
+      const { result: a } = renderHook(() => useBookmarks())
+      const { result: b } = renderHook(() => useBookmarks())
+
+      act(() => a.current.toggle(decision))
+      act(() => b.current.toggle(other))
+
+      const stored = JSON.parse(localStorage.getItem('bookmarks')).map((e) => e.url)
+      expect(stored).toEqual([decision.url, other.url])
+      for (const hook of [a, b]) {
+        expect(hook.current.isBookmarked(decision.url)).toBe(true)
+        expect(hook.current.isBookmarked(other.url)).toBe(true)
+      }
+    })
+
+    it('updates another mounted instance without a remount', () => {
+      const { result: a } = renderHook(() => useBookmarks())
+      const { result: b } = renderHook(() => useBookmarks())
+
+      act(() => a.current.toggle(decision))
+
+      expect(b.current.isBookmarked(decision.url)).toBe(true)
+    })
+  })
 })
